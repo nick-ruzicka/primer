@@ -54,7 +54,8 @@ frontend/test-results/
 BLOCKERS.md
 deploy/BLOCKERS.md
 
-# ---- Logs ----
+# ---- Sweep + logs ----
+backend/sweep_output/
 *.log
 logs/
 
