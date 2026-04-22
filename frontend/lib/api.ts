@@ -117,7 +117,7 @@ function adaptGroup(g: BackendGroup): AccountGroup {
  */
 export async function fetchAccounts(): Promise<AccountsResponse | null> {
   if (!LIVE_MODE) return null;
-  const url = `${API_BASE}/api/accounts`; // empty base → same-origin, served by Next rewrite
+  const url = API_BASE ? `${API_BASE}/api/accounts` : `/api/accounts`; // empty base → same-origin, served by Next rewrite
   try {
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
