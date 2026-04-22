@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { BriefFixture } from "@/lib/fixtures/northstar-beauty-brief";
 import { cn } from "@/lib/utils";
 import { BriefSection } from "./brief-section";
@@ -25,7 +26,21 @@ export function Brief({
   onCitationHover,
   onCitationClick,
 }: Props) {
+  const [highlightedCitationId, setHighlightedCitationId] = useState<string | null>(null);
   const isWorkspace = layout === "workspace";
+
+  const handleCitationClick = (citationId: string) => {
+    setHighlightedCitationId(citationId);
+    onCitationClick?.(citationId);
+
+    // Scroll to References section
+    setTimeout(() => {
+      const refElement = document.getElementById("references-section");
+      if (refElement) {
+        refElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
+  };
   return (
     <div
       className={cn(
@@ -45,7 +60,7 @@ export function Brief({
           defaultOpen={isWorkspace ? s.id === "01" : true}
           hoveredEvid={hoveredEvid}
           onCitationHover={onCitationHover}
-          onCitationClick={onCitationClick}
+          onCitationClick={handleCitationClick}
         />
       ))}
     </div>
