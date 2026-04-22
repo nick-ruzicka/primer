@@ -59,6 +59,11 @@ Schema:
 
 - **Data-quality callouts are the brief's job, not a violation.** Do not flag a claim when the brief correctly identifies that underlying data is stale, unclear, or missing. A brief that surfaces data quality issues to the rep is behaving correctly.
 - **Don't second-guess the context.** Do not flag a claim when the citation is correct and the claim matches the fact, even if the underlying fact itself seems imperfect. The validator checks alignment between brief and context blob; it does not audit the source systems.
+- **Staleness claims explicitly stated by the brief.** If the brief explicitly states data age (e.g., "exec touch was 6 weeks ago," "discovery call 7 days ago"), this is the brief doing its job. Do not flag unless the stated age materially contradicts the underlying `fact_id`'s timestamp. A brief that surfaces staleness to the rep is helpful, not a violation.
+  - Brief says "discovery call 7 days ago ·9" and fact 9 is 7 days old → **do not flag**.
+  - Brief says "exec touch was 6 weeks ago ·5" and fact 5 is 42 days old → **do not flag**.
+  - Brief says "two weeks ago" and the fact is 14 days old → **do not flag**. "Two weeks" is a correct expression of 14 days; treating it as a discrepancy is pedantic.
+- **"Approaching" or "edge of" thresholds is not a violation.** Only flag `stale_data` when the data strictly **exceeds** the freshness threshold (>30 days for usage, >90 days for relationship events). Do not emit warnings using language like "borderline acceptable," "at the edge of freshness," or "approaching staleness." If the claim is accurate and the data is within threshold, stay silent.
 
 ## Discipline
 
