@@ -1,0 +1,29 @@
+[Unit]
+Description=Primer frontend (Next.js production server)
+After=network.target primer-backend.service
+Wants=primer-backend.service
+
+[Service]
+Type=simple
+User=primer
+Group=primer
+WorkingDirectory=/opt/primer/app/frontend
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/opt/primer/app/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=3
+StandardOutput=append:/opt/primer/logs/frontend.log
+StandardError=append:/opt/primer/logs/frontend.log
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/primer/logs /opt/primer/app/frontend/.next
+
+[Install]
+WantedBy=multi-user.target
