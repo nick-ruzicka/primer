@@ -31,11 +31,20 @@ export type IntelSectionId =
 
 export interface Account {
   id: string;
+  /** Short label used in the left rail (e.g. "Beauty"). */
   name: string;
+  /** Full display name used in the account header (e.g. "Northstar Beauty"). Falls back to `name`. */
+  full_name?: string;
+  /** 2-letter tile used in rail (brand short, e.g. "BE"). */
   initial: string;
+  /** 2-letter tile used in header (full-name initials, e.g. "NB"). Falls back to `initial`. */
+  header_initial?: string;
   color: string;
   industry?: string;
+  /** Pre-formatted short ARR e.g. "$940k" — used in rail. */
   arr: string;
+  /** Pre-formatted ARR for header e.g. "$940k ARR". Falls back to `{arr} ARR`. */
+  arr_display?: string;
   arr_cents?: number;
   hq?: string;
   employees?: number;

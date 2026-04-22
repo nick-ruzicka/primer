@@ -8,6 +8,30 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T02:10:00Z — Phase 2 · Static shell
+
+**Status:** PASS (with minor drift noted)
+
+**Compared:** `verification-output/2026-04-22_phase2-split-dark.png` + `_phase2-split-light.png` against `reference/screenshots/02_split_view_dark.png` + `01_split_view_light.png`.
+
+**Matches:**
+- Left rail structure: Attentive brand + Briefing · AE kicker; ⌘K search; Northstar Group section with NS group-head row; Beauty (active, yellow border), Active, Home children; "Other upcoming" with Tidepool Swim / Mellow Mattress / Ember Coffee; Jamie Kwon footer.
+- State dots (hot/warm/cool) use correct color tokens.
+- Topbar: breadcrumb "Briefings › Northstar Beauty › Pre-call"; mode toggle with 1/2/3 kbd hints; Refresh (subtle) + Join call (yellow accent).
+- Account header: NB tile + "Northstar Beauty" + NORTHSTAR GROUP pill; meta row ("Skincare · DTC · $940k ARR · HQ Brooklyn, NY · 142 employees · Owner — Jamie Kwon"); call card with Today · 2:30 PM + In 47 min yellow pill + four attendees.
+- Confidence strip: ring at 84, "84 · likely", 6 green source dots with 1 amber (stale), "6 sources queried · 1 stale", Clock icon + "Generated 6 min ago", Regenerate brief CTA.
+- Tweaks panel: floating bottom-right trigger, Theme/Density/Verify segmented controls when open, theme toggle flips `.dark` on html.
+- Keyboard shortcuts: 1/2/3/4 switch modes (4 active in Phase 6 when Writeup lands).
+
+**Minor drift (non-blocking — to revisit in Phase 7):**
+- Light-mode rail background reads slightly too warm vs reference; may need to nudge `--color-surface` down.
+- Mode-toggle tab sizing feels a touch compact — reference buttons have a little more horizontal padding.
+- `Northstar Beauty` heading in the header runs slightly tighter kerning than reference — likely Fraunces weight difference; acceptable for now.
+
+Drifts logged, moving to Phase 3.
+
+---
+
 ## 2026-04-22T01:40:00Z — Phase 1 · Foundation shell
 
 **Status:** PASS
