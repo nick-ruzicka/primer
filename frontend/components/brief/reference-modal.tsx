@@ -24,7 +24,7 @@ export function ReferenceModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">{citation.sourceName}</h2>
+          <h2 className="text-lg font-semibold">{citation.label}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-surface-2 rounded"
@@ -39,14 +39,14 @@ export function ReferenceModal({
             <label className="text-xs font-semibold text-ink-4 uppercase">
               Data Point
             </label>
-            <p className="text-sm mt-1">{citation.dataPoint}</p>
+            <p className="text-sm mt-1">{citation.label}</p>
           </div>
 
           <div>
             <label className="text-xs font-semibold text-ink-4 uppercase">
               Last Updated
             </label>
-            <p className="text-sm mt-1">{citation.timestamp}</p>
+            <p className="text-sm mt-1">{citation.time_ago}</p>
           </div>
 
           <button className="w-full mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
