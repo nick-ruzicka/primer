@@ -129,6 +129,28 @@ Current rail badge correctly shows `$0`. Header should match.
 
 ---
 
+### S5. Delete dead frontend fixture data
+
+**Impact:** Low. Stale fixture values no longer render but create drift risk between "what the code hints" and "what ships."
+
+**Background:** Terminal 3's commit `a459ac6` ("frontend: switch to direct backend via ALLOWED_ORIGINS, remove workarounds") rewired the account rail + header to read from `/api/accounts` instead of the hardcoded fixture. The fixture was left in place as an "offline mode fallback" but no longer renders when the backend is reachable (which is required for Primer to do anything useful anyway).
+
+Concretely, `frontend/lib/fixtures/accounts.ts` and `frontend/lib/fixtures/brief-meta.ts` still carry pre-integration mockup values from the Claude Design reference HTML (`"Brooklyn, NY" · 142 employees · Owner Jamie Kwon` for Northstar Beauty). The live backend seed is `Los Angeles, CA · 260 · Morgan Yu`. Neither is wrong in isolation; only the live one is authoritative. (Confirmed via `/api/accounts`, Salesforce MCP `get_account`, and SQLite seed — all agree.)
+
+**Files:** `frontend/lib/fixtures/accounts.ts`, `frontend/lib/fixtures/brief-meta.ts`.
+
+**Options:**
+- **(a)** Delete entirely. Live backend is required for Primer to function; an offline fallback doesn't earn its keep.
+- **(b)** Keep as offline fallback but update values to match the live seed (LA/260/Morgan Yu), so the two sources agree.
+
+**Recommendation:** **(a).** Simpler repo, no drift risk. The existing mock-mode flag in `lib/sse.ts` already handles offline dev scenarios for briefs; the account list doesn't need a separate fixture.
+
+**Commit:** `refactor: remove dead pre-integration account fixtures`
+
+**Owner:** Terminal 3. Ships alongside C1 / C2 / S1 as the fourth item in the PR-sized batch.
+
+---
+
 ## COSMETIC — fix only if trivially cheap
 
 ### Co1. Truncation in Conversations cards
@@ -159,10 +181,11 @@ Current rail badge correctly shows `$0`. Header should match.
 | S2 | Validator severity calibration | Substantive | T2 | DONE 53c8258 |
 | S3 | Spec/seed mismatches | Substantive | User | decision pending |
 | S4 | Validator false positives | Substantive | T2 | DONE 9b112a1 |
+| S5 | Delete dead frontend fixture data | Substantive | T3 | pending |
 | Co1 | Conversation card truncation | Cosmetic | T3 | deferred |
 | Co2 | Run variance | Cosmetic | documented | accepted |
 
-**Critical path:** Terminal 3 has three fixes remaining (C1 frontend, C2, S1). All other items are complete, deferred, or user-decision.
+**Critical path:** Terminal 3 has four fixes remaining (C1 frontend, C2, S1, S5) — one PR-sized batch. All other items are complete, deferred, or user-decision.
 
 ## What this proves about the system (for the writeup)
 
