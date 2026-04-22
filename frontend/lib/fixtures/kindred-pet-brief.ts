@@ -23,14 +23,18 @@ const P1: Paragraph = [
   t(", Jamie Park took over in February, and usage has "),
   b("collapsed since"),
   c(2),
-  t(" — four of twelve flows paused, sends down 41%, and relationship score dropped from 81 to 48"),
+  t(
+    " — four of twelve flows paused, sends down 41%, and relationship score dropped from 81 to 48",
+  ),
   c(3),
   t("."),
 ];
 
 const P2: Paragraph = [
   t("Jamie was candid on the last call: they're "),
-  i("evaluating whether we're using it to its full potential — otherwise we'll consolidate"),
+  i(
+    "evaluating whether we're using it to its full potential — otherwise we'll consolidate",
+  ),
   c(4),
   t(". Her LinkedIn post last week talked about "),
   b("consolidating the marketing stack"),
@@ -56,7 +60,9 @@ const WHY_P1: Paragraph = [
 ];
 
 const WHY_P2: Paragraph = [
-  t("The DM turnover is the root cause. Rowan owned the relationship for three years and has been replaced by someone who inherited a stack she didn't choose"),
+  t(
+    "The DM turnover is the root cause. Rowan owned the relationship for three years and has been replaced by someone who inherited a stack she didn't choose",
+  ),
   c(1),
   t(". Exec sponsor hasn't been engaged in 127 days"),
   c(7),
@@ -111,7 +117,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
           body: [t("Acknowledge the DM change directly.")],
           rationale: [
             t(
-              '"You inherited this — let\'s make sure you own what\'s here" takes the consolidation threat off the table as the opening frame.',
+              "\"You inherited this — let's make sure you own what's here\" takes the consolidation threat off the table as the opening frame.",
             ),
           ],
         },

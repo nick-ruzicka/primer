@@ -1,7 +1,10 @@
 "use client";
 
 import { Fragment } from "react";
-import type { CitationMeta, Paragraph } from "@/lib/fixtures/northstar-beauty-brief";
+import type {
+  CitationMeta,
+  Paragraph,
+} from "@/lib/fixtures/northstar-beauty-brief";
 import { CitationChip } from "./citation-chip";
 
 interface Props {

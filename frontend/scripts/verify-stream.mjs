@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Walks through the mock SSE stream timeline: captures the app at 500ms (just
  * after load), 2000ms (intelligence populated, brief pending), 5000ms (brief
@@ -6,9 +9,6 @@
  * phase of the stream renders as expected.
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** Light-theme QA pass: all three modes + writeup + intel overlay. */
-import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+/** Light-theme QA pass: all three modes + writeup + intel overlay. */
+import { chromium } from "@playwright/test";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -32,7 +32,11 @@ await page.getByRole("button", { name: /Close tweaks/i }).click();
 // Wait for Beauty stream to complete
 await page.waitForTimeout(7500);
 
-for (const [key, label] of [["1", "split"], ["2", "workspace"], ["3", "reading"]]) {
+for (const [key, label] of [
+  ["1", "split"],
+  ["2", "workspace"],
+  ["3", "reading"],
+]) {
   await page.keyboard.press(key);
   await page.waitForTimeout(200);
   await page.screenshot({

@@ -23,7 +23,12 @@ interface Props {
   onJoinCall?: () => void;
 }
 
-const MODES: { id: ViewMode; label: string; key: string; Icon: typeof Columns2 }[] = [
+const MODES: {
+  id: ViewMode;
+  label: string;
+  key: string;
+  Icon: typeof Columns2;
+}[] = [
   { id: "split", label: "Split", key: "1", Icon: Columns2 },
   { id: "workspace", label: "Workspace", key: "2", Icon: LayoutPanelLeft },
   { id: "reading", label: "Reading", key: "3", Icon: BookOpen },
@@ -42,7 +47,10 @@ export function Topbar({
 }: Props) {
   return (
     <header className="flex h-14 items-center gap-3 border-b border-line bg-bg px-5">
-      <nav className="flex items-center gap-2 text-[12px] text-ink-3" aria-label="Breadcrumb">
+      <nav
+        className="flex items-center gap-2 text-[12px] text-ink-3"
+        aria-label="Breadcrumb"
+      >
         <span>Briefings</span>
         <span className="text-ink-4">›</span>
         <span className="font-medium text-ink">{breadcrumbAccount}</span>
@@ -105,7 +113,9 @@ export function Topbar({
           <span
             className={cn(
               "rounded-sm px-1 font-mono text-[10px]",
-              intelligenceOpen ? "bg-accent-ink/15 text-accent-ink" : "bg-surface-sunk text-ink-4",
+              intelligenceOpen
+                ? "bg-accent-ink/15 text-accent-ink"
+                : "bg-surface-sunk text-ink-4",
             )}
           >
             {intelligenceCount}

@@ -1,9 +1,9 @@
 import type { IntelligenceSection } from "../types";
+import { KINDRED_PET_BRIEF } from "./kindred-pet-brief";
+import { KINDRED_PET_INTELLIGENCE } from "./kindred-pet-intelligence";
 import type { BriefFixture } from "./northstar-beauty-brief";
 import { NORTHSTAR_BEAUTY_BRIEF } from "./northstar-beauty-brief";
 import { NORTHSTAR_BEAUTY_INTELLIGENCE } from "./northstar-beauty-intelligence";
-import { KINDRED_PET_BRIEF } from "./kindred-pet-brief";
-import { KINDRED_PET_INTELLIGENCE } from "./kindred-pet-intelligence";
 
 interface AccountMock {
   brief: BriefFixture;
@@ -44,7 +44,10 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
         preview: `Straightforward check-in for ${accountName}.`,
         paragraphs: [
           [
-            { kind: "text", value: `This brief is a minimal mock for ${accountName}. ` },
+            {
+              kind: "text",
+              value: `This brief is a minimal mock for ${accountName}. `,
+            },
             {
               kind: "text",
               value:
@@ -82,9 +85,17 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
         actions: [
           {
             id: "A1",
-            body: [{ kind: "text", value: "Review the account in Salesforce before the call." }],
+            body: [
+              {
+                kind: "text",
+                value: "Review the account in Salesforce before the call.",
+              },
+            ],
             rationale: [
-              { kind: "text", value: "The real brief fills in grounded next actions." },
+              {
+                kind: "text",
+                value: "The real brief fills in grounded next actions.",
+              },
             ],
           },
         ],
@@ -99,7 +110,8 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
           [
             {
               kind: "text",
-              value: "Generic opener — real talk tracks come from the live agent.",
+              value:
+                "Generic opener — real talk tracks come from the live agent.",
             },
           ],
         ],
@@ -110,6 +122,9 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
   return { brief, intelligence: [] };
 }
 
-export function getMockForAccount(accountId: string, accountName: string): AccountMock {
+export function getMockForAccount(
+  accountId: string,
+  accountName: string,
+): AccountMock {
   return MOCK_REGISTRY[accountId] ?? makeGenericMock(accountId, accountName);
 }

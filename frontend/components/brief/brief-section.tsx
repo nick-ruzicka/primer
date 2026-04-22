@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import type { BriefSection as BriefSectionData, CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
+import { useState } from "react";
+import type {
+  BriefSection as BriefSectionData,
+  CitationMeta,
+} from "@/lib/fixtures/northstar-beauty-brief";
 import { cn } from "@/lib/utils";
 import { HedgePill } from "./hedge-pill";
 import { Prose } from "./prose";
@@ -35,7 +38,8 @@ export function BriefSection({
     <section
       className={cn(
         "brief-section",
-        isWorkspace && "rounded-lg border border-line bg-surface-2 px-4 py-3 mb-2",
+        isWorkspace &&
+          "rounded-lg border border-line bg-surface-2 px-4 py-3 mb-2",
       )}
     >
       <header
@@ -60,11 +64,17 @@ export function BriefSection({
       >
         <span className="brief-kicker">{section.id}</span>
         <h2 className="brief-title">
-          {section.id === "01" && <span className="yellow-accent" aria-hidden />}
+          {section.id === "01" && (
+            <span className="yellow-accent" aria-hidden />
+          )}
           {section.title}
         </h2>
         <div className="ml-auto flex items-center gap-2">
-          <HedgePill level={section.hedge.level} label={section.hedge.label} tip={section.hedge.tip} />
+          <HedgePill
+            level={section.hedge.level}
+            label={section.hedge.label}
+            tip={section.hedge.tip}
+          />
           {isWorkspace && (
             <ChevronDown
               className={cn(

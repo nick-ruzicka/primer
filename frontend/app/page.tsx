@@ -12,8 +12,15 @@ import { TweaksTrigger } from "@/components/tweaks-trigger";
 import { ValidationBanner } from "@/components/validation-banner";
 import { Writeup } from "@/components/writeup/writeup";
 import { useBootstrap, useKeyboardShortcuts } from "@/lib/bootstrap";
-import { NORTHSTAR_GROUP, OTHER_UPCOMING_VISIBLE } from "@/lib/fixtures/accounts";
-import { CURRENT_USER, DEFAULT_BRIEF_META, DEFAULT_SOURCE_STATUSES } from "@/lib/fixtures/brief-meta";
+import {
+  NORTHSTAR_GROUP,
+  OTHER_UPCOMING_VISIBLE,
+} from "@/lib/fixtures/accounts";
+import {
+  CURRENT_USER,
+  DEFAULT_BRIEF_META,
+  DEFAULT_SOURCE_STATUSES,
+} from "@/lib/fixtures/brief-meta";
 import { loadAccount } from "@/lib/sse";
 import {
   setDensity,
@@ -64,7 +71,10 @@ export default function BriefingPage() {
     intelligence.portfolio,
     intelligence.external,
   ].filter((s): s is IntelligenceSection => !!s);
-  const intelligenceCount = intelligenceSections.reduce((sum, s) => sum + s.items.length, 0);
+  const intelligenceCount = intelligenceSections.reduce(
+    (sum, s) => sum + s.items.length,
+    0,
+  );
 
   return (
     <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
@@ -80,9 +90,13 @@ export default function BriefingPage() {
           breadcrumbAccount={displayAccount.full_name ?? displayAccount.name}
           mode={mode}
           onModeChange={setMode}
-          intelligenceCount={intelligenceCount || DEFAULT_BRIEF_META.intelligenceItemCount}
+          intelligenceCount={
+            intelligenceCount || DEFAULT_BRIEF_META.intelligenceItemCount
+          }
           intelligenceOpen={intelligenceOpen}
-          onToggleIntelligence={() => setIntelligencePanelOpen(!intelligenceOpen)}
+          onToggleIntelligence={() =>
+            setIntelligencePanelOpen(!intelligenceOpen)
+          }
           onRefresh={() => activeId && loadAccount(activeId, { refresh: true })}
         />
 
@@ -90,14 +104,24 @@ export default function BriefingPage() {
           <Writeup />
         ) : (
           <div className="flex flex-1 flex-col overflow-y-auto">
-            <AccountHeader account={displayAccount} parentGroupName={displayAccount.parent_group_name} />
+            <AccountHeader
+              account={displayAccount}
+              parentGroupName={displayAccount.parent_group_name}
+            />
             <ConfidenceStrip
-              confidence={brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence}
-              confidenceLabel={brief.fixture?.confidence_label ?? DEFAULT_BRIEF_META.confidenceLabel}
+              confidence={
+                brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence
+              }
+              confidenceLabel={
+                brief.fixture?.confidence_label ??
+                DEFAULT_BRIEF_META.confidenceLabel
+              }
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
               generatedAgo={brief.complete ? "just now" : "streaming…"}
-              onRegenerate={() => activeId && loadAccount(activeId, { refresh: true })}
+              onRegenerate={() =>
+                activeId && loadAccount(activeId, { refresh: true })
+              }
             />
 
             {warnings.length > 0 && <ValidationBanner warnings={warnings} />}
@@ -105,20 +129,27 @@ export default function BriefingPage() {
             <main
               className={cn(
                 "flex flex-1 min-h-0",
-                mode === "split" && "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+                mode === "split" &&
+                  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
                 mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
                 mode === "reading" && "flex-col",
               )}
               aria-label="Brief + intelligence"
             >
               {(() => {
-                const revealedSections = brief.fixture?.sections.filter((s) => brief.revealed[s.id]) ?? [];
+                const revealedSections =
+                  brief.fixture?.sections.filter((s) => brief.revealed[s.id]) ??
+                  [];
                 if (!brief.fixture || revealedSections.length === 0) {
                   return <BriefSkeleton layout={mode} />;
                 }
                 return (
                   <Brief
-                    brief={{ ...brief.fixture, sections: revealedSections, citations }}
+                    brief={{
+                      ...brief.fixture,
+                      sections: revealedSections,
+                      citations,
+                    }}
                     layout={
                       mode === "reading"
                         ? "centered"
@@ -184,7 +215,8 @@ function BriefSkeleton({ layout }: { layout: string }) {
         "min-w-0 flex-1 px-7 pb-10 pt-6",
         layout === "reading" && "mx-auto max-w-[760px] px-8",
         layout === "split" && "border-r border-line",
-        layout === "workspace" && "max-w-[360px] border-r border-line bg-surface/40 px-4 py-4",
+        layout === "workspace" &&
+          "max-w-[360px] border-r border-line bg-surface/40 px-4 py-4",
       )}
     >
       <div className="animate-pulse space-y-4">

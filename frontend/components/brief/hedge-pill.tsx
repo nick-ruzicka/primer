@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { ConfidenceLevel } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   level: ConfidenceLevel;

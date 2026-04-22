@@ -124,9 +124,13 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
         "New CFO blocked payment; exec sponsor has been cold 89 days; Beauty usage is the only brand under Group average.",
       paragraphs: [
         [
-          t("Four independent signals contradict the Commit forecast. Catalyst moved Beauty to Watchlist on Mar 28 after a 13-point health drop"),
+          t(
+            "Four independent signals contradict the Commit forecast. Catalyst moved Beauty to Watchlist on Mar 28 after a 13-point health drop",
+          ),
           c(4),
-          t(", driven almost entirely by adoption: three flows paused since March"),
+          t(
+            ", driven almost entirely by adoption: three flows paused since March",
+          ),
           c(9),
           t(" and send volume down 18% vs. the prior 30 days"),
           c(10),
@@ -140,19 +144,27 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
             "The Apr 11 QBR is the clearest signal of what Priya is actually evaluating. A competitor's loyalty product was named twice on the call, and Priya pushed back on pricing in the same session",
           ),
           c(11),
-          t(". Her LinkedIn post two days earlier called out vendor overlap across the group by name"),
+          t(
+            ". Her LinkedIn post two days earlier called out vendor overlap across the group by name",
+          ),
           c(2),
-          t(", and on the DTC Pod that week she praised Active's integrated approach directly"),
+          t(
+            ", and on the DTC Pod that week she praised Active's integrated approach directly",
+          ),
           c(3),
           t(". "),
-          i("This reads less like a feature complaint and more like a short list being built."),
+          i(
+            "This reads less like a feature complaint and more like a short list being built.",
+          ),
         ],
         [
           t(
             "The CFO change is the forcing function. Carla's prior role emphasized AP controls and vendor consolidation",
           ),
           c(1),
-          t("; NetSuite's invoice-blocking flag was set the day after her start date"),
+          t(
+            "; NetSuite's invoice-blocking flag was set the day after her start date",
+          ),
           c(12),
           t(". "),
           i(
@@ -184,7 +196,9 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
         },
         {
           id: "A2",
-          body: [t("Bring up Carla on your terms — don't let Priya introduce her.")],
+          body: [
+            t("Bring up Carla on your terms — don't let Priya introduce her."),
+          ],
           rationale: [
             t(
               '"We saw the CFO news — we\'d like to get you clean on invoicing this week" positions you as the one proposing the reset.',

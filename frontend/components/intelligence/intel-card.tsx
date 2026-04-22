@@ -29,11 +29,55 @@ export function IntelCard({
   onMouseEnter,
   onMouseLeave,
 }: Props) {
-  if (variant === "person") return <PersonCard item={item} hovered={hovered} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} />;
-  if (variant === "web") return <WebCard item={item} hovered={hovered} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} />;
-  if (variant === "hero") return <HeroCard item={item} hovered={hovered} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} />;
-  if (variant === "health") return <HealthCard item={item} hovered={hovered} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} />;
-  return <StandardCard item={item} hovered={hovered} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onClick={onClick} />;
+  if (variant === "person")
+    return (
+      <PersonCard
+        item={item}
+        hovered={hovered}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      />
+    );
+  if (variant === "web")
+    return (
+      <WebCard
+        item={item}
+        hovered={hovered}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      />
+    );
+  if (variant === "hero")
+    return (
+      <HeroCard
+        item={item}
+        hovered={hovered}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      />
+    );
+  if (variant === "health")
+    return (
+      <HealthCard
+        item={item}
+        hovered={hovered}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onClick={onClick}
+      />
+    );
+  return (
+    <StandardCard
+      item={item}
+      hovered={hovered}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      onClick={onClick}
+    />
+  );
 }
 
 interface SubProps {
@@ -44,7 +88,11 @@ interface SubProps {
   onMouseLeave?: () => void;
 }
 
-function cardClass(item: IntelligenceItem, hovered?: boolean, extra?: string): string {
+function cardClass(
+  item: IntelligenceItem,
+  hovered?: boolean,
+  extra?: string,
+): string {
   return cn(
     "intel-card",
     item.flag === "critical" && "critical",
@@ -54,7 +102,13 @@ function cardClass(item: IntelligenceItem, hovered?: boolean, extra?: string): s
   );
 }
 
-function StandardCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubProps) {
+function StandardCard({
+  item,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: SubProps) {
   return (
     <div
       data-evid={item.evid}
@@ -101,7 +155,13 @@ function StandardCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: Su
   );
 }
 
-function PersonCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubProps) {
+function PersonCard({
+  item,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: SubProps) {
   const fullValue = item.value ?? "";
   const [name, role] = fullValue.split("—").map((s) => s.trim());
   const isExec = item.evid === "sponsor";
@@ -126,7 +186,10 @@ function PersonCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubP
         <div className="card-person-name">{name}</div>
         {role && <div className="card-person-role">{role}</div>}
         {item.sub && (
-          <p className="card-person-meta" dangerouslySetInnerHTML={{ __html: item.sub }} />
+          <p
+            className="card-person-meta"
+            dangerouslySetInnerHTML={{ __html: item.sub }}
+          />
         )}
         <div className="card-foot">
           <span className={cn("pill", `src-${item.source}`)}>
@@ -150,7 +213,13 @@ function PersonCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubP
   );
 }
 
-function HealthCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubProps) {
+function HealthCard({
+  item,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: SubProps) {
   return (
     <div
       data-evid={item.evid}
@@ -171,7 +240,10 @@ function HealthCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubP
         <Sparkline />
       </div>
       {item.sub && (
-        <p className="card-person-meta" dangerouslySetInnerHTML={{ __html: item.sub }} />
+        <p
+          className="card-person-meta"
+          dangerouslySetInnerHTML={{ __html: item.sub }}
+        />
       )}
       <div className="card-foot">
         <span className={cn("pill", `src-${item.source}`)}>
@@ -194,7 +266,13 @@ function HealthCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubP
   );
 }
 
-function HeroCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubProps) {
+function HeroCard({
+  item,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: SubProps) {
   const [lead, ...rest] = (item.value ?? "").split("·").map((s) => s.trim());
   const meta = rest.join(" · ");
   const flagIsCritical = item.flag === "critical";
@@ -204,7 +282,11 @@ function HeroCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubPro
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={cn("intel-card hero", flagIsCritical && "critical", hovered && "hot")}
+      className={cn(
+        "intel-card hero",
+        flagIsCritical && "critical",
+        hovered && "hot",
+      )}
     >
       {item.flagPill && (
         <span className={cn("card-flag", item.flag === "warn" ? "warn" : "")}>
@@ -215,10 +297,15 @@ function HeroCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubPro
       <div className="card-hero-label">{item.label}</div>
       <div className="card-hero-number">{lead}</div>
       {meta && (
-        <div className="mt-1 text-[12px] font-medium text-ink-3 tnum">{meta}</div>
+        <div className="mt-1 text-[12px] font-medium text-ink-3 tnum">
+          {meta}
+        </div>
       )}
       {item.sub && (
-        <p className="card-person-meta max-w-[420px]" dangerouslySetInnerHTML={{ __html: item.sub }} />
+        <p
+          className="card-person-meta max-w-[420px]"
+          dangerouslySetInnerHTML={{ __html: item.sub }}
+        />
       )}
       <div className="card-foot">
         <span className={cn("pill", `src-${item.source}`)}>
@@ -244,8 +331,23 @@ function HeroCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubPro
   );
 }
 
-function WebCard({ item, hovered, onClick, onMouseEnter, onMouseLeave }: SubProps) {
-  if (!item.web) return <StandardCard item={item} hovered={hovered} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />;
+function WebCard({
+  item,
+  hovered,
+  onClick,
+  onMouseEnter,
+  onMouseLeave,
+}: SubProps) {
+  if (!item.web)
+    return (
+      <StandardCard
+        item={item}
+        hovered={hovered}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+      />
+    );
   return (
     <div
       data-evid={item.evid}

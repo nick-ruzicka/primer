@@ -29,18 +29,22 @@ export function ValidationBanner({ warnings }: Props) {
             )}
           >
             {critical ? (
-              <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-bad" strokeWidth={2} />
+              <AlertTriangle
+                className="mt-0.5 h-4 w-4 flex-shrink-0 text-bad"
+                strokeWidth={2}
+              />
             ) : (
-              <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn-strong" strokeWidth={2} />
+              <Info
+                className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn-strong"
+                strokeWidth={2}
+              />
             )}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
                     "rounded-sm px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em]",
-                    critical
-                      ? "bg-bad text-bg"
-                      : "bg-warn-strong/90 text-bg",
+                    critical ? "bg-bad text-bg" : "bg-warn-strong/90 text-bg",
                   )}
                 >
                   {w.severity}
@@ -51,10 +55,7 @@ export function ValidationBanner({ warnings }: Props) {
                 {w.sources && w.sources.length > 0 && (
                   <span className="ml-auto flex gap-1">
                     {w.sources.map((src) => (
-                      <span
-                        key={src}
-                        className={cn("pill", `src-${src}`)}
-                      >
+                      <span key={src} className={cn("pill", `src-${src}`)}>
                         <span className="dot" aria-hidden />
                         {src}
                       </span>

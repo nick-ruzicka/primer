@@ -1,5 +1,7 @@
 "use client";
 
+import { findAccount } from "./fixtures/accounts";
+import { getMockForAccount } from "./fixtures/briefs-registry";
 import {
   appendCitations,
   markBriefDone,
@@ -10,11 +12,10 @@ import {
   revealIntelligence,
   setBriefFixture,
 } from "./store";
-import { findAccount } from "./fixtures/accounts";
-import { getMockForAccount } from "./fixtures/briefs-registry";
 import type { ValidationWarning } from "./types";
 
-const API_BASE = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
+const API_BASE =
+  typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
 
 /**
  * Mock mode = live backend URL not configured. Flip to live by setting
@@ -64,7 +65,10 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-async function runMockStream(accountId: string, signal: AbortSignal): Promise<void> {
+async function runMockStream(
+  accountId: string,
+  signal: AbortSignal,
+): Promise<void> {
   const account = findAccount(accountId);
   const { brief, intelligence } = getMockForAccount(
     accountId,
@@ -90,10 +94,12 @@ async function runMockStream(accountId: string, signal: AbortSignal): Promise<vo
       const referenced = new Set<number>();
       const collectRefs = (nodes: { kind: string; n?: number }[]) => {
         for (const node of nodes) {
-          if (node.kind === "cite" && typeof node.n === "number") referenced.add(node.n);
+          if (node.kind === "cite" && typeof node.n === "number")
+            referenced.add(node.n);
         }
       };
-      if (section.paragraphs) for (const p of section.paragraphs) collectRefs(p);
+      if (section.paragraphs)
+        for (const p of section.paragraphs) collectRefs(p);
       if (section.actions) {
         for (const a of section.actions) {
           collectRefs(a.body);
@@ -102,7 +108,9 @@ async function runMockStream(accountId: string, signal: AbortSignal): Promise<vo
       }
       if (section.questions) for (const q of section.questions) collectRefs(q);
 
-      const citationsForSection = brief.citations.filter((c) => referenced.has(c.n));
+      const citationsForSection = brief.citations.filter((c) =>
+        referenced.has(c.n),
+      );
       appendCitations(citationsForSection);
       for (const c of citationsForSection) {
         pushSourceCited({
@@ -149,7 +157,8 @@ function warningsForAccount(accountId: string): ValidationWarning[] {
       {
         severity: "watch",
         type: "stale_data",
-        message: "Exa web results last refreshed 4h ago — verify external claims before citing.",
+        message:
+          "Exa web results last refreshed 4h ago — verify external claims before citing.",
         sources: ["exa"],
       },
     ];

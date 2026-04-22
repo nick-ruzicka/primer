@@ -39,7 +39,9 @@ export function TweaksPanel({
       className="fixed bottom-5 right-5 z-40 w-[280px] rounded-xl border border-line bg-surface-2 p-4 shadow-md"
     >
       <header className="mb-3 flex items-center">
-        <span className="font-serif text-[14px] font-semibold text-ink">Tweaks</span>
+        <span className="font-serif text-[14px] font-semibold text-ink">
+          Tweaks
+        </span>
         <button
           type="button"
           onClick={onClose}
@@ -57,7 +59,11 @@ export function TweaksPanel({
             onClick={() => onThemeChange("light")}
             label="Light"
           />
-          <Seg active={theme === "dark"} onClick={() => onThemeChange("dark")} label="Dark" />
+          <Seg
+            active={theme === "dark"}
+            onClick={() => onThemeChange("dark")}
+            label="Dark"
+          />
         </SegRow>
         <SegRow label="Density">
           <Seg
@@ -72,19 +78,39 @@ export function TweaksPanel({
           />
         </SegRow>
         <SegRow label="Verify styling">
-          <Seg active={verify === "subtle"} onClick={() => onVerifyChange("subtle")} label="Subtle" />
-          <Seg active={verify === "medium"} onClick={() => onVerifyChange("medium")} label="Medium" />
-          <Seg active={verify === "loud"} onClick={() => onVerifyChange("loud")} label="Loud" />
+          <Seg
+            active={verify === "subtle"}
+            onClick={() => onVerifyChange("subtle")}
+            label="Subtle"
+          />
+          <Seg
+            active={verify === "medium"}
+            onClick={() => onVerifyChange("medium")}
+            label="Medium"
+          />
+          <Seg
+            active={verify === "loud"}
+            onClick={() => onVerifyChange("loud")}
+            label="Loud"
+          />
         </SegRow>
       </div>
     </aside>
   );
 }
 
-function SegRow({ label, children }: { label: string; children: React.ReactNode }) {
+function SegRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex items-center justify-between gap-4">
-      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-4">{label}</span>
+      <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-4">
+        {label}
+      </span>
       <div className="flex items-center gap-0.5 rounded-lg border border-line bg-surface-sunk p-0.5">
         {children}
       </div>
@@ -92,14 +118,24 @@ function SegRow({ label, children }: { label: string; children: React.ReactNode 
   );
 }
 
-function Seg({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+function Seg({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
         "rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
-        active ? "bg-surface-2 text-ink shadow-sm" : "text-ink-3 hover:text-ink",
+        active
+          ? "bg-surface-2 text-ink shadow-sm"
+          : "text-ink-3 hover:text-ink",
       )}
     >
       {label}

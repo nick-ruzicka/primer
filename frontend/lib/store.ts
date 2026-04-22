@@ -3,6 +3,10 @@
 import { useSyncExternalStore } from "react";
 import type { Density, VerifyIntensity } from "@/components/tweaks-panel";
 import type {
+  BriefFixture,
+  CitationMeta,
+} from "./fixtures/northstar-beauty-brief";
+import type {
   Account,
   AccountGroup,
   IntelligenceSection,
@@ -11,7 +15,6 @@ import type {
   ValidationWarning,
   ViewMode,
 } from "./types";
-import type { BriefFixture, CitationMeta } from "./fixtures/northstar-beauty-brief";
 
 /**
  * Per-section progressive reveal flags for the brief. A section flips to `true`
@@ -133,7 +136,10 @@ export function useStore<T>(selector: (s: StoreState) => T): T {
 
 // ---------- action helpers (used by sse.ts and page.tsx) ----------
 
-export function resetAccountState(account: Account | null, accountId: string | null) {
+export function resetAccountState(
+  account: Account | null,
+  accountId: string | null,
+) {
   setState((s) => ({
     ...s,
     activeAccountId: accountId,
@@ -162,7 +168,11 @@ export function revealIntelligence(section: IntelligenceSection) {
 export function setBriefFixture(fixture: BriefFixture) {
   setState((s) => ({
     ...s,
-    brief: { ...EMPTY_BRIEF, fixture, revealed: { "01": false, "02": false, "03": false, "04": false } },
+    brief: {
+      ...EMPTY_BRIEF,
+      fixture,
+      revealed: { "01": false, "02": false, "03": false, "04": false },
+    },
     citations: [],
   }));
 }
@@ -184,7 +194,10 @@ export function appendCitations(toAdd: CitationMeta[]) {
 }
 
 export function pushSourceCited(event: SourceCited) {
-  setState((s) => ({ ...s, sourceCitedEvents: [...s.sourceCitedEvents, event] }));
+  setState((s) => ({
+    ...s,
+    sourceCitedEvents: [...s.sourceCitedEvents, event],
+  }));
 }
 
 export function pushWarning(warning: ValidationWarning) {
