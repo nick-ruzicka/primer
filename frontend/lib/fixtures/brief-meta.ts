@@ -60,8 +60,13 @@ export const DEFAULT_BRIEF_META = {
   intelligenceItemCount: 24,
 } as const;
 
+/**
+ * The rep whose shoes the demo is stepping into — matches the canonical seed
+ * owner on /api/accounts (every account is owned by Morgan Yu so the demo
+ * reads as "your accounts"). Revisit if/when real auth lands.
+ */
 export const CURRENT_USER = {
-  initials: "JK",
-  name: "Jamie Kwon",
-  role: "AE · Mid-market",
+  initials: "MY",
+  name: "Morgan Yu",
+  role: "Senior AE",
 } as const;

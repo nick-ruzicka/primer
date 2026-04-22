@@ -136,6 +136,19 @@ export function useStore<T>(selector: (s: StoreState) => T): T {
 
 // ---------- action helpers (used by sse.ts and page.tsx) ----------
 
+/**
+ * Look up an account by id across accountGroups.brands + standalone. Returns
+ * null if the account list hasn't been populated yet (e.g. before /api/accounts
+ * resolves on initial load).
+ */
+export function findAccountInStore(id: string): Account | null {
+  for (const g of state.accountGroups) {
+    const match = g.brands.find((b) => b.id === id);
+    if (match) return match;
+  }
+  return state.standalone.find((a) => a.id === id) ?? null;
+}
+
 export function resetAccountState(
   account: Account | null,
   accountId: string | null,
