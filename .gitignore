@@ -1,26 +1,68 @@
-# Python
+# ---- Python ----
 .venv/
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
-# uv
-# (uv.lock IS committed; venv is not)
+# uv keeps its lockfile committed; venv stays local
+# (uv.lock IS committed; .venv/ is not)
 
-# Local env + secrets
+# ---- Node / Next.js ----
+node_modules/
+.next/
+out/
+build/
+.turbo/
+*.tsbuildinfo
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ---- Env + secrets ----
 .env
 .env.local
 .env.*.local
+*.pem
 
-# Seeded SQLite DB (rebuilt from seed.py; do not commit the binary)
+# ---- Database (seeded, regenerated from data/seed.py) ----
 data/primer.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
 
-# macOS
+# ---- Frontend reference artifacts ----
+# _unpacked/ is decompressed Claude Design output; not source
+frontend/reference/_unpacked/
+# verification-output/ is regenerated every QA run
+frontend/verification-output/
+# playwright results are local
+frontend/playwright-report/
+frontend/test-results/
+
+# ---- Local-only operator notes ----
+# Morning reports + terminal handoffs are committed (they document each build session).
+# BLOCKERS.md is local-only scratch for in-flight issues.
+BLOCKERS.md
+deploy/BLOCKERS.md
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- macOS ----
 .DS_Store
 
-# Editors
+# ---- Editors ----
 .vscode/
 .idea/
 *.swp
+*.swo
