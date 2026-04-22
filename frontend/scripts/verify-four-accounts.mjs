@@ -1,13 +1,13 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Runs the Beauty / Kindred / Ember / Tidepool integration test per the
  * T1 spec. Each account: load, wait for completion, capture screenshot,
  * report first paragraph + warning count.
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -41,10 +41,28 @@ for (const { id, label } of ACCOUNTS) {
     fullPage: false,
   });
 
-  const briefLead = (await page.locator(".the-read, .why-stack").first().innerText().catch(() => "")).slice(0, 140).replace(/\s+/g, " ");
-  const warningCount = await page.locator('[role="dialog"], .bg-bad-soft, .bg-warn-soft\\/60').count().catch(() => 0);
-  const banners = await page.locator("text=SOURCE CONTRADICTION, text=UNSUPPORTED CLAIM, text=STALE DATA, text=MISSING GROUND").count().catch(() => 0);
-  console.log(`${label} (${id}): lead="${briefLead.slice(0, 100)}${briefLead.length > 100 ? "..." : ""}" · warnings=${banners}`);
+  const briefLead = (
+    await page
+      .locator(".the-read, .why-stack")
+      .first()
+      .innerText()
+      .catch(() => "")
+  )
+    .slice(0, 140)
+    .replace(/\s+/g, " ");
+  const _warningCount = await page
+    .locator('[role="dialog"], .bg-bad-soft, .bg-warn-soft\\/60')
+    .count()
+    .catch(() => 0);
+  const banners = await page
+    .locator(
+      "text=SOURCE CONTRADICTION, text=UNSUPPORTED CLAIM, text=STALE DATA, text=MISSING GROUND",
+    )
+    .count()
+    .catch(() => 0);
+  console.log(
+    `${label} (${id}): lead="${briefLead.slice(0, 100)}${briefLead.length > 100 ? "..." : ""}" · warnings=${banners}`,
+  );
 }
 
 await browser.close();

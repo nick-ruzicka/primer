@@ -3,8 +3,8 @@
 import type {
   Account,
   AccountGroup,
-  AccountsResponse,
   AccountState,
+  AccountsResponse,
 } from "./types";
 
 const API_BASE =
@@ -51,7 +51,8 @@ interface BackendAccountsResponse {
 function fmtArr(cents?: number): string {
   if (!cents) return "$0";
   const dollars = cents / 100;
-  if (dollars >= 1_000_000) return `$${(dollars / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (dollars >= 1_000_000)
+    return `$${(dollars / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
   if (dollars >= 1_000) return `$${Math.round(dollars / 1_000)}k`;
   return `$${dollars}`;
 }
@@ -61,13 +62,13 @@ function initials(name: string): string {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase();
 }
 
-function adaptAccount(b: BackendAccount, forHeader = false): Account {
+function adaptAccount(b: BackendAccount, _forHeader = false): Account {
   const id = b.frontend_id ?? b.id;
   const fullName = b.name;
   // Rail "short name" = full name with the parent prefix stripped
   const parent = b.parent_name ?? undefined;
   const shortName =
-    parent && fullName.startsWith(parent + " ")
+    parent && fullName.startsWith(`${parent} `)
       ? fullName.slice(parent.length + 1)
       : fullName;
   const arrShort = fmtArr(b.arr_cents);
@@ -85,7 +86,8 @@ function adaptAccount(b: BackendAccount, forHeader = false): Account {
     note: deriveNote(b),
     parent_group_id: b.parent_id ?? null,
     parent_group_name: b.parent_name ?? null,
-    industry: b.industry && b.segment ? `${b.industry} · ${b.segment}` : b.industry,
+    industry:
+      b.industry && b.segment ? `${b.industry} · ${b.segment}` : b.industry,
     hq: b.hq_city && b.hq_state ? `${b.hq_city}, ${b.hq_state}` : b.hq_city,
     employees: b.employees,
     owner: b.owner_name,
@@ -127,7 +129,10 @@ export async function fetchAccounts(): Promise<AccountsResponse | null> {
       standalone: (data.standalone ?? []).map((a) => adaptAccount(a)),
     };
   } catch (err) {
-    console.error("[primer] fetchAccounts failed, will fall back to fixture", err);
+    console.error(
+      "[primer] fetchAccounts failed, will fall back to fixture",
+      err,
+    );
     return null;
   }
 }

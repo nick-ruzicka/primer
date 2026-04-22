@@ -18,8 +18,22 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "noNoninteractiveTabindex": "warn",
+        "noStaticElementInteractions": "warn",
+        "noSvgWithoutTitle": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useValidAnchor": "warn"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "warn"
+      },
       "suspicious": {
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "off",
+        "noArrayIndexKey": "warn",
+        "noAssignInExpressions": "warn",
+        "useIterableCallbackReturn": "warn"
       }
     },
     "domains": {

@@ -148,7 +148,6 @@ async def test_e2e_brief_smoke(pool: MCPPool) -> None:
         elif evt.kind == "source_cited":
             citations += 1
         elif evt.kind == "done":
-            brief = evt.data["brief_markdown"]
             break
     full = "".join(chunks)
     assert len(full) > 500, "brief should be at least a few hundred chars"

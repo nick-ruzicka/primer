@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { fetchAccounts } from "./api";
 import { ACCOUNTS_FIXTURE } from "./fixtures/accounts";
-import { MOCK_MODE, loadAccount } from "./sse";
+import { loadAccount, MOCK_MODE } from "./sse";
 import { pushWarning, setAccounts, setMode } from "./store";
 import type { ViewMode } from "./types";
 

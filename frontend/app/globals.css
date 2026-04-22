@@ -412,7 +412,7 @@ body {
   border-left: 3px solid var(--color-bad);
 }
 .intel-card.hot {
-  border-color: var(--color-accent) !important;
+  border-color: var(--color-accent);
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent),
     var(--shadow-md);
