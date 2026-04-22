@@ -232,7 +232,10 @@ def _sse(event: str, data: dict[str, Any]) -> dict[str, str]:
 
 
 async def _briefing_event_stream(
-    account_id: str, refresh: bool, request: Request
+    account_id: str,
+    refresh: bool,
+    request: Request,
+    cached_transcript: list[dict[str, Any]] | None = None,
 ) -> AsyncIterator[dict[str, str]]:
     from .mcp_client import get_pool
 
@@ -245,20 +248,19 @@ async def _briefing_event_stream(
         transcript.append({"event": event, "data": data})
         return _sse(event, data)
 
-    # 1. Cache hit? Replay.
-    if not refresh:
-        cached = await cache.get_brief(account_id)
-        if cached:
-            log.info(
-                "briefing.cache_hit",
-                extra={"account_id": account_id, "events": len(cached)},
-            )
-            for evt in cached:
-                if await request.is_disconnected():
-                    return
-                yield _sse(evt["event"], evt["data"])
-                await asyncio.sleep(0.04)
-            return
+    # 1. Cache replay — the HTTP handler already pre-fetched so that rate
+    # limiting could be skipped for hits. Just replay.
+    if cached_transcript is not None:
+        log.info(
+            "briefing.cache_hit",
+            extra={"account_id": account_id, "events": len(cached_transcript)},
+        )
+        for evt in cached_transcript:
+            if await request.is_disconnected():
+                return
+            yield _sse(evt["event"], evt["data"])
+            await asyncio.sleep(0.04)
+        return
 
     # 2. Fan out. Emit intelligence events as soon as the bundle is ready.
     try:
@@ -401,13 +403,31 @@ async def briefing(account_id: str, request: Request, refresh: int = 0):
 
     cache = get_cache()
     ip = _client_ip(request)
-    allowed, remaining = await cache.check_rate_limit(ip)
-    if not allowed:
-        log.warning("briefing.rate_limited", extra={"ip": ip, "account_id": account_id})
-        raise HTTPException(
-            status_code=429,
-            detail=f"Rate limit exceeded ({SETTINGS.rate_limit_per_hour}/hour). Remaining: {remaining}",
-        )
+
+    # Pre-read the cache so rate-limiting only gates fresh generations. A
+    # cache replay serves from Redis and consumes zero Anthropic tokens; it
+    # has no reason to count against the 20/hr IP quota. This matters in
+    # particular once nginx terminates on a single upstream IP — without
+    # this check, every demo visitor would share one quota bucket even on
+    # already-generated briefs.
+    cached_transcript: list[dict[str, Any]] | None = None
+    if not refresh:
+        cached_transcript = await cache.get_brief(account_id)
+
+    if cached_transcript is None:
+        # Fresh generation path — rate-limit applies.
+        allowed, remaining = await cache.check_rate_limit(ip)
+        if not allowed:
+            log.warning(
+                "briefing.rate_limited",
+                extra={"ip": ip, "account_id": account_id},
+            )
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded ({SETTINGS.rate_limit_per_hour}/hour). Remaining: {remaining}",
+            )
+    else:
+        remaining = None
 
     log.info(
         "briefing.begin",
@@ -415,11 +435,14 @@ async def briefing(account_id: str, request: Request, refresh: int = 0):
             "account_id": account_id,
             "refresh": bool(refresh),
             "ip": ip,
+            "cache_prefetched": cached_transcript is not None,
             "remaining_quota": remaining,
         },
     )
 
     return EventSourceResponse(
-        _briefing_event_stream(account_id, bool(refresh), request),
+        _briefing_event_stream(
+            account_id, bool(refresh), request, cached_transcript=cached_transcript
+        ),
         ping=15,
     )
