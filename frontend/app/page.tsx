@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
+import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
 import { Topbar } from "@/components/topbar";
 import { TweaksPanel, type Density, type VerifyIntensity } from "@/components/tweaks-panel";
@@ -11,6 +12,10 @@ import { TweaksTrigger } from "@/components/tweaks-trigger";
 import { findAccount, NORTHSTAR_GROUP, OTHER_UPCOMING_VISIBLE } from "@/lib/fixtures/accounts";
 import { CURRENT_USER, DEFAULT_BRIEF_META, DEFAULT_SOURCE_STATUSES } from "@/lib/fixtures/brief-meta";
 import { NORTHSTAR_BEAUTY_BRIEF } from "@/lib/fixtures/northstar-beauty-brief";
+import {
+  NORTHSTAR_BEAUTY_INTELLIGENCE,
+  NORTHSTAR_BEAUTY_INTEL_COUNT,
+} from "@/lib/fixtures/northstar-beauty-intelligence";
 import { cn } from "@/lib/utils";
 import type { ViewMode } from "@/lib/types";
 
@@ -68,7 +73,7 @@ export default function BriefingPage() {
           breadcrumbAccount={account.full_name ?? account.name}
           mode={mode}
           onModeChange={setMode}
-          intelligenceCount={DEFAULT_BRIEF_META.intelligenceItemCount}
+          intelligenceCount={NORTHSTAR_BEAUTY_INTEL_COUNT}
           intelligenceOpen={intelligenceOpen}
           onToggleIntelligence={handleToggleIntelligence}
         />
@@ -106,14 +111,32 @@ export default function BriefingPage() {
               />
             )}
             {mode !== "reading" && (
-              <aside
-                className="min-w-0 overflow-y-auto bg-surface px-5 py-6 text-[12px] text-ink-3"
-                aria-label="Account intelligence"
-              >
-                <p className="italic">Intelligence panel renders in phase 4.</p>
-              </aside>
+              <IntelligencePanel
+                sections={NORTHSTAR_BEAUTY_INTELLIGENCE}
+                variant={mode === "workspace" ? "workspace" : "compact"}
+                hoveredEvid={hoveredEvid}
+                onCardHover={setHoveredEvid}
+              />
             )}
           </main>
+
+          {/* Reading mode: slide-over intelligence panel */}
+          {mode === "reading" && intelligenceOpen && (
+            <div
+              className="fixed inset-y-0 right-0 z-20 flex w-[560px] max-w-[90vw] flex-col border-l border-line bg-surface shadow-md"
+              role="dialog"
+              aria-label="Account intelligence overlay"
+            >
+              <IntelligencePanel
+                sections={NORTHSTAR_BEAUTY_INTELLIGENCE}
+                variant="overlay"
+                hoveredEvid={hoveredEvid}
+                onCardHover={setHoveredEvid}
+                onClose={() => setIntelligenceOpen(false)}
+                description={`Everything known about ${account.full_name ?? account.name}, updated in real time from 6 systems.`}
+              />
+            </div>
+          )}
         </div>
       </div>
 
