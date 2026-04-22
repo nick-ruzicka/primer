@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useState, useRef } from "react";
 import type {
   CitationMeta,
   Paragraph,
 } from "@/lib/fixtures/northstar-beauty-brief";
 import { CitationChip } from "./citation-chip";
+import { CitationTooltip } from "./citation-tooltip";
 
 interface Props {
   nodes: Paragraph;
@@ -16,9 +17,27 @@ interface Props {
 }
 
 /**
+ * Source icon map for citations.
+ */
+function getSourceIcon(source: string) {
+  const iconMap: Record<string, React.ReactNode> = {
+    sf: <span>📊</span>,
+    salesforce: <span>📊</span>,
+    gong: <span>🎙️</span>,
+    netsuite: <span>📑</span>,
+    catalyst: <span>⚡</span>,
+    snowflake: <span>❄️</span>,
+    exa: <span>🔍</span>,
+    hubspot: <span>🤝</span>,
+    internal: <span>🔗</span>,
+  };
+  return iconMap[source.toLowerCase()] || <span>🔗</span>;
+}
+
+/**
  * Renders a paragraph of inline nodes (text/bold/italic + citation chips).
  * Keeps citation chips clickable so they can scroll the intelligence panel
- * to the matching evidence card.
+ * to the matching evidence card. Shows CitationTooltip on citation hover.
  */
 export function Prose({
   nodes,
@@ -27,6 +46,10 @@ export function Prose({
   onCitationHover,
   onCitationClick,
 }: Props) {
+  const [hoveredCitation, setHoveredCitation] = useState<string | null>(null);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const citationRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
   return (
     <>
       {nodes.map((node, idx) => {
@@ -42,15 +65,45 @@ export function Prose({
         // cite
         const match = citations.find((c) => c.n === node.n);
         return (
-          <CitationChip
-            key={idx}
-            n={node.n}
-            citation={match}
-            hovered={!!match && hoveredEvid === match.evid}
-            onMouseEnter={() => match && onCitationHover?.(match.evid)}
-            onMouseLeave={() => onCitationHover?.(null)}
-            onClick={() => match && onCitationClick?.(match.evid)}
-          />
+          <Fragment key={idx}>
+            <span
+              ref={(el) => {
+                if (el && match) {
+                  citationRefs.current[match.evid] = el.querySelector("button");
+                }
+              }}
+              onMouseEnter={(e) => {
+                if (match && citationRefs.current[match.evid]) {
+                  const rect = citationRefs.current[match.evid]!.getBoundingClientRect();
+                  setTooltipPos({
+                    top: rect.top,
+                    left: rect.left + rect.width / 2,
+                  });
+                  setHoveredCitation(match.evid);
+                }
+              }}
+              onMouseLeave={() => setHoveredCitation(null)}
+            >
+              <CitationChip
+                n={node.n}
+                citation={match}
+                hovered={!!match && hoveredEvid === match.evid}
+                onMouseEnter={() => match && onCitationHover?.(match.evid)}
+                onMouseLeave={() => onCitationHover?.(null)}
+                onClick={() => match && onCitationClick?.(match.evid)}
+              />
+            </span>
+            {match && hoveredCitation === match.evid && (
+              <CitationTooltip
+                sourceIcon={getSourceIcon(match.source)}
+                sourceName={match.label}
+                dataPoint={match.label}
+                timestamp={match.time_ago}
+                isOpen={hoveredCitation === match.evid}
+                position={tooltipPos}
+              />
+            )}
+          </Fragment>
         );
       })}
     </>
