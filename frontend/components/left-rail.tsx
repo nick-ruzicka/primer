@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Search } from "lucide-react";
+import { useState } from "react";
 import type { Account, AccountGroup } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -13,17 +13,28 @@ interface Props {
   currentUser: { initials: string; name: string; role: string };
 }
 
-export function LeftRail({ group, otherUpcoming, activeId, onSelect, currentUser }: Props) {
+export function LeftRail({
+  group,
+  otherUpcoming,
+  activeId,
+  onSelect,
+  currentUser,
+}: Props) {
   const [query, setQuery] = useState("");
 
   return (
-    <aside className="flex h-full flex-col border-r border-line bg-surface" aria-label="Accounts">
+    <aside
+      className="flex h-full flex-col border-r border-line bg-surface"
+      aria-label="Accounts"
+    >
       <header className="flex items-center gap-3 px-4 pt-5 pb-3">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-accent text-[13px] font-semibold text-accent-ink">
           A
         </div>
         <div className="min-w-0">
-          <div className="text-[14px] font-semibold text-ink leading-tight">Attentive</div>
+          <div className="text-[14px] font-semibold text-ink leading-tight">
+            Attentive
+          </div>
           <div className="mt-[1px] text-[10px] font-medium uppercase tracking-[0.08em] text-ink-4">
             Briefing · AE
           </div>
@@ -58,8 +69,12 @@ export function LeftRail({ group, otherUpcoming, activeId, onSelect, currentUser
             {group.initials}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[13px] font-medium text-ink leading-tight">{group.name}</div>
-            <div className="text-[11px] text-ink-4 mt-0.5">{group.total_arr}</div>
+            <div className="text-[13px] font-medium text-ink leading-tight">
+              {group.name}
+            </div>
+            <div className="text-[11px] text-ink-4 mt-0.5">
+              {group.total_arr}
+            </div>
           </div>
         </div>
 
@@ -94,8 +109,12 @@ export function LeftRail({ group, otherUpcoming, activeId, onSelect, currentUser
           {currentUser.initials}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] font-medium text-ink leading-tight">{currentUser.name}</div>
-          <div className="text-[10.5px] text-ink-4 mt-0.5">{currentUser.role}</div>
+          <div className="text-[12.5px] font-medium text-ink leading-tight">
+            {currentUser.name}
+          </div>
+          <div className="text-[10.5px] text-ink-4 mt-0.5">
+            {currentUser.role}
+          </div>
         </div>
       </footer>
     </aside>
@@ -129,7 +148,9 @@ function AccountItem({
         {account.initial}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium text-ink leading-tight">{account.name}</div>
+        <div className="text-[13px] font-medium text-ink leading-tight">
+          {account.name}
+        </div>
         <div className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-3">
           <span className={cn("account-dot", account.state)} aria-hidden />
           <span className="font-medium">{account.arr}</span>

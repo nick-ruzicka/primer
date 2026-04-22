@@ -119,7 +119,11 @@ export interface SourceCited {
 
 export interface ValidationWarning {
   severity: Severity;
-  type: "source_contradiction" | "unsupported_claim" | "stale_data" | "missing_ground";
+  type:
+    | "source_contradiction"
+    | "unsupported_claim"
+    | "stale_data"
+    | "missing_ground";
   message: string;
   brief_excerpt?: string;
   sources?: SourceId[];

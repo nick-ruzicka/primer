@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import type { IntelligenceItem, IntelligenceSection } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { IntelCard } from "./intel-card";
@@ -34,18 +34,24 @@ export function IntelligencePanel({
   const [filter, setFilter] = useState<"all" | "flagged" | "critical">("all");
   const [search, setSearch] = useState("");
 
-  const allItems = useMemo(
-    () => sections.flatMap((s) => s.items),
-    [sections],
-  );
-  const flaggedCount = allItems.filter((i) => i.flag === "critical" || i.flag === "warn").length;
+  const allItems = useMemo(() => sections.flatMap((s) => s.items), [sections]);
+  const flaggedCount = allItems.filter(
+    (i) => i.flag === "critical" || i.flag === "warn",
+  ).length;
   const totalCount = allItems.length;
 
   const itemMatches = (it: IntelligenceItem) => {
     if (filter === "flagged" && !it.flag) return false;
     if (filter === "critical" && it.flag !== "critical") return false;
     if (search) {
-      const hay = [it.label, it.value, it.sub, it.web?.title, it.web?.snippet, it.source]
+      const hay = [
+        it.label,
+        it.value,
+        it.sub,
+        it.web?.title,
+        it.web?.snippet,
+        it.source,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -68,7 +74,11 @@ export function IntelligencePanel({
             <h2 className="font-serif text-[17px] font-medium leading-tight text-ink">
               {variant === "overlay" ? "Account intelligence" : title}
             </h2>
-            {description && <p className="mt-0.5 text-[11.5px] text-ink-3 italic">{description}</p>}
+            {description && (
+              <p className="mt-0.5 text-[11.5px] text-ink-3 italic">
+                {description}
+              </p>
+            )}
           </div>
           {variant === "overlay" && (
             <button
@@ -85,12 +95,29 @@ export function IntelligencePanel({
 
       {variant !== "compact" && (
         <div className="flex flex-wrap items-center gap-2 border-b border-line bg-surface px-5 py-3">
-          <FilterChip active={filter === "all"} onClick={() => setFilter("all")} label="All" count={totalCount} />
-          <FilterChip active={filter === "flagged"} onClick={() => setFilter("flagged")} label="Flagged" count={flaggedCount} />
-          <FilterChip active={filter === "critical"} onClick={() => setFilter("critical")} label="Critical only" />
+          <FilterChip
+            active={filter === "all"}
+            onClick={() => setFilter("all")}
+            label="All"
+            count={totalCount}
+          />
+          <FilterChip
+            active={filter === "flagged"}
+            onClick={() => setFilter("flagged")}
+            label="Flagged"
+            count={flaggedCount}
+          />
+          <FilterChip
+            active={filter === "critical"}
+            onClick={() => setFilter("critical")}
+            label="Critical only"
+          />
           <div className="flex-1" />
           <label className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-4" strokeWidth={2} />
+            <Search
+              className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-4"
+              strokeWidth={2}
+            />
             <input
               type="search"
               placeholder="Search intelligence…"
@@ -105,9 +132,16 @@ export function IntelligencePanel({
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4">
         {variant === "compact" && (
           <header className="mb-4 flex items-baseline gap-2">
-            <h2 className="font-serif text-[15px] font-medium text-ink">Account Intelligence</h2>
+            <h2 className="font-serif text-[15px] font-medium text-ink">
+              Account Intelligence
+            </h2>
             <span className="ml-auto text-[10.5px] text-ink-4">
-              grouped by topic · click a <span className="cite inline-flex"><span className="cite-dot" /><span>n</span></span> in the brief to jump
+              grouped by topic · click a{" "}
+              <span className="cite inline-flex">
+                <span className="cite-dot" />
+                <span>n</span>
+              </span>{" "}
+              in the brief to jump
             </span>
           </header>
         )}
@@ -123,14 +157,18 @@ export function IntelligencePanel({
                 <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
                   0{sectionIdx + 1}
                 </span>
-                <h3 className="font-serif text-[15px] font-medium text-ink">{section.title}</h3>
+                <h3 className="font-serif text-[15px] font-medium text-ink">
+                  {section.title}
+                </h3>
                 {variant !== "compact" && (
                   <span className="ml-auto text-[10.5px] text-ink-4">
                     {visible.length} of {section.items.length}
                   </span>
                 )}
                 {variant === "compact" && (
-                  <span className="ml-auto font-mono text-[10px] text-ink-4">{section.items.length}</span>
+                  <span className="ml-auto font-mono text-[10px] text-ink-4">
+                    {section.items.length}
+                  </span>
                 )}
               </header>
               <SectionBody
@@ -151,7 +189,10 @@ function IntelligenceSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-lg border border-line bg-surface-2/40 p-4">
+        <div
+          key={i}
+          className="rounded-lg border border-line bg-surface-2/40 p-4"
+        >
           <div className="h-3 w-20 rounded bg-ink-4/20" />
           <div className="mt-3 h-5 w-3/4 rounded bg-ink-4/25" />
           <div className="mt-2 h-3 w-full rounded bg-ink-4/15" />
@@ -218,19 +259,31 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
   });
 
   if (section.id === "relationship") {
-    const people = items.filter((i) => i.evid === "priya" || i.evid === "sponsor");
+    const people = items.filter(
+      (i) => i.evid === "priya" || i.evid === "sponsor",
+    );
     const health = items.filter((i) => i.evid === "rel-health");
     return (
       <>
         {people.length > 0 && (
           <div className="mb-3 grid grid-cols-1 gap-3 @xl:grid-cols-2 sm:grid-cols-2">
             {people.map((p) => (
-              <IntelCard key={p.evid} item={p} variant="person" {...cardProps(p.evid)} />
+              <IntelCard
+                key={p.evid}
+                item={p}
+                variant="person"
+                {...cardProps(p.evid)}
+              />
             ))}
           </div>
         )}
         {health.map((h) => (
-          <IntelCard key={h.evid} item={h} variant="health" {...cardProps(h.evid)} />
+          <IntelCard
+            key={h.evid}
+            item={h}
+            variant="health"
+            {...cardProps(h.evid)}
+          />
         ))}
       </>
     );
@@ -242,10 +295,20 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
     return (
       <>
         {hero.map((h) => (
-          <IntelCard key={h.evid} item={h} variant="hero" {...cardProps(h.evid)} />
+          <IntelCard
+            key={h.evid}
+            item={h}
+            variant="hero"
+            {...cardProps(h.evid)}
+          />
         ))}
         {others.map((o) => (
-          <IntelCard key={o.evid} item={o} variant="standard" {...cardProps(o.evid)} />
+          <IntelCard
+            key={o.evid}
+            item={o}
+            variant="standard"
+            {...cardProps(o.evid)}
+          />
         ))}
       </>
     );
@@ -255,7 +318,12 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
     return (
       <>
         {items.map((item) => (
-          <IntelCard key={item.evid} item={item} variant="web" {...cardProps(item.evid)} />
+          <IntelCard
+            key={item.evid}
+            item={item}
+            variant="web"
+            {...cardProps(item.evid)}
+          />
         ))}
       </>
     );
@@ -265,7 +333,12 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
   return (
     <>
       {items.map((item) => (
-        <IntelCard key={item.evid} item={item} variant="standard" {...cardProps(item.evid)} />
+        <IntelCard
+          key={item.evid}
+          item={item}
+          variant="standard"
+          {...cardProps(item.evid)}
+        />
       ))}
     </>
   );

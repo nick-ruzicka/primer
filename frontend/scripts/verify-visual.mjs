@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // Visual verification helper — screenshots the running dev server at each viewport
 // we care about and writes artifacts to verification-output/ for side-by-side diffing
 // against reference/screenshots/.
@@ -8,11 +9,11 @@
 //   node scripts/verify-visual.mjs --name foo     # labels output with `foo`
 //   node scripts/verify-visual.mjs --path "/?m=2" # custom path under http://localhost:3000
 
-import { chromium } from "@playwright/test";
+import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
+import { chromium } from "@playwright/test";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -54,7 +55,9 @@ async function main() {
   }
 
   if (theme === "light") {
-    await page.evaluate(() => document.documentElement.classList.remove("dark"));
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark"),
+    );
   } else if (theme === "dark") {
     await page.evaluate(() => document.documentElement.classList.add("dark"));
   }

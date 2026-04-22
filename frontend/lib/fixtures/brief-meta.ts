@@ -14,12 +14,42 @@ export interface SourceStatus {
 }
 
 export const DEFAULT_SOURCE_STATUSES: SourceStatus[] = [
-  { id: "sf", label: "Salesforce", status: "ok", lastSync: "2m ago", count: 47 },
-  { id: "catalyst", label: "Catalyst", status: "ok", lastSync: "5m ago", count: 12 },
-  { id: "netsuite", label: "NetSuite", status: "ok", lastSync: "1m ago", count: 9 },
-  { id: "snowflake", label: "Snowflake", status: "ok", lastSync: "8m ago", count: 3 },
+  {
+    id: "sf",
+    label: "Salesforce",
+    status: "ok",
+    lastSync: "2m ago",
+    count: 47,
+  },
+  {
+    id: "catalyst",
+    label: "Catalyst",
+    status: "ok",
+    lastSync: "5m ago",
+    count: 12,
+  },
+  {
+    id: "netsuite",
+    label: "NetSuite",
+    status: "ok",
+    lastSync: "1m ago",
+    count: 9,
+  },
+  {
+    id: "snowflake",
+    label: "Snowflake",
+    status: "ok",
+    lastSync: "8m ago",
+    count: 3,
+  },
   { id: "gong", label: "Gong", status: "ok", lastSync: "11m ago", count: 6 },
-  { id: "exa", label: "Exa (web)", status: "stale", lastSync: "4h ago", count: 14 },
+  {
+    id: "exa",
+    label: "Exa (web)",
+    status: "stale",
+    lastSync: "4h ago",
+    count: 14,
+  },
 ];
 
 export const DEFAULT_BRIEF_META = {

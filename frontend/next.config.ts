@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
 import path from "node:path";
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Pin the Turbopack workspace root to this app dir. Without this, Next 16 detects

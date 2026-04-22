@@ -65,9 +65,12 @@ export function ConfidenceStrip({
           ))}
         </span>
         <span className="text-ink-3">
-          <b className="font-medium text-ink-2">{sources.length}</b> sources queried
+          <b className="font-medium text-ink-2">{sources.length}</b> sources
+          queried
         </span>
-        {staleCount > 0 && <span className="text-warn-strong">· {staleCount} stale</span>}
+        {staleCount > 0 && (
+          <span className="text-warn-strong">· {staleCount} stale</span>
+        )}
       </span>
 
       <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1">
@@ -97,10 +100,21 @@ function ConfidenceRing({ value }: { value: number }) {
   const offset = circumference * (1 - value / 100);
   const tier = value >= 75 ? "high" : value >= 55 ? "med" : "low";
   const color =
-    tier === "high" ? "var(--color-accent)" : tier === "med" ? "var(--color-warn-strong)" : "var(--color-bad)";
+    tier === "high"
+      ? "var(--color-accent)"
+      : tier === "med"
+        ? "var(--color-warn-strong)"
+        : "var(--color-bad)";
   return (
     <svg viewBox="0 0 28 28" className="h-7 w-7" aria-hidden>
-      <circle cx="14" cy="14" r={r} fill="none" stroke="var(--color-line)" strokeWidth="3" />
+      <circle
+        cx="14"
+        cy="14"
+        r={r}
+        fill="none"
+        stroke="var(--color-line)"
+        strokeWidth="3"
+      />
       <circle
         cx="14"
         cy="14"

@@ -33,8 +33,16 @@ export const NORTHSTAR_GROUP: AccountGroup = {
       call_when: "Today · 2:30 PM",
       countdown: "In 47 min",
       attendees: [
-        { name: "Priya Shah", role: "VP Marketing · Northstar Beauty", ours: false },
-        { name: "Dev Patel", role: "Head of Lifecycle · Northstar Beauty", ours: false },
+        {
+          name: "Priya Shah",
+          role: "VP Marketing · Northstar Beauty",
+          ours: false,
+        },
+        {
+          name: "Dev Patel",
+          role: "Head of Lifecycle · Northstar Beauty",
+          ours: false,
+        },
         { name: "Jamie Kwon", role: "AE · Attentive", ours: true },
         { name: "Rae Nguyen", role: "SE · Attentive", ours: true },
       ],
@@ -189,7 +197,10 @@ export const ACCOUNTS_FIXTURE: AccountsResponse = {
 };
 
 /** Quick helper for the rail: only the accounts the reference shows under "Other upcoming". */
-export const OTHER_UPCOMING_VISIBLE: Account[] = STANDALONE_ACCOUNTS.slice(0, 3);
+export const OTHER_UPCOMING_VISIBLE: Account[] = STANDALONE_ACCOUNTS.slice(
+  0,
+  3,
+);
 
 /** Look up any account by id. */
 export function findAccount(id: string): Account | null {

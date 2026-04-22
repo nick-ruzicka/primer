@@ -1,4 +1,8 @@
-import type { IntelligenceItem, IntelligenceSection, IntelligenceState } from "../types";
+import type {
+  IntelligenceItem,
+  IntelligenceSection,
+  IntelligenceState,
+} from "../types";
 
 /**
  * Northstar Beauty intelligence fixture — lifted verbatim from the reference
@@ -259,12 +263,42 @@ const EXTERNAL_ITEMS: IntelligenceItem[] = [
 ];
 
 export const NORTHSTAR_BEAUTY_INTELLIGENCE: IntelligenceSection[] = [
-  { id: "relationship", title: "Relationship", desc: "Decision maker, sponsor, and health", items: RELATIONSHIP_ITEMS },
-  { id: "commercial", title: "Commercial", desc: "ARR, plan, renewal, billing", items: COMMERCIAL_ITEMS },
-  { id: "product", title: "Product & usage", desc: "Adoption, health, trend", items: PRODUCT_ITEMS },
-  { id: "conversations", title: "Conversations", desc: "Calls, emails, tickets, follow-ups", items: CONVERSATIONS_ITEMS },
-  { id: "portfolio", title: "Portfolio — Northstar Group", desc: "Beauty vs. Active vs. Home", items: PORTFOLIO_ITEMS },
-  { id: "external", title: "External signals", desc: "Verify before quoting", items: EXTERNAL_ITEMS },
+  {
+    id: "relationship",
+    title: "Relationship",
+    desc: "Decision maker, sponsor, and health",
+    items: RELATIONSHIP_ITEMS,
+  },
+  {
+    id: "commercial",
+    title: "Commercial",
+    desc: "ARR, plan, renewal, billing",
+    items: COMMERCIAL_ITEMS,
+  },
+  {
+    id: "product",
+    title: "Product & usage",
+    desc: "Adoption, health, trend",
+    items: PRODUCT_ITEMS,
+  },
+  {
+    id: "conversations",
+    title: "Conversations",
+    desc: "Calls, emails, tickets, follow-ups",
+    items: CONVERSATIONS_ITEMS,
+  },
+  {
+    id: "portfolio",
+    title: "Portfolio — Northstar Group",
+    desc: "Beauty vs. Active vs. Home",
+    items: PORTFOLIO_ITEMS,
+  },
+  {
+    id: "external",
+    title: "External signals",
+    desc: "Verify before quoting",
+    items: EXTERNAL_ITEMS,
+  },
 ];
 
 export const NORTHSTAR_BEAUTY_INTEL_STATE: IntelligenceState = {
@@ -277,7 +311,5 @@ export const NORTHSTAR_BEAUTY_INTEL_STATE: IntelligenceState = {
 };
 
 /** Flat item count across all six sections — 22 for Northstar Beauty. */
-export const NORTHSTAR_BEAUTY_INTEL_COUNT = NORTHSTAR_BEAUTY_INTELLIGENCE.reduce(
-  (sum, s) => sum + s.items.length,
-  0,
-);
+export const NORTHSTAR_BEAUTY_INTEL_COUNT =
+  NORTHSTAR_BEAUTY_INTELLIGENCE.reduce((sum, s) => sum + s.items.length, 0);

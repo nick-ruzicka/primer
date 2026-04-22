@@ -96,7 +96,7 @@ const CONVERSATIONS: IntelligenceItem[] = [
     label: "Apr 14 check-in",
     flagPill: "Watch",
     value: "Consolidation mention",
-    sub: 'Jamie: <em>"evaluating whether we\'re using it to its full potential — otherwise we\'ll consolidate"</em>. Spoken at 00:24:08.',
+    sub: "Jamie: <em>\"evaluating whether we're using it to its full potential — otherwise we'll consolidate\"</em>. Spoken at 00:24:08.",
     time: "7m ago",
     action: "Open in Gong ↗",
   },
@@ -113,19 +113,49 @@ const EXTERNAL: IntelligenceItem[] = [
     web: {
       title: "Jamie Park — post on stack consolidation",
       snippet:
-        "<em>\"First 90-day read: too many tools doing 70% of their job, not enough doing 100%. Looking to <mark>consolidate the marketing stack</mark> this quarter.\"</em>",
+        '<em>"First 90-day read: too many tools doing 70% of their job, not enough doing 100%. Looking to <mark>consolidate the marketing stack</mark> this quarter."</em>',
     },
     sub: "linkedin.com · Apr 13 · 9 days ago",
   },
 ];
 
 export const KINDRED_PET_INTELLIGENCE: IntelligenceSection[] = [
-  { id: "relationship", title: "Relationship", desc: "New DM, cold sponsor", items: RELATIONSHIP },
-  { id: "commercial", title: "Commercial", desc: "Renewal + billing", items: COMMERCIAL },
-  { id: "product", title: "Product & usage", desc: "Adoption collapsed", items: PRODUCT },
-  { id: "conversations", title: "Conversations", desc: "Most recent check-in", items: CONVERSATIONS },
-  { id: "portfolio", title: "Portfolio", desc: "Standalone account", items: [] },
-  { id: "external", title: "External signals", desc: "Verify before quoting", items: EXTERNAL },
+  {
+    id: "relationship",
+    title: "Relationship",
+    desc: "New DM, cold sponsor",
+    items: RELATIONSHIP,
+  },
+  {
+    id: "commercial",
+    title: "Commercial",
+    desc: "Renewal + billing",
+    items: COMMERCIAL,
+  },
+  {
+    id: "product",
+    title: "Product & usage",
+    desc: "Adoption collapsed",
+    items: PRODUCT,
+  },
+  {
+    id: "conversations",
+    title: "Conversations",
+    desc: "Most recent check-in",
+    items: CONVERSATIONS,
+  },
+  {
+    id: "portfolio",
+    title: "Portfolio",
+    desc: "Standalone account",
+    items: [],
+  },
+  {
+    id: "external",
+    title: "External signals",
+    desc: "Verify before quoting",
+    items: EXTERNAL,
+  },
 ];
 
 export const KINDRED_PET_INTEL_COUNT = KINDRED_PET_INTELLIGENCE.reduce(

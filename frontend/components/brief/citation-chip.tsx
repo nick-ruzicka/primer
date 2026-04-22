@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
+import { cn } from "@/lib/utils";
 
 interface Props {
   n: number;
