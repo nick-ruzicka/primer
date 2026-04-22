@@ -176,8 +176,10 @@ function parseQuestions(body: string): Paragraph[] {
  */
 export function tokenizeInline(text: string): Paragraph {
   const out: InlineNode[] = [];
-  // Group 1: bold, group 2: italic, group 3: citation number.
-  const regex = /\*\*([^*]+)\*\*|_([^_]+)_|·(\d+)/g;
+  // Citation capture handles `·14`, `·14,15`, `·14, 15`, and `·14 ,15`. The
+  // `·14, ·15` variant is picked up as two back-to-back matches (the second
+  // `·` re-enters the pattern), which still produces two chips.
+  const regex = /\*\*([^*]+)\*\*|_([^_]+)_|·(\d+(?:\s*[,，]\s*\d+)*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(text)) !== null) {
@@ -187,7 +189,13 @@ export function tokenizeInline(text: string): Paragraph {
     const [, bold, italic, cite] = match;
     if (bold) out.push({ kind: "bold", value: bold });
     else if (italic) out.push({ kind: "italic", value: italic });
-    else if (cite) out.push({ kind: "cite", n: Number(cite) });
+    else if (cite) {
+      const nums = cite.split(/\s*[,，]\s*/).map((n) => Number(n));
+      nums.forEach((n, i) => {
+        if (i > 0) out.push({ kind: "text", value: " " });
+        out.push({ kind: "cite", n });
+      });
+    }
     lastIndex = regex.lastIndex;
   }
   if (lastIndex < text.length) {

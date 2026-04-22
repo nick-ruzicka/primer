@@ -17,11 +17,30 @@ import {
   updateLiveBriefFixture,
 } from "./store";
 import type {
+  Account,
   IntelligenceItem,
   IntelligenceSection,
   IntelSectionId,
   ValidationWarning,
 } from "./types";
+
+/**
+ * Look up the active account from live store data first, then fall back to the
+ * bundled fixture. Prevents the fixture's stale arr/metadata from leaking into
+ * the header when the live backend has newer truth (e.g. Tidepool is a
+ * prospect with arr_cents=0, but the fixture still carries the old $220k opp
+ * amount for rail color/note purposes).
+ */
+function lookupAccount(accountId: string): Account | null {
+  const state = getState();
+  for (const g of state.accountGroups) {
+    const match = g.brands.find((b) => b.id === accountId);
+    if (match) return match;
+  }
+  const standalone = state.standalone.find((a) => a.id === accountId);
+  if (standalone) return standalone;
+  return findAccount(accountId);
+}
 
 const API_BASE =
   typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
@@ -49,7 +68,7 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
     currentEventSource = null;
   }
 
-  const account = findAccount(accountId);
+  const account = lookupAccount(accountId);
   resetAccountState(account, accountId);
 
   if (typeof window !== "undefined") {

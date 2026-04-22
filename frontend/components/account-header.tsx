@@ -14,7 +14,10 @@ interface Props {
 export function AccountHeader({ account, parentGroupName }: Props) {
   const groupName = parentGroupName ?? account.parent_group_name;
   const displayName = account.full_name ?? account.name;
-  const arrLabel = account.arr_display ?? `${account.arr} ARR`;
+  const isProspect = account.arr_cents === 0;
+  const arrLabel = isProspect
+    ? "Prospect"
+    : (account.arr_display ?? `${account.arr} ARR`);
   const tileInitial = account.header_initial ?? account.initial;
   return (
     <section
