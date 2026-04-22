@@ -21,6 +21,14 @@ interface Props {
   onCitationClick?: (evid: string) => void;
 }
 
+/**
+ * Spacing strategy for brief sections:
+ * - Header margin-bottom: mb-1 (0.25rem) - small gap between header and preview
+ * - Preview margin: mt-1 mb-4 (0.25rem top, 1rem bottom) - separates preview from body
+ * - Section margin: CSS .brief-section { margin-bottom: 5rem } - controls space between sections
+ * - Workspace mode: header mb-0, section CSS applies mb-2 inline for compact spacing
+ */
+
 export function BriefSection({
   section,
   citations,
@@ -44,7 +52,7 @@ export function BriefSection({
     >
       <header
         className={cn(
-          "brief-head flex items-baseline gap-2.5 border-l-4 border-l-accent pl-4 mb-20 pb-0",
+          "brief-head flex items-baseline gap-2.5 border-l-4 border-l-accent pl-4 mb-1 pb-0",
           isWorkspace && "border-b border-line border-l-0 pl-0 mb-0 pb-1 cursor-pointer select-none",
         )}
         onClick={isWorkspace ? () => setOpen((o) => !o) : undefined}
