@@ -110,3 +110,41 @@ interleave with prose, and validation surfaces issues on the problem accounts.
   `frontend_id` per-account so Terminal 3 can migrate cleanly.
 - Verified: `GET /briefing/ns-beauty` and `GET /briefing/northstar_beauty` return
   identical event streams. Unknown IDs (`nope-xyz`) still 404. PASS.
+
+## 2026-04-22 · Phase 11 — latency tuning (operator follow-up)
+
+Two-step tuning per operator direction ("drop max_tokens to 1200; if still over 20s,
+switch to Haiku + tighten the prompt"):
+
+**Step A — `max_tokens=2000 → 1200` (Sonnet 4.6)**
+- Sweep avg 34.4 s (was 36.6 s). Only 2 s shaved: Sonnet was already finishing the
+  brief organically under the cap, so the ceiling wasn't the bottleneck.
+- Decision: move on to Step B.
+
+**Step B — `BRIEFING_MODEL=claude-haiku-4-5-20251001` + tightened prompt**
+- Prompt tightening: explicit "≤4 sentences per paragraph," "~400-600 word target,"
+  "cut anything a busy AE would skim past," plus a forecast-disagreement directive
+  so source contradictions keep getting surfaced.
+- Sweep results (final):
+
+| account | total s | 1st chunk s | chars | cites | warn |
+| --- | --- | --- | --- | --- | --- |
+| northstar_beauty | 18.54 | 1.49 | 3709 | 10 | 3 |
+| northstar_active | 16.14 | 0.73 | 3084 | 8 | 3 |
+| northstar_home | 22.92 | 0.95 | 3101 | 10 | 5 |
+| quiver_supplements | 18.21 | 0.79 | 2885 | 10 | 3 |
+| quiver_rituals | 15.53 | 1.26 | 2925 | 10 | 2 |
+| mellow_mattress | 13.58 | 0.85 | 2440 | 9 | 2 |
+| hearth_home | 17.59 | 1.75 | 3102 | 12 | 2 |
+| kindred_pet | 17.25 | 0.79 | 3359 | 8 | 2 |
+| ember_coffee | 14.64 | 0.75 | 2852 | 12 | 2 |
+| tidepool_swim | 13.04 | 0.85 | 2808 | 7 | 1 |
+
+- **Average 16.7 s** (min 13.0, max 22.9). Lands in the 15-20 s target.
+- First chunk avg 0.9 s (well under 4 s).
+- Brief char count dropped ~40% (~5000 → ~3000) but citation density held (8-12 per brief).
+- Validation still surfacing forecast disagreements on Northstar Beauty (different phrasing
+  than the Sonnet run, but the hero signal is still flagged).
+- Trade-off: Haiku's briefs are less rhetorically layered than Sonnet's — flip
+  `BRIEFING_MODEL=claude-sonnet-4-6` or `claude-opus-4-7` in `.env` when you want richer
+  prose and can spend the extra 15-20 s.

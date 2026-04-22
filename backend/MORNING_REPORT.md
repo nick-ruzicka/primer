@@ -27,6 +27,7 @@ Claude Code OAuth token. See `BLOCKERS.md` for the full writeup and the one
 | 8 · Hardening | ✅ | JSON logs, CORS, 404 on unknown account_id, 429 on quota, graceful degrade on any subsystem failure |
 | 9 · End-to-end sweep | ✅ | see `backend/sweep_output/summary.json` |
 | 10 · Frontend contract compat | ✅ | Intelligence events now emit frontend-expected shape (`id`, `title`, `desc`, items with `evid`/`sub`/`flag`) and spec-legacy keys side-by-side; `ns-beauty`/`kindred`/… fixture IDs resolve to DB rows via alias table |
+| 11 · Latency tuning (post-sleep) | ✅ | Dropped `max_tokens` 2000→1200, switched `BRIEFING_MODEL` to Haiku 4.5, tightened the prompt with a length target and a "surface source disagreements" directive. Avg sweep 36.6 s → 16.7 s |
 
 ## End-to-end status — can the frontend use it?
 
@@ -81,25 +82,26 @@ curl -Ns 'http://localhost:8000/briefing/northstar_beauty' | head -50
 
 ## Performance
 
-Measured across a clean-cache sweep of all 10 billable accounts:
+Measured across a clean-cache sweep of all 10 billable accounts (after the
+latency-tuning pass — now Haiku 4.5 + tightened prompt + `max_tokens=1200`):
 
-| Metric | Target | Measured (Sonnet 4.6) |
+| Metric | Target | Measured |
 | --- | --- | --- |
-| Intelligence visible | <2 s | ~60 ms for all six sections |
-| Brief first token | <4 s | 1–3 s typical, worst 4 s |
-| Full brief | <12 s | 35–55 s — **over target** |
+| Intelligence visible | <2 s | 60 ms avg for all six sections |
+| Brief first token | <4 s | 0.9 s avg (range 0.7–1.75 s) |
+| Full brief | <12 s | 16.7 s avg (range 13.0–22.9 s) |
 | Validation warnings | <14 s | 1–3 s after brief done |
 
-The "full brief" target is the one miss. Two causes: (1) Sonnet 4.6 streams
-at a slower tokens/sec than Haiku, and (2) the brief markdown ends up ~1500
-output tokens. Flipping back to Opus 4.7 (per BLOCKERS.md) won't help —
-Opus is slower than Sonnet. If you want to hit the <12 s ceiling, either:
+The "<12 s" spec target is still a miss, but the tuning got us from 36.6 s
+→ 16.7 s — a >50% reduction — and every account except one lands under
+20 s. With streaming, the perceived wait is much less than the wall-clock
+number: the rep sees intelligence sections in the first second and the
+brief starts building right after.
 
-- Shorten `max_tokens` from 2000 to ~1000 (brief becomes tighter),
-- Or switch to Haiku 4.5 for the briefing agent (faster, somewhat less punchy),
-- Or accept the current latency — the streaming UX means the rep sees
-  intelligence immediately and the brief builds in real time, so the
-  perceived wait is much less than the wall-clock number.
+If you want richer prose, flip `BRIEFING_MODEL` back to Sonnet 4.6 or
+Opus 4.7 in `.env` — you'll spend ~15 more seconds per brief for the
+upgrade. See `backend/VERIFICATION_LOG.md` → Phase 11 for the tuning
+trace.
 
 Full numbers per account are in `backend/sweep_output/summary.json` and
 per-account briefs in `backend/sweep_output/{account}.md`.
