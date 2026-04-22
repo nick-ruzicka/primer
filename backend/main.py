@@ -275,7 +275,7 @@ async def _briefing_event_stream(
                 "sources": [],
             },
         )
-        yield record_and_yield("done", {"total_tokens": 0, "duration_ms": 0})
+        yield record_and_yield("done", {"total_tokens": None, "duration_ms": 0})
         return
 
     sections = shape_sections_for_frontend(bundle)
@@ -307,7 +307,7 @@ async def _briefing_event_stream(
         yield record_and_yield(
             "done",
             {
-                "total_tokens": 0,
+                "total_tokens": None,
                 "duration_ms": int((time.perf_counter() - started_at) * 1000),
             },
         )
@@ -343,7 +343,7 @@ async def _briefing_event_stream(
         yield record_and_yield(
             "done",
             {
-                "total_tokens": 0,
+                "total_tokens": None,
                 "duration_ms": int((time.perf_counter() - started_at) * 1000),
             },
         )
