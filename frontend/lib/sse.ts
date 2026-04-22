@@ -266,7 +266,9 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
   const normalizedId = id.replace("_usage", "") as IntelSectionId;
   if (!VALID_SECTIONS.has(normalizedId)) return null;
 
-  const items = Array.isArray(payload.items) ? (payload.items as Record<string, unknown>[]) : [];
+  const items = Array.isArray(payload.items)
+    ? (payload.items as Record<string, unknown>[])
+    : [];
   const adaptedItems: IntelligenceItem[] = items.map((raw) => {
     const flag = (raw.flag as IntelligenceItem["flag"]) ?? null;
     const flagPill = raw.flagPill
@@ -278,7 +280,9 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
           : undefined;
     const source = (raw.source as IntelligenceItem["source"]) ?? "internal";
     const item: IntelligenceItem = {
-      evid: String(raw.evid ?? `${id}-${Math.random().toString(36).slice(2, 8)}`),
+      evid: String(
+        raw.evid ?? `${id}-${Math.random().toString(36).slice(2, 8)}`,
+      ),
       source,
       label: String(raw.label ?? ""),
       value: raw.value ? String(raw.value) : undefined,
@@ -289,15 +293,25 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
       action: raw.action ? String(raw.action) : undefined,
     };
     // External signals: synthesize a `web` block from meta + value/sub
-    if (normalizedId === "external" && raw.meta && typeof raw.meta === "object") {
+    if (
+      normalizedId === "external" &&
+      raw.meta &&
+      typeof raw.meta === "object"
+    ) {
       const meta = raw.meta as Record<string, unknown>;
       item.web = {
         title: item.value ?? "",
         snippet: item.sub ?? "",
       };
-      item.fav = typeof meta.origin === "string" ? String(meta.origin).slice(0, 2).toUpperCase() : "W";
+      item.fav =
+        typeof meta.origin === "string"
+          ? String(meta.origin).slice(0, 2).toUpperCase()
+          : "W";
       // the sub-ttle used by the pill row becomes source + reliability
-      item.sub = [meta.origin, meta.reliability && `reliability: ${meta.reliability}`]
+      item.sub = [
+        meta.origin,
+        meta.reliability && `reliability: ${meta.reliability}`,
+      ]
         .filter(Boolean)
         .join(" · ");
     }
@@ -383,7 +397,9 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
       if (!hasAnyRevealed) {
         const mock = getMockForAccount(
           accountId,
-          findAccount(accountId)?.full_name ?? findAccount(accountId)?.name ?? "",
+          findAccount(accountId)?.full_name ??
+            findAccount(accountId)?.name ??
+            "",
         );
         setBriefFixture(mock.brief);
         for (const section of mock.brief.sections) {
@@ -416,4 +432,3 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
     }
   });
 }
-

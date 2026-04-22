@@ -50,7 +50,8 @@ export default function BriefingPage() {
   const warnings = useStore((s) => s.warnings);
   const accountGroups = useStore((s) => s.accountGroups);
   const standaloneAccounts = useStore((s) => s.standalone);
-  const accountsLoading = accountGroups.length === 0 && standaloneAccounts.length === 0;
+  const accountsLoading =
+    accountGroups.length === 0 && standaloneAccounts.length === 0;
 
   // Propagate theme to <html>.dark class
   useEffect(() => {
@@ -59,8 +60,7 @@ export default function BriefingPage() {
     else root.classList.remove("dark");
   }, [theme]);
 
-  const displayAccount =
-    activeAccount ??
+  const displayAccount = activeAccount ??
     accountGroups[0]?.brands[0] ??
     standaloneAccounts[0] ?? {
       id: "",

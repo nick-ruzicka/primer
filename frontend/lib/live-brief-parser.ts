@@ -37,11 +37,15 @@ const SECTION_KEYS: Record<string, BriefSection["key"]> = {
   "04": "talk_track",
 };
 
-const SECTION_HEADER_RE =
-  /^##\s+(0[1-4])\s+·\s+([^—\n]+?)\s+—\s+([^\n]+)$/gm;
+const SECTION_HEADER_RE = /^##\s+(0[1-4])\s+·\s+([^—\n]+?)\s+—\s+([^\n]+)$/gm;
 
 export function parseStreamingBrief(markdown: string): ParseResult {
-  const headers: { id: BriefSection["id"]; title: string; hedge: string; index: number }[] = [];
+  const headers: {
+    id: BriefSection["id"];
+    title: string;
+    hedge: string;
+    index: number;
+  }[] = [];
   let match: RegExpExecArray | null = SECTION_HEADER_RE.exec(markdown);
   SECTION_HEADER_RE.lastIndex = 0;
   while ((match = SECTION_HEADER_RE.exec(markdown)) !== null) {
@@ -59,7 +63,8 @@ export function parseStreamingBrief(markdown: string): ParseResult {
   for (let i = 0; i < headers.length; i++) {
     const h = headers[i];
     const bodyStart = h.index + markdown.slice(h.index).indexOf("\n") + 1;
-    const bodyEnd = i + 1 < headers.length ? headers[i + 1].index : markdown.length;
+    const bodyEnd =
+      i + 1 < headers.length ? headers[i + 1].index : markdown.length;
     const body = markdown.slice(bodyStart, bodyEnd);
     // A section counts as "complete enough to render" if the next header exists
     // (hard boundary) or if we see a blank line that terminates its last block.
@@ -138,10 +143,10 @@ function parseActions(body: string) {
   //      _italicized rationale_
   // OR: `1. **body**\n   _rationale_`
   const actions: NonNullable<BriefSection["actions"]> = [];
-  const blocks = body.split(/\n(?=\s*(?:A?\d{1,2}[\.)]\s))/);
+  const blocks = body.split(/\n(?=\s*(?:A?\d{1,2}[.)]\s))/);
   for (const block of blocks) {
     const m = block.match(
-      /^\s*(A?\d{1,2})[\.)]\s+\*\*(.+?)\*\*\s*(?:\n\s*_([\s\S]+?)_)?/,
+      /^\s*(A?\d{1,2})[.)]\s+\*\*(.+?)\*\*\s*(?:\n\s*_([\s\S]+?)_)?/,
     );
     if (!m) continue;
     const [, idRaw, bodyText, rationale] = m;
@@ -159,7 +164,7 @@ function parseQuestions(body: string): Paragraph[] {
   const lines: Paragraph[] = [];
   for (const line of body.split(/\n/)) {
     const trimmed = line.trim();
-    const m = trimmed.match(/^(?:\d+[\.)]|-)\s+(.+)$/);
+    const m = trimmed.match(/^(?:\d+[.)]|-)\s+(.+)$/);
     if (m) lines.push(tokenizeInline(m[1]));
   }
   return lines;

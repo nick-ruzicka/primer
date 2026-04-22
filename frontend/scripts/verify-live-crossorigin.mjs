@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Probes a cross-origin live connection (NEXT_PUBLIC_API_BASE=http://localhost:8000):
  * - captures console errors
@@ -7,9 +10,6 @@
  * - reports whether CORS or other errors blocked the flow
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -35,7 +35,10 @@ page.on("requestfailed", (req) => {
   failedRequests.push(`${req.failure()?.errorText} ${req.url()}`);
 });
 page.on("response", async (res) => {
-  if (res.url().includes("localhost:8000") && (res.status() >= 400 || res.status() === 0)) {
+  if (
+    res.url().includes("localhost:8000") &&
+    (res.status() >= 400 || res.status() === 0)
+  ) {
     failedRequests.push(`HTTP ${res.status()} ${res.url()}`);
   }
 });
@@ -55,7 +58,13 @@ console.log("---failed requests---");
 failedRequests.forEach((m) => console.log(m));
 
 // Check if brief rendered
-const briefText = await page.locator(".the-read").first().innerText().catch(() => "");
-console.log(`---brief first paragraph: ${briefText.slice(0, 80)}${briefText.length > 80 ? "..." : ""}---`);
+const briefText = await page
+  .locator(".the-read")
+  .first()
+  .innerText()
+  .catch(() => "");
+console.log(
+  `---brief first paragraph: ${briefText.slice(0, 80)}${briefText.length > 80 ? "..." : ""}---`,
+);
 
 await browser.close();
