@@ -27,11 +27,12 @@ const API_BASE =
   typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
 
 /**
- * Mock mode flips off when the env var is defined at all (even as an empty
- * string, which means "use same-origin via Next rewrites"). Setting the env
- * var to an absolute URL uses cross-origin directly.
+ * Mock mode off when NEXT_PUBLIC_API_BASE is truthy. Setting it to an absolute
+ * URL (http://localhost:8000) uses cross-origin directly; empty string keeps
+ * the old same-origin-via-Next-rewrite path, which we leave wired in
+ * next.config.ts as a fallback if CORS ever blocks us.
  */
-export const MOCK_MODE = API_BASE === undefined;
+export const MOCK_MODE = !API_BASE;
 
 let currentAbort: AbortController | null = null;
 let currentEventSource: EventSource | null = null;
