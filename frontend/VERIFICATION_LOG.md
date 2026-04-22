@@ -8,6 +8,23 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T04:05:00Z — Phase 6 · Mode 4 Writeup
+
+**Status:** PASS
+
+**Compared:** `verification-output/2026-04-22_phase6-writeup-dark.png` + `_phase6-writeup-light.png`.
+
+**Matches spec:**
+- Full-width main area, no left-rail collapse; topbar + left rail remain visible for navigation.
+- Editorial layout: mono kicker, Fraunces 44px headline, meta byline, Inter Tight body at 15.5px 1.7 line-height.
+- Three placeholder sections: "The problem we're actually solving", "How it's built", "What's next" — enough content to show the typography system at work. Operator copy drops in later (Terminal 4 / `specs/07_WRITEUP_INTEGRATION_SPEC.md`).
+- Keyboard 4 toggles mode; topbar now shows four tabs (Split / Workspace / Reading / Writeup) with matching kbd hints.
+
+**Minor drift:**
+- Headline sits ~120px below topbar with no hero/cover; reference screenshots don't include a writeup example so this is my call. Easy to swap once the operator's copy arrives.
+
+---
+
 ## 2026-04-22T03:55:00Z — Phase 5 · State + mock SSE
 
 **Status:** PASS
