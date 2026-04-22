@@ -1,6 +1,14 @@
 "use client";
 
-import { BookOpen, Columns2, LayoutPanelLeft, Phone, RefreshCw, Sparkles } from "lucide-react";
+import {
+  BookOpen,
+  Columns2,
+  FileText,
+  LayoutPanelLeft,
+  Phone,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import type { ViewMode } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +27,7 @@ const MODES: { id: ViewMode; label: string; key: string; Icon: typeof Columns2 }
   { id: "split", label: "Split", key: "1", Icon: Columns2 },
   { id: "workspace", label: "Workspace", key: "2", Icon: LayoutPanelLeft },
   { id: "reading", label: "Reading", key: "3", Icon: BookOpen },
+  { id: "writeup", label: "Writeup", key: "4", Icon: FileText },
 ];
 
 export function Topbar({
