@@ -1,0 +1,28 @@
+[Unit]
+Description=Primer backend (FastAPI + MCP orchestrator)
+After=network.target redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=primer
+Group=primer
+WorkingDirectory=/opt/primer/app
+Environment=PATH=/opt/primer/venv/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/opt/primer/app/.env
+ExecStart=/opt/primer/venv/bin/uvicorn backend.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+StandardOutput=append:/opt/primer/logs/backend.log
+StandardError=append:/opt/primer/logs/backend.log
+
+# Light hardening — not a secure sandbox, just guardrails.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/primer/logs /opt/primer/app/data
+
+[Install]
+WantedBy=multi-user.target
