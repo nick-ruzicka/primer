@@ -5,18 +5,31 @@ import type { Account } from "@/lib/types";
 interface Props {
   account: Account;
   parentGroupName?: string | null;
+  /**
+   * For prospect accounts (arr_cents === 0), the open-pipeline dollar amount
+   * pulled from the Commercial intelligence section — surfaces as
+   * "Prospect · $220K in discovery" so the rep sees the opportunity size
+   * instead of a bare "Prospect" label.
+   */
+  prospectPipeline?: string | null;
 }
 
 /**
  * Big hero card at the top of the briefing body. Logo tile + name + parent group
  * pill + meta row on the left; call card (time + attendees) on the right.
  */
-export function AccountHeader({ account, parentGroupName }: Props) {
+export function AccountHeader({
+  account,
+  parentGroupName,
+  prospectPipeline,
+}: Props) {
   const groupName = parentGroupName ?? account.parent_group_name;
   const displayName = account.full_name ?? account.name;
   const isProspect = account.arr_cents === 0;
   const arrLabel = isProspect
-    ? "Prospect"
+    ? prospectPipeline
+      ? `Prospect · ${prospectPipeline} in discovery`
+      : "Prospect"
     : (account.arr_display ?? `${account.arr} ARR`);
   const tileInitial = account.header_initial ?? account.initial;
   return (
