@@ -8,6 +8,35 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T03:55:00Z — Phase 5 · State + mock SSE
+
+**Status:** PASS
+
+**Compared:** `verification-output/2026-04-22_phase5-stream-*.png` (500ms / 2000ms / 5000ms / complete), `_phase5-beauty-complete.png`, `_phase5-kindred-complete.png`.
+
+**End-to-end flow verified:**
+- 500ms: intelligence is empty, brief skeleton visible (pulsing bars using ink-4/20 — readable in both dark and light themes).
+- 2000ms: intelligence fully populated (relationship + commercial visible at viewport; product / conversations / portfolio / external rendered below fold); brief still in skeleton.
+- 5000ms: intelligence complete; brief 1–3 sections revealed, talk track still streaming.
+- complete (~7s): four sections revealed; citations populated; two validation warnings (critical source-contradiction + watch stale-data) banner atop main; confidence strip reads "Generated just now".
+
+**Account switching:**
+- Northstar Beauty stream → renders trust-repair brief with 84 confidence, source-contradiction warning naming Salesforce/Catalyst/NetSuite/Gong.
+- Switch to Kindred Pet (via localStorage + reload path for the verification) → renders DM-change + adoption-collapse brief with 71 confidence, watch warning about Mei Chen's 90-day-cold sponsor status. Breadcrumb, account header (KI tile, $145K ARR, Pet supply · DTC), and intelligence (Renewal forecast $0 past-due card, etc.) all swap cleanly. No cross-account contamination.
+
+**Architectural notes:**
+- `lib/store.ts` is `useSyncExternalStore`-backed per spec. Action helpers (`revealBriefSection`, `revealIntelligence`, `pushWarning` …) are the only mutation surface.
+- `lib/sse.ts` routes through `MOCK_MODE = !process.env.NEXT_PUBLIC_API_BASE`. Setting the env var flips every `loadAccount()` call to the `runLiveStream` EventSource path — one-line swap.
+- Mock timeline: intelligence 300–2300ms, brief sections 2300–6300ms (one reveal per ~1s), validation warnings 6300–7500ms, done at ~7.5s. Proportional to spec's "<2s intel visible, <4s brief starts, 8–12s full render".
+- `lib/bootstrap.ts` exports `useBootstrap` (loads accounts + resumes last-viewed) and `useKeyboardShortcuts` (1/2/3/4 mode switch).
+
+**Minor drift / phase 7:**
+- Skeleton is a flat-bars shimmer, not a per-section silhouette.
+- Kindred isn't in the rail (only 3 standalones shown by reference); tests use localStorage. Fine for demo, but worth adding a "more accounts" expander before shipping.
+- "Generated just now" copy changes on completion — matches the feel of a streamed brief, but the real path will emit a duration ms we can show as "Generated Xs ago".
+
+---
+
 ## 2026-04-22T03:20:00Z — Phase 4 · Intelligence panel
 
 **Status:** PASS

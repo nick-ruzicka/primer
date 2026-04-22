@@ -1,63 +1,70 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
 import { Topbar } from "@/components/topbar";
-import { TweaksPanel, type Density, type VerifyIntensity } from "@/components/tweaks-panel";
+import { TweaksPanel } from "@/components/tweaks-panel";
 import { TweaksTrigger } from "@/components/tweaks-trigger";
-import { findAccount, NORTHSTAR_GROUP, OTHER_UPCOMING_VISIBLE } from "@/lib/fixtures/accounts";
+import { ValidationBanner } from "@/components/validation-banner";
+import { Writeup } from "@/components/writeup/writeup";
+import { useBootstrap, useKeyboardShortcuts } from "@/lib/bootstrap";
+import { NORTHSTAR_GROUP, OTHER_UPCOMING_VISIBLE } from "@/lib/fixtures/accounts";
 import { CURRENT_USER, DEFAULT_BRIEF_META, DEFAULT_SOURCE_STATUSES } from "@/lib/fixtures/brief-meta";
-import { NORTHSTAR_BEAUTY_BRIEF } from "@/lib/fixtures/northstar-beauty-brief";
+import { loadAccount } from "@/lib/sse";
 import {
-  NORTHSTAR_BEAUTY_INTELLIGENCE,
-  NORTHSTAR_BEAUTY_INTEL_COUNT,
-} from "@/lib/fixtures/northstar-beauty-intelligence";
+  setDensity,
+  setHoveredEvid,
+  setIntelligencePanelOpen,
+  setMode,
+  setTheme,
+  setTweaksOpen,
+  setVerify,
+  useStore,
+} from "@/lib/store";
+import type { IntelligenceSection } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import type { ViewMode } from "@/lib/types";
 
 export default function BriefingPage() {
-  const [activeId, setActiveId] = useState("ns-beauty");
-  const [mode, setMode] = useState<ViewMode>("split");
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
-  const [density, setDensity] = useState<Density>("comfortable");
-  const [verify, setVerify] = useState<VerifyIntensity>("subtle");
-  const [tweaksOpen, setTweaksOpen] = useState(false);
-  const [intelligenceOpen, setIntelligenceOpen] = useState(false);
-  const [hoveredEvid, setHoveredEvid] = useState<string | null>(null);
+  useBootstrap();
+  useKeyboardShortcuts();
 
-  const account = findAccount(activeId) ?? NORTHSTAR_GROUP.brands[0];
-  const brief = NORTHSTAR_BEAUTY_BRIEF; // Phase 5 swaps this for store-driven state
+  const mode = useStore((s) => s.mode);
+  const theme = useStore((s) => s.theme);
+  const density = useStore((s) => s.density);
+  const verify = useStore((s) => s.verifyIntensity);
+  const tweaksOpen = useStore((s) => s.tweaksOpen);
+  const intelligenceOpen = useStore((s) => s.intelligencePanelOpen);
+  const activeId = useStore((s) => s.activeAccountId);
+  const activeAccount = useStore((s) => s.activeAccount);
+  const hoveredEvid = useStore((s) => s.hoveredEvid);
+  const brief = useStore((s) => s.brief);
+  const intelligence = useStore((s) => s.intelligence);
+  const citations = useStore((s) => s.citations);
+  const warnings = useStore((s) => s.warnings);
 
-  // Theme toggling — flip `.dark` on <html>
+  // Propagate theme to <html>.dark class
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
 
-  // Keyboard shortcuts for modes
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      // skip when typing in inputs
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) {
-        return;
-      }
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === "1") setMode("split");
-      else if (e.key === "2") setMode("workspace");
-      else if (e.key === "3") setMode("reading");
-      else if (e.key === "4") setMode("writeup");
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  const displayAccount = activeAccount ?? NORTHSTAR_GROUP.brands[0];
 
-  const handleToggleIntelligence = useCallback(() => setIntelligenceOpen((o) => !o), []);
+  // Rebuild intelligence section list in declaration order, skipping unrevealed.
+  const intelligenceSections: IntelligenceSection[] = [
+    intelligence.relationship,
+    intelligence.commercial,
+    intelligence.product,
+    intelligence.conversations,
+    intelligence.portfolio,
+    intelligence.external,
+  ].filter((s): s is IntelligenceSection => !!s);
+  const intelligenceCount = intelligenceSections.reduce((sum, s) => sum + s.items.length, 0);
 
   return (
     <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
@@ -65,79 +72,94 @@ export default function BriefingPage() {
         group={NORTHSTAR_GROUP}
         otherUpcoming={OTHER_UPCOMING_VISIBLE}
         activeId={activeId}
-        onSelect={setActiveId}
+        onSelect={(id) => loadAccount(id)}
         currentUser={CURRENT_USER}
       />
       <div className="flex min-w-0 flex-col overflow-hidden">
         <Topbar
-          breadcrumbAccount={account.full_name ?? account.name}
+          breadcrumbAccount={displayAccount.full_name ?? displayAccount.name}
           mode={mode}
           onModeChange={setMode}
-          intelligenceCount={NORTHSTAR_BEAUTY_INTEL_COUNT}
+          intelligenceCount={intelligenceCount || DEFAULT_BRIEF_META.intelligenceItemCount}
           intelligenceOpen={intelligenceOpen}
-          onToggleIntelligence={handleToggleIntelligence}
+          onToggleIntelligence={() => setIntelligencePanelOpen(!intelligenceOpen)}
+          onRefresh={() => activeId && loadAccount(activeId, { refresh: true })}
         />
-        <div className="flex flex-1 flex-col overflow-y-auto">
-          <AccountHeader account={account} parentGroupName={account.parent_group_name} />
-          <ConfidenceStrip
-            confidence={DEFAULT_BRIEF_META.confidence}
-            confidenceLabel={DEFAULT_BRIEF_META.confidenceLabel}
-            sources={DEFAULT_SOURCE_STATUSES}
-            staleCount={DEFAULT_BRIEF_META.staleCount}
-            generatedAgo={DEFAULT_BRIEF_META.generatedAgo}
-          />
-          <main
-            className={cn(
-              "flex flex-1 min-h-0",
-              mode === "split" && "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
-              mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
-              mode === "reading" && "flex-col",
-            )}
-            aria-label="Brief + intelligence"
-          >
-            {mode === "reading" ? (
-              <Brief
-                brief={brief}
-                layout="centered"
-                hoveredEvid={hoveredEvid}
-                onCitationHover={setHoveredEvid}
-              />
-            ) : (
-              <Brief
-                brief={brief}
-                layout={mode === "workspace" ? "workspace" : "split"}
-                hoveredEvid={hoveredEvid}
-                onCitationHover={setHoveredEvid}
-              />
-            )}
-            {mode !== "reading" && (
-              <IntelligencePanel
-                sections={NORTHSTAR_BEAUTY_INTELLIGENCE}
-                variant={mode === "workspace" ? "workspace" : "compact"}
-                hoveredEvid={hoveredEvid}
-                onCardHover={setHoveredEvid}
-              />
-            )}
-          </main>
 
-          {/* Reading mode: slide-over intelligence panel */}
-          {mode === "reading" && intelligenceOpen && (
-            <div
-              className="fixed inset-y-0 right-0 z-20 flex w-[560px] max-w-[90vw] flex-col border-l border-line bg-surface shadow-md"
-              role="dialog"
-              aria-label="Account intelligence overlay"
+        {mode === "writeup" ? (
+          <Writeup />
+        ) : (
+          <div className="flex flex-1 flex-col overflow-y-auto">
+            <AccountHeader account={displayAccount} parentGroupName={displayAccount.parent_group_name} />
+            <ConfidenceStrip
+              confidence={brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence}
+              confidenceLabel={brief.fixture?.confidence_label ?? DEFAULT_BRIEF_META.confidenceLabel}
+              sources={DEFAULT_SOURCE_STATUSES}
+              staleCount={DEFAULT_BRIEF_META.staleCount}
+              generatedAgo={brief.complete ? "just now" : "streaming…"}
+              onRegenerate={() => activeId && loadAccount(activeId, { refresh: true })}
+            />
+
+            {warnings.length > 0 && <ValidationBanner warnings={warnings} />}
+
+            <main
+              className={cn(
+                "flex flex-1 min-h-0",
+                mode === "split" && "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+                mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
+                mode === "reading" && "flex-col",
+              )}
+              aria-label="Brief + intelligence"
             >
-              <IntelligencePanel
-                sections={NORTHSTAR_BEAUTY_INTELLIGENCE}
-                variant="overlay"
-                hoveredEvid={hoveredEvid}
-                onCardHover={setHoveredEvid}
-                onClose={() => setIntelligenceOpen(false)}
-                description={`Everything known about ${account.full_name ?? account.name}, updated in real time from 6 systems.`}
-              />
-            </div>
-          )}
-        </div>
+              {(() => {
+                const revealedSections = brief.fixture?.sections.filter((s) => brief.revealed[s.id]) ?? [];
+                if (!brief.fixture || revealedSections.length === 0) {
+                  return <BriefSkeleton layout={mode} />;
+                }
+                return (
+                  <Brief
+                    brief={{ ...brief.fixture, sections: revealedSections, citations }}
+                    layout={
+                      mode === "reading"
+                        ? "centered"
+                        : mode === "workspace"
+                          ? "workspace"
+                          : "split"
+                    }
+                    hoveredEvid={hoveredEvid}
+                    onCitationHover={setHoveredEvid}
+                  />
+                );
+              })()}
+
+              {mode !== "reading" && (
+                <IntelligencePanel
+                  sections={intelligenceSections}
+                  variant={mode === "workspace" ? "workspace" : "compact"}
+                  hoveredEvid={hoveredEvid}
+                  onCardHover={setHoveredEvid}
+                />
+              )}
+            </main>
+
+            {mode === "reading" && intelligenceOpen && (
+              <div
+                className="fixed inset-y-0 right-0 z-20 flex w-[560px] max-w-[90vw] flex-col border-l border-line bg-surface shadow-md"
+                role="dialog"
+                aria-label="Account intelligence overlay"
+              >
+                <IntelligencePanel
+                  sections={intelligenceSections}
+                  variant="overlay"
+                  hoveredEvid={hoveredEvid}
+                  onCardHover={setHoveredEvid}
+                  onClose={() => setIntelligencePanelOpen(false)}
+                  description={`Everything known about ${displayAccount.full_name ?? displayAccount.name}, updated in real time from 6 systems.`}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <TweaksTrigger onClick={() => setTweaksOpen(true)} open={tweaksOpen} />
@@ -151,6 +173,34 @@ export default function BriefingPage() {
         onVerifyChange={setVerify}
         onClose={() => setTweaksOpen(false)}
       />
+    </div>
+  );
+}
+
+function BriefSkeleton({ layout }: { layout: string }) {
+  return (
+    <div
+      className={cn(
+        "min-w-0 flex-1 px-7 pb-10 pt-6",
+        layout === "reading" && "mx-auto max-w-[760px] px-8",
+        layout === "split" && "border-r border-line",
+        layout === "workspace" && "max-w-[360px] border-r border-line bg-surface/40 px-4 py-4",
+      )}
+    >
+      <div className="animate-pulse space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="h-3 w-6 rounded bg-ink-4/20" />
+          <div className="h-3 w-24 rounded bg-ink-4/20" />
+          <div className="ml-auto h-5 w-20 rounded-full bg-ink-4/15" />
+        </div>
+        <div className="h-4 w-2/3 rounded bg-ink-4/25" />
+        <div className="h-3 w-full rounded bg-ink-4/15" />
+        <div className="h-3 w-[92%] rounded bg-ink-4/15" />
+        <div className="h-3 w-[85%] rounded bg-ink-4/15" />
+        <div className="mt-6 h-3 w-1/3 rounded bg-ink-4/20" />
+        <div className="h-3 w-full rounded bg-ink-4/15" />
+        <div className="h-3 w-[88%] rounded bg-ink-4/15" />
+      </div>
     </div>
   );
 }
