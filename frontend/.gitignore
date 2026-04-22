@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# reference artifacts — unpacked from HTML bundler, not source
+/reference/_unpacked/
+
+# verification artifacts — regenerated every run
+/verification-output/
+
+# playwright
+/playwright-report/
+/test-results/
