@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+
+# uv
+# (uv.lock IS committed; venv is not)
+
+# Local env + secrets
+.env
+.env.local
+.env.*.local
+
+# Seeded SQLite DB (rebuilt from seed.py; do not commit the binary)
+data/primer.db
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
