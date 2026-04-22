@@ -46,7 +46,7 @@ export function Brief({
   };
 
   const getCitationById = (citationId: string): CitationMeta | null => {
-    return brief.citations.find((c) => c.id === citationId) || null;
+    return brief.citations.find((c) => c.evid === citationId) || null;
   };
   return (
     <div

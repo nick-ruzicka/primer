@@ -2,6 +2,7 @@ import type { CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
 import { ReactNode } from "react";
 
 interface ReferencesSectionProps {
+  id?: string;
   citations: CitationMeta[];
   onReferenceClick?: (citationId: string) => void;
   highlightedCitationId?: string | null;
@@ -9,13 +10,14 @@ interface ReferencesSectionProps {
 }
 
 export function ReferencesSection({
+  id,
   citations,
   onReferenceClick,
   highlightedCitationId,
   sourceIcons = {},
 }: ReferencesSectionProps) {
   return (
-    <section className="references-section mt-24 pt-6 border-t border-line">
+    <section id={id} className="references-section mt-24 pt-6 border-t border-line">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-4 mb-4">
         References
       </h3>

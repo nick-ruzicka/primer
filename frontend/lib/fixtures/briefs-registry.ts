@@ -15,6 +15,10 @@ interface AccountMock {
  * Accounts not listed fall back to `getMockForAccount`'s generic stub.
  */
 const MOCK_REGISTRY: Record<string, AccountMock> = {
+  "ns-active": {
+    brief: NORTHSTAR_BEAUTY_BRIEF,
+    intelligence: NORTHSTAR_BEAUTY_INTELLIGENCE,
+  },
   "ns-beauty": {
     brief: NORTHSTAR_BEAUTY_BRIEF,
     intelligence: NORTHSTAR_BEAUTY_INTELLIGENCE,
