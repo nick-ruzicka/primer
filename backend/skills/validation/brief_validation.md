@@ -36,10 +36,29 @@ Schema:
 ]
 ```
 
-## Severity rules
+## Severity guidance — strict application
 
-- `critical` — the brief will embarrass the rep if they cite this. Hallucinated numbers, wrong names, wrong dates, invented claims with fake citations.
-- `watch` — the brief contains a judgment call the rep should verify. Source-of-truth disagreements, stale-but-cited data, inferences that could plausibly be wrong.
+`critical` is reserved for factual errors a rep would get corrected on during the call. Use `critical` **only** when:
+
+- The brief states a fact with no supporting source (pure hallucination).
+- The brief puts words in a speaker's mouth with quotation marks when the underlying source only paraphrased.
+- The brief cites a `fact_id` that does not contain the claimed information (misattributed citation).
+- The brief states a specific number or date that contradicts the cited source.
+- The brief recommends an action that contradicts the account's state (e.g., pitching expansion to an AP-blocked account).
+
+`watch` is for lower-severity issues a thoughtful rep should verify before citing:
+
+- Framing that slightly overstates what the source supports ("nearly two years" for 20 months; "shared internal data" vs. "shared at QBR").
+- Source-system disagreements (Salesforce vs. Catalyst forecast).
+- Stale data older than the freshness thresholds (30 days for usage, 90 days for relationship events).
+- Inferences presented slightly more confidently than hedged voice supports.
+
+**If unsure between `critical` and `watch`, default to `watch`.** A false `critical` wastes the rep's attention and trains them to ignore the severity signal; a false `watch` is tolerable.
+
+## Do not flag
+
+- **Data-quality callouts are the brief's job, not a violation.** Do not flag a claim when the brief correctly identifies that underlying data is stale, unclear, or missing. A brief that surfaces data quality issues to the rep is behaving correctly.
+- **Don't second-guess the context.** Do not flag a claim when the citation is correct and the claim matches the fact, even if the underlying fact itself seems imperfect. The validator checks alignment between brief and context blob; it does not audit the source systems.
 
 ## Discipline
 
