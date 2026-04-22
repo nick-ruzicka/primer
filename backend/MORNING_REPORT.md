@@ -17,7 +17,7 @@ Claude Code OAuth token. See `BLOCKERS.md` for the full writeup and the one
 
 | Phase | Status | Notes |
 | --- | --- | --- |
-| 1 · Foundation + prompts | ✅ | `backend/`, `prompts/briefing.md`, `prompts/validation.md`, `.env.example` |
+| 1 · Foundation + prompts | ✅ | `backend/`, agent system prompts (later restructured into `skills/master.md` + `skills/artifact_types/pre_call_brief.md`), `.env.example` |
 | 2 · MCP pool + /api/accounts | ✅ | Pool uses single `AsyncExitStack`, per-server locks, 300 ms startup per server |
 | 3 · Intelligence fan-out | ✅ | 19 tool calls in parallel, ~50 ms total, null-semantics preserved |
 | 4 · SSE endpoint | ✅ | sse-starlette, 15 s keepalive ping, emits intelligence → brief_chunk → source_cited → validation_warning → done |
