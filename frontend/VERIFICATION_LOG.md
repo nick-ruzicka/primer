@@ -8,6 +8,35 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T03:20:00Z — Phase 4 · Intelligence panel
+
+**Status:** PASS
+
+**Compared:** `verification-output/2026-04-22_phase4-reading-intel-overlay.png` + `_phase3-mode-split-dark.png` (re-captured) + `_phase3-mode-workspace-dark.png` (re-captured) against references `03_workspace_view_dark.png`, `05_reading_view_intelligence_panel_open.png`, `08_workspace_view_cards_open.png`.
+
+**Matches:**
+- Six sections render in correct order: Relationship, Commercial, Product & usage, Conversations, Portfolio — Northstar Group, External signals.
+- Section headers: mono `01` kicker, serif title, right-aligned `{visible} of {total}` count.
+- Relationship section: Priya + Sam in 2-col avatar-card grid; full-width health card with sparkline below.
+- Commercial section: `$18,500` hero card renders with red tint, big serif number, `PAST DUE` red flag pill, "41 days overdue" meta, "Open in NetSuite" dark CTA button.
+- Product/Conversations/Portfolio: standard cards with label + serif value + HTML-escaped sub text + source pill + time.
+- External signals: web cards with favicon tile + source label + serif title + snippet with `<mark>`-highlighted phrases + "Exa (web)" amber pill.
+- Filter chips: All / Flagged / Critical only with counts; Search input.
+- Hover state: moving mouse over a card activates `.hot` class (yellow ring + lift); state is lifted to the page so brief citations can highlight matching evidence (wire-up in phase 5).
+- Reading mode overlay: clicking "Intelligence" in the topbar opens a right-side slide-over (560px) with close button, description subtitle, filters, and all sections.
+
+**Variant coverage:**
+- `compact` (Split Mode 1): narrow column; header shows "grouped by topic · click a ·n in the brief to jump".
+- `workspace` (Mode 2): full filter bar + adaptive section layouts.
+- `overlay` (Reading Mode 3): slide-over dialog, close button, same filter bar.
+
+**Minor drift (Phase 7 polish):**
+- Sparkline is a static stub — good enough visually, but the reference animates it in. Accepting for now.
+- External card favicon tile uses text (`RD`, `in`, `🎙`, `GD`) rather than actual favicons; matches reference fallback behavior, but could be nicer.
+- `ms-auto`/`pill time` right-alignment works but some hero card CTAs break onto their own line at narrower widths — not visible in current Mode 1/2 captures, but worth watching.
+
+---
+
 ## 2026-04-22T02:45:00Z — Phase 3 · Brief rendering
 
 **Status:** PASS
