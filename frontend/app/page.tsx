@@ -13,10 +13,6 @@ import { ValidationBanner } from "@/components/validation-banner";
 import { Writeup } from "@/components/writeup/writeup";
 import { useBootstrap, useKeyboardShortcuts } from "@/lib/bootstrap";
 import {
-  NORTHSTAR_GROUP,
-  OTHER_UPCOMING_VISIBLE,
-} from "@/lib/fixtures/accounts";
-import {
   CURRENT_USER,
   DEFAULT_BRIEF_META,
   DEFAULT_SOURCE_STATUSES,
@@ -52,6 +48,9 @@ export default function BriefingPage() {
   const intelligence = useStore((s) => s.intelligence);
   const citations = useStore((s) => s.citations);
   const warnings = useStore((s) => s.warnings);
+  const accountGroups = useStore((s) => s.accountGroups);
+  const standaloneAccounts = useStore((s) => s.standalone);
+  const accountsLoading = accountGroups.length === 0 && standaloneAccounts.length === 0;
 
   // Propagate theme to <html>.dark class
   useEffect(() => {
@@ -60,7 +59,18 @@ export default function BriefingPage() {
     else root.classList.remove("dark");
   }, [theme]);
 
-  const displayAccount = activeAccount ?? NORTHSTAR_GROUP.brands[0];
+  const displayAccount =
+    activeAccount ??
+    accountGroups[0]?.brands[0] ??
+    standaloneAccounts[0] ?? {
+      id: "",
+      name: "",
+      initial: "",
+      color: "#6b6454",
+      arr: "",
+      state: "cool" as const,
+      note: "",
+    };
 
   // Rebuild intelligence section list in declaration order, skipping unrevealed.
   const intelligenceSections: IntelligenceSection[] = [
@@ -79,11 +89,12 @@ export default function BriefingPage() {
   return (
     <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
       <LeftRail
-        group={NORTHSTAR_GROUP}
-        otherUpcoming={OTHER_UPCOMING_VISIBLE}
+        groups={accountGroups}
+        standalone={standaloneAccounts}
         activeId={activeId}
         onSelect={(id) => loadAccount(id)}
         currentUser={CURRENT_USER}
+        loading={accountsLoading}
       />
       <div className="flex min-w-0 flex-col overflow-hidden">
         <Topbar

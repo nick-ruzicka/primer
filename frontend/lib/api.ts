@@ -9,7 +9,7 @@ import type {
 
 const API_BASE =
   typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
-const LIVE_MODE = API_BASE !== undefined;
+const LIVE_MODE = !!API_BASE;
 
 /**
  * Backend /api/accounts shape (per `specs/03_ORCHESTRATOR_SPEC.md` +
