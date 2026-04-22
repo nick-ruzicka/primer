@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { BriefFixture } from "@/lib/fixtures/northstar-beauty-brief";
+import type { BriefFixture, CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
 import { cn } from "@/lib/utils";
 import { BriefSection } from "./brief-section";
+import { ReferencesSection } from "./references-section";
+import { ReferenceModal } from "./reference-modal";
 
 interface Props {
   brief: BriefFixture;
@@ -27,6 +29,7 @@ export function Brief({
   onCitationClick,
 }: Props) {
   const [highlightedCitationId, setHighlightedCitationId] = useState<string | null>(null);
+  const [selectedReferenceForModal, setSelectedReferenceForModal] = useState<CitationMeta | null>(null);
   const isWorkspace = layout === "workspace";
 
   const handleCitationClick = (citationId: string) => {
@@ -40,6 +43,10 @@ export function Brief({
         refElement.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 50);
+  };
+
+  const getCitationById = (citationId: string): CitationMeta | null => {
+    return brief.citations.find((c) => c.id === citationId) || null;
   };
   return (
     <div
@@ -63,6 +70,24 @@ export function Brief({
           onCitationClick={handleCitationClick}
         />
       ))}
+      {!isWorkspace && (
+        <>
+          <ReferencesSection
+            id="references-section"
+            citations={brief.citations}
+            onReferenceClick={(citationId) => {
+              const citation = getCitationById(citationId);
+              setSelectedReferenceForModal(citation);
+            }}
+            highlightedCitationId={highlightedCitationId}
+          />
+          <ReferenceModal
+            citation={selectedReferenceForModal}
+            isOpen={selectedReferenceForModal !== null}
+            onClose={() => setSelectedReferenceForModal(null)}
+          />
+        </>
+      )}
     </div>
   );
 }
