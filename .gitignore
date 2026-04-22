@@ -70,3 +70,4 @@ logs/
 .idea/
 *.swp
 *.swo
+.gstack/
