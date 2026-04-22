@@ -95,7 +95,10 @@
   --color-accent: #f5d03a;
   --color-accent-2: #e6b918;
   --color-accent-soft: #2a2410;
-  --color-accent-ink: #f5d03a;
+  /* accent-ink stays dark in both themes — it's the readable text color for
+     content rendered on an accent-yellow background (Join call button, mode
+     chips, etc.). */
+  --color-accent-ink: #3a2f08;
   --color-purple: #a796d9;
   --color-good-soft: #1d2a1f;
   --color-warn-soft: #2a2010;
