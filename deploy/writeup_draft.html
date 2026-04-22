@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Primer — about this build</title>
+
+  <!--
+    Terminal 4 / Phase 5 — writeup draft.
+
+    This is a self-contained preview of the Mode 4 writeup. Terminal 3 will
+    lift the content into the React <Writeup /> component and drop the
+    inline <style> block once the tokens are wired through Tailwind theme.
+
+    Typography and color tokens mirror specs/05_FRONTEND_SPEC.md so this
+    previews correctly in a browser without the app running.
+  -->
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --color-bg: #f4f1ec;
+      --color-surface: #fbfaf7;
+      --color-surface-2: #ffffff;
+      --color-surface-sunk: #efebe3;
+      --color-line: #e6e0d4;
+      --color-line-strong: #d2c9b8;
+      --color-ink: #1a1712;
+      --color-ink-2: #3d372d;
+      --color-ink-3: #6b6454;
+      --color-ink-4: #9a9281;
+      --color-accent: #f5d03a;
+      --color-accent-2: #e6b918;
+      --color-accent-soft: #fcf3c9;
+      --color-accent-ink: #3a2f08;
+      --color-good: #3a6b4a;
+      --color-good-soft: #e0ead9;
+      --color-warn-strong: #b87a2a;
+      --color-warn-soft: #f4e8d0;
+      --color-bad: #8a2f2f;
+      --color-bad-soft: #f0dcdc;
+      --font-sans: "Inter Tight", system-ui, -apple-system, Segoe UI, sans-serif;
+      --font-serif: "Fraunces", Georgia, serif;
+      --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+      --radius-sm: 6px;
+      --radius: 10px;
+      --radius-pill: 999px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      background: var(--color-bg);
+      color: var(--color-ink);
+      font-family: var(--font-sans);
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .writeup {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 96px 32px 160px;
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      margin: 0 0 16px;
+    }
+
+    h1.hero {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 72px;
+      line-height: 1.02;
+      letter-spacing: -0.02em;
+      margin: 0 0 16px;
+      color: var(--color-ink);
+    }
+
+    .hero-sub {
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: 28px;
+      line-height: 1.25;
+      color: var(--color-ink-2);
+      margin: 0 0 40px;
+    }
+
+    .hero-meta {
+      font-size: 14px;
+      color: var(--color-ink-3);
+      margin: 0 0 40px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--color-line-strong);
+      background: var(--color-surface-2);
+      color: var(--color-ink);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .btn:hover { transform: translateY(-1px); background: var(--color-surface); }
+    .btn.primary {
+      background: var(--color-accent);
+      border-color: var(--color-accent-2);
+      color: var(--color-accent-ink);
+    }
+    .btn.primary:hover { background: var(--color-accent-2); }
+
+    .divider {
+      border: 0;
+      border-top: 1px solid var(--color-line);
+      margin: 120px 0;
+    }
+
+    section.slide {
+      margin: 120px 0 0;
+    }
+
+    section.slide .section-num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      color: var(--color-ink-4);
+      margin: 0 0 16px;
+    }
+
+    section.slide h2.claim {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 44px;
+      line-height: 1.08;
+      letter-spacing: -0.01em;
+      margin: 0 0 24px;
+      color: var(--color-ink);
+    }
+
+    section.slide p.thesis {
+      font-family: var(--font-serif);
+      font-weight: 400;
+      font-size: 22px;
+      line-height: 1.45;
+      color: var(--color-ink-2);
+      margin: 0 0 32px;
+    }
+
+    section.slide ul.evidence {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px;
+    }
+    section.slide ul.evidence li {
+      padding: 14px 0 14px 28px;
+      border-top: 1px solid var(--color-line);
+      position: relative;
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--color-ink-2);
+    }
+    section.slide ul.evidence li:last-child { border-bottom: 1px solid var(--color-line); }
+    section.slide ul.evidence li::before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      color: var(--color-accent-2);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+    section.slide ul.evidence li b {
+      color: var(--color-ink);
+      font-weight: 600;
+    }
+
+    /* Inline visual moments */
+    .visual {
+      margin: 32px 0;
+      padding: 24px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+    }
+    .visual .vlabel {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-4);
+      margin: 0 0 12px;
+    }
+    .visual.ascii {
+      background: var(--color-surface-sunk);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--color-ink-2);
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .two-col .col {
+      padding: 20px;
+      border-radius: var(--radius);
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-line);
+    }
+    .two-col h4 {
+      margin: 0 0 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      font-weight: 500;
+    }
+    .two-col .col.vs-left p { color: var(--color-ink-3); font-size: 14px; margin: 4px 0; font-family: var(--font-mono); }
+    .two-col .col.vs-right p { color: var(--color-ink); font-family: var(--font-serif); font-size: 16px; line-height: 1.5; margin: 0; }
+
+    .source-chip {
+      display: inline-block;
+      padding: 2px 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      color: #fff;
+      background: var(--color-ink-2);
+      border-radius: 4px;
+      margin: 0 2px;
+      vertical-align: 0.1em;
+    }
+    .source-chip.sf { background: #2e8fbf; }
+    .source-chip.catalyst { background: #c5843a; }
+
+    .hedge { color: var(--color-ink-3); font-style: italic; }
+
+    /* Comparison table for deterministic/probabilistic */
+    .dp-example {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .dp-example { grid-template-columns: 1fr; } }
+    .dp-example .card {
+      padding: 18px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+      font-family: var(--font-serif);
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--color-ink-2);
+    }
+    .dp-example .card .label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-4);
+      margin: 0 0 8px;
+      font-weight: 500;
+    }
+
+    /* Validation warning */
+    .warn-ex {
+      padding: 16px 18px;
+      background: var(--color-warn-soft);
+      border-left: 3px solid var(--color-warn-strong);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--color-ink-2);
+    }
+    .warn-ex b {
+      color: var(--color-warn-strong);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Timeline */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 8px 0;
+    }
+    @media (max-width: 640px) { .timeline { grid-template-columns: 1fr; } }
+    .timeline .step {
+      padding: 18px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+    }
+    .timeline .step .when {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-accent-2);
+      margin: 0 0 10px;
+      font-weight: 600;
+    }
+    .timeline .step h5 {
+      font-family: var(--font-serif);
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--color-ink);
+    }
+    .timeline .step p {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--color-ink-3);
+      margin: 0;
+    }
+
+    /* Terminals visual for AI section */
+    .terminal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      height: 260px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+    @media (max-width: 640px) { .terminal-grid { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); height: 400px; } }
+    .terminal-grid .term {
+      background: #0e0d0b;
+      color: #d6cebe;
+      padding: 12px;
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .terminal-grid .term .title {
+      color: var(--color-accent);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .terminal-grid .term .out { color: #6a6251; }
+    .terminal-grid .term .ok { color: var(--color-good); }
+
+    /* Tradeoffs */
+    .tradeoffs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 640px) { .tradeoffs { grid-template-columns: 1fr; } }
+    .tradeoffs .t {
+      padding: 18px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+    }
+    .tradeoffs .t h5 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      font-family: var(--font-mono);
+      color: var(--color-ink);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    .tradeoffs .t p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--color-ink-3);
+    }
+
+    /* Speaker notes (collapsible) */
+    details.notes {
+      margin: 32px 0 0;
+      border-top: 1px dashed var(--color-line-strong);
+      padding-top: 16px;
+    }
+    details.notes > summary {
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      list-style: none;
+      user-select: none;
+      padding: 4px 0;
+    }
+    details.notes > summary::-webkit-details-marker { display: none; }
+    details.notes > summary::before {
+      content: "+ ";
+      color: var(--color-accent-2);
+      font-weight: 500;
+    }
+    details.notes[open] > summary::before { content: "– "; }
+    details.notes .notes-body {
+      margin-top: 16px;
+      font-family: var(--font-serif);
+      font-size: 17px;
+      line-height: 1.6;
+      color: var(--color-ink-2);
+    }
+    details.notes .notes-body p {
+      margin: 0 0 16px;
+    }
+    details.notes .notes-body p:last-child { margin-bottom: 0; }
+
+    /* Closing */
+    .closing {
+      margin-top: 140px;
+      padding: 48px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-line);
+      border-radius: var(--radius);
+    }
+    .closing h3 {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 32px;
+      line-height: 1.2;
+      margin: 0 0 24px;
+    }
+    .closing ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 32px;
+    }
+    .closing ul li {
+      padding: 10px 0;
+      border-top: 1px solid var(--color-line);
+      font-size: 15px;
+      color: var(--color-ink-2);
+    }
+    .closing ul li:first-child { border-top: 0; }
+    .closing ul li b {
+      display: inline-block;
+      width: 160px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      font-weight: 500;
+    }
+    .closing ul li a {
+      color: var(--color-ink);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: var(--color-line-strong);
+    }
+    .closing ul li a:hover { text-decoration-color: var(--color-accent-2); }
+    .closing .footer-note {
+      font-size: 13px;
+      color: var(--color-ink-4);
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <article class="writeup">
+
+    <!-- ============ HERO ============ -->
+    <header>
+      <p class="kicker">portfolio project · april 2026</p>
+      <h1 class="hero">Primer</h1>
+      <p class="hero-sub">A pre-call briefing for enterprise account executives.</p>
+      <p class="hero-meta">Built by Nick Ruzicka in about six hours of elapsed time, across four Claude Code terminals running in parallel.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#/">Open the prototype →</a>
+        <a class="btn" href="#section-1">Read the architecture ↓</a>
+      </div>
+    </header>
+
+    <!-- ============ SECTION 1 ============ -->
+    <section class="slide" id="section-1">
+      <p class="section-num">§ 01</p>
+      <h2 class="claim">We built a read layer, not a write layer.</h2>
+      <p class="thesis">Primer wraps existing systems, reasons across them, and outputs opinion — but never mutates upstream state. That single constraint is the reason this ships without stepping on RevTech's roadmap.</p>
+
+      <ul class="evidence">
+        <li><b>Six MCP servers, one per source system.</b> Salesforce, Snowflake, Catalyst, NetSuite, Gong, Exa. Each one a thin stdio process that exposes read-only tools scoped to an <code>account_id</code>.</li>
+        <li><b>Drafts for rep approval, never direct mutations.</b> Even the future follow-up-email feature drafts in the rep's voice; nothing writes back without a human in the loop.</li>
+        <li><b>When RevTech ships their unified data layer, the MCP servers repoint.</b> Primer doesn't change. The agent, the UI, the validation pass — all untouched.</li>
+        <li><b>Doesn't compete with RevTech.</b> Sits on top of whatever they deliver. If they unify five systems into one, Primer collapses from six MCP servers to one without needing a redesign.</li>
+      </ul>
+
+      <div class="visual ascii" aria-label="MCP servers diagram">
+┌─────────────┐          ┌──────────────┐          ┌─────────────────┐
+│   Primer    │ ──read──▶│ MCP servers  │ ──read──▶│  Source systems │
+│  (agent +   │          │  (6 stdio)   │          │  (SFDC, Gong…)  │
+│   UI)       │          │              │          │                 │
+└─────────────┘          └──────────────┘          └─────────────────┘
+         ▲                                                    │
+         └─────────── opinions, never writes ◀────────────────┘
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>Most GTM tooling in this category gets into trouble the same way: it starts as a helpful layer and ends up as the fifth system of record the RevOps team has to reconcile. The move here was to refuse to become one of those systems. Primer doesn't own any field. It doesn't overwrite Salesforce. It doesn't patch Catalyst health. It reads from the system of record, reasons over the bundle, and returns an opinion in a format the rep can use.</p>
+          <p>That's what makes it <em>deployable inside </em> even while RevTech is mid-consolidation. They're the team that owns making these systems talk to each other; Primer is the team that reads whatever they expose. When RevTech finishes their unified layer, Primer's six MCP adapters collapse into one and nothing above them shifts. The posture is: earn trust with the read layer first, earn the right to a write layer later.</p>
+          <p>A product that writes back from day one couldn't survive that conversation with RevTech. This one can.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 2 ============ -->
+    <section class="slide" id="section-2">
+      <p class="section-num">§ 02</p>
+      <h2 class="claim">The brief takes a position.</h2>
+      <p class="thesis">Most tools give you a grid of signals. Primer gives you a sentence that tells you what posture to walk into the call with — and the architecture underneath is what makes that sentence safe to ship.</p>
+
+      <ul class="evidence">
+        <li><b>Example: Northstar Beauty.</b> The brief says <em>"this is a trust-repair call, not an expansion call."</em> Three paragraphs later the rep knows what to say in the first 60 seconds.</li>
+        <li><b>Rep walks in knowing the posture, not juggling signals.</b> Dashboards concentrate manual work into one tab instead of five; they don't remove the work.</li>
+        <li><b>Comes with real risk.</b> An opinionated product can be wrong. The whole rest of this writeup is about the architecture that makes opinion safe to ship.</li>
+        <li><b>Opinion is higher leverage.</b> A brief that takes a position compounds across the 20 calls a rep makes per week. A dashboard compounds nothing.</li>
+      </ul>
+
+      <div class="two-col">
+        <div class="col vs-left">
+          <h4>What most tools give you</h4>
+          <p>· health: 72</p>
+          <p>· pipeline: $420K</p>
+          <p>· last CSM touch: 14d</p>
+          <p>· NPS: 6</p>
+          <p>· MRR: $28K</p>
+          <p>· renewal: Q3</p>
+          <p>(you synthesize the posture)</p>
+        </div>
+        <div class="col vs-right">
+          <h4>What Primer gives you</h4>
+          <p>Northstar's renewal is soft. A Q1 integration slip, a new CMO, and three dormant weeks in Gong suggest this is a <em>trust-repair call</em>, not an expansion call. Lead with the integration post-mortem before revisiting Q3 expansion.</p>
+        </div>
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>A dashboard-shaped product is easy to ship and hard to justify. Easy because you just pipe the source systems into a grid. Hard because the rep still has to sit there and synthesize a posture. The synthesis is the work. Moving that work into a model — with controls — is the product.</p>
+          <p>The thing a rep actually wants before a call is not more information. It's fewer decisions. "Is this account healthy or at risk?" is a decision. "What's the opening move?" is a decision. "Is this a renewal call or an expansion call?" is a decision. A brief takes those decisions off the rep's plate before the call starts, which is the only thing that changes prep from a chore to a read.</p>
+          <p>The risk, of course, is obvious: what happens when the opinion is wrong? Sections 3 and 4 are the whole answer — deterministic vs. probabilistic is encoded in the UI so the rep knows what to verify, and hallucination is a rendering problem we solved with a second agent, not a prompt tweak.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 3 ============ -->
+    <section class="slide" id="section-3">
+      <p class="section-num">§ 03</p>
+      <h2 class="claim">Deterministic vs. probabilistic is load-bearing but invisible.</h2>
+      <p class="thesis">Every sentence in a Primer brief is either a fact from a system of record or an inference generated by the model. The distinction shapes the UI but is never labeled — the rep learns which claims to verify, not which system produced them.</p>
+
+      <ul class="evidence">
+        <li><b>Deterministic facts carry inline source chips.</b> <span class="source-chip sf">·4</span> maps to a Salesforce record; <span class="source-chip catalyst">·7</span> to a Catalyst note. Click the chip, see the row.</li>
+        <li><b>Inferences use hedged voice.</b> <span class="hedge">"this suggests,"</span> <span class="hedge">"likely,"</span> <span class="hedge">"trends toward."</span> No chip. The rep feels the difference without being told what it means.</li>
+        <li><b>Section confidence in words, not percentages.</b> <em>"likely,"</em> <em>"very likely,"</em> <em>"uncertain."</em> 83% is fake precision.</li>
+        <li><b>The rep never learns the architecture.</b> They learn which claims to verify and which to reference. That's the whole contract.</li>
+      </ul>
+
+      <div class="dp-example">
+        <div class="card">
+          <span class="label">Deterministic</span>
+          Pipeline closed last quarter: $420,000 <span class="source-chip sf">·4</span>
+        </div>
+        <div class="card">
+          <span class="label">Probabilistic</span>
+          <span class="hedge">The pattern of a skipped QBR plus two missed check-ins likely signals an internal priority shift.</span>
+        </div>
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>The temptation is always to put a giant "AI-GENERATED" banner on anything the model produced. Reps hate this. It's annoying, it's condescending, and it doesn't actually help — they already assume everything might be AI. What they need is a way to <em>quickly tell</em> which facts are real and which are inferences, so they know what to back-check before the call.</p>
+          <p>The answer is visual grammar, not labels. A source chip next to a number means <em>this came from a system of record, you can trust the number</em>. Hedged voice ("this suggests," "likely") means <em>the model reasoned to this, treat it as a read not a fact</em>. Section confidence in plain words — "likely," "very likely" — gives the rep a prior on how much weight to put on a whole paragraph.</p>
+          <p>The rep never needs to know that under the hood we're running structured output, per-field attribution, and a validation pass. They just need to know what to verify. The architecture is invisible by design.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 4 ============ -->
+    <section class="slide" id="section-4">
+      <p class="section-num">§ 04</p>
+      <h2 class="claim">Hallucination guardrails are architectural, not prompted.</h2>
+      <p class="thesis">The failure mode that kills trust in tools like this is confident wrong answers. We prevent them at the rendering layer, not the prompt — a second agent reads the draft against the raw data before the brief is displayed.</p>
+
+      <ul class="evidence">
+        <li><b>Structured output with per-field source attribution.</b> The model doesn't emit prose with footnotes; it emits JSON where each claim carries its source <code>account_id</code> → <code>tool</code> → <code>field</code>.</li>
+        <li><b>Validation agent re-reads the brief against the raw data.</b> Cheaper model, narrower job: flag contradictions, missing citations, stale facts. Warnings render in the panel.</li>
+        <li><b>Refusal rather than inference when sources are missing.</b> No data for a section → the section says so. It does not quietly fabricate.</li>
+        <li><b>Staleness timestamps on every cached fact.</b> A 4-week-old Catalyst note is labeled as such. The rep calibrates trust automatically.</li>
+      </ul>
+
+      <div class="warn-ex">
+        <b>Forecast vs. evidence conflict</b>
+        The forecasted close date is this quarter, but Gong conversations show the champion left and no replacement has been identified. Verify with the AE before relying on the forecast.
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>Every team shipping LLM-backed products has had the same conversation about hallucination. The wrong answer to it — the common answer — is "better prompts." A prompt is a string. It cannot provide guarantees. A rep who ships a wrong number to a customer because the model was 83% sure is not a prompt problem, it's a <em>rendering</em> problem: we rendered something as a fact that wasn't one.</p>
+          <p>The right answer is to move correctness into the architecture. The agent emits structured output where each claim is a tuple of <em>(claim, source_id, freshness, confidence)</em>. The renderer has rules about which tuples get chips, which get hedged voice, and which get rejected. A claim with no source doesn't get rendered as a fact — it gets rendered as a refusal or an inference. A contradiction between a forecast and a Gong signal doesn't get swept under the rug — it gets surfaced as a validation warning.</p>
+          <p>The second agent is the last line of defense. It reads the draft side by side with the raw data and looks for the specific failure modes you can't catch in a prompt: claims whose sources were removed, forecasts that disagree with the evidence, numbers that contradict other numbers. Cheap model, narrow job, high value. By the time the brief renders, the structural problems have been flagged.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 5 ============ -->
+    <section class="slide" id="section-5">
+      <p class="section-num">§ 05</p>
+      <h2 class="claim">What I intentionally left out.</h2>
+      <p class="thesis">A V1 is defined more by what it excludes than what it includes. Every exclusion here is load-bearing — it maps to a decision the product is making about what to earn first.</p>
+
+      <ul class="evidence">
+        <li><b>No chat.</b> Reps don't want to ask questions. They want a prepared read. A chat is a dashboard with extra steps.</li>
+        <li><b>No generic dashboards.</b> Only flagged or contradictory data gets prominence. If a number is boring, it doesn't get pixels.</li>
+        <li><b>No write-back.</b> Drafted proposals for rep approval, never direct writes. See §01.</li>
+        <li><b>No multi-account briefings.</b> Scoped to one rep, one call. Portfolio mode is a 60-day feature, not a V1 feature.</li>
+        <li><b>No custom confidence weighting.</b> A validated scoring model matters more than a configurable one. Configurability pushes the accuracy problem onto the customer.</li>
+      </ul>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>Every one of these is a thing the product <em>could</em> have — and in a typical v1 scope review they would have been pulled in. I pulled them out. The argument is the same for each: doing them well requires a longer trust runway than this product has on day one.</p>
+          <p>A chat interface, for example, is a very natural extension. But a chat interface has to be good at the worst possible question the rep will ask, and we don't have enough context on a rep's workflow to be good at that question yet. Shipping chat on day one is shipping a new failure mode. It's better to ship a prepared read that doesn't have that failure mode, see what reps ask for, and then add the narrow chat that serves the two or three asks that recur.</p>
+          <p>Same story for write-back. Same story for portfolio briefings. Same story for generic dashboards. All of them are additions we'd earn later. None of them are V1.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 6 ============ -->
+    <section class="slide" id="section-6">
+      <p class="section-num">§ 06</p>
+      <h2 class="claim">Account Intelligence is the layer. The briefing is one artifact.</h2>
+      <p class="thesis">The briefing is the first thing we ship on this foundation. A 60-day roadmap adds CSM briefs, drafted follow-ups, and rep voice profiles. 90 days adds portfolio-level views. The layer stays; the artifacts multiply.</p>
+
+      <div class="timeline">
+        <div class="step">
+          <p class="when">Day 30</p>
+          <h5>Piloted to one AE team.</h5>
+          <p>This product, logged end-to-end. Manual QA on every brief. Invite three reps, not thirty. Earn the trust before scaling.</p>
+        </div>
+        <div class="step">
+          <p class="when">Day 60</p>
+          <h5>CSMs + drafted follow-ups.</h5>
+          <p>Same layer, new brief type for CSM renewal prep. Drafted post-call follow-up emails in the rep's voice. Rep voice profiles learned from sent-email history.</p>
+        </div>
+        <div class="step">
+          <p class="when">Day 90</p>
+          <h5>Portfolio + QBR + risk.</h5>
+          <p>Portfolio briefings ("here's the state of your book"). Renewal risk alerts. QBR prep as its own brief type. All on the same Account Intelligence layer.</p>
+        </div>
+      </div>
+
+      <ul class="evidence">
+        <li><b>When RevTech ships the unified data layer — the MCP servers repoint.</b> Nothing else changes. The agent keeps running. The UI keeps rendering. The validation pass keeps validating.</li>
+        <li><b>Each brief type is a prompt + a schema, not a new app.</b> Adding QBR prep is a day of work once the layer exists, not a quarter.</li>
+        <li><b>Shared caching, shared rate limits, shared evals.</b> Every new artifact inherits the guardrails that earned the first one's trust.</li>
+      </ul>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>The framing I want the hiring team to leave with is that Primer is not a briefing product. It's an Account Intelligence layer that ships briefings as its first artifact. The distinction matters because it changes what you're underwriting when you back the project.</p>
+          <p>If this is a briefing product, the next quarter is feature creep on the brief. If this is a layer, the next quarter is <em>new brief types on the same foundation</em>, each of which took a day to ship because the expensive part — MCP adapters, the agent pipeline, the validation pass, the rendering rules — is already built.</p>
+          <p>The layer is also what makes the RevTech conversation work. RevTech isn't building briefings; they're building the unified data substrate. Primer is downstream of them. When they ship, the six adapters collapse to one. When they ship faster than expected, Primer gets better. There's no competition because the two teams are at different altitudes in the stack.</p>
+          <p>The 30/60/90 pitch is: day 30, earn trust with one artifact. Day 60, prove the layer generalizes (CSMs, follow-ups, voice). Day 90, prove it scales beyond the per-call unit (portfolios, risk, QBRs). If that sequence works, you have a platform. If it doesn't, you've shipped a good briefing tool — which is still a good outcome.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 7 ============ -->
+    <section class="slide" id="section-7">
+      <p class="section-num">§ 07</p>
+      <h2 class="claim">How I used AI in the build.</h2>
+      <p class="thesis">The prototype went from zero to live in about six hours of elapsed time using Claude Code and Claude Design. That itself is a point about what GTM Engineering means in 2026 — teams that invest in building ship differentiation, teams that rent ship sameness.</p>
+
+      <ul class="evidence">
+        <li><b>Four Claude Code terminals running in parallel.</b> One for data + MCP servers. One for the FastAPI orchestrator + Claude streaming + validation. One for the Next.js + Tailwind frontend. One for infra, deploy, and this writeup.</li>
+        <li><b>Claude Design drove the UI system.</b> Typography pairing, color tokens, component layout — surfaced by Design, rebuilt properly in Next.js + Tailwind v4.</li>
+        <li><b>Specs written first, code second.</b> Eight specs in <code>specs/</code> — dataset, MCP servers, orchestrator, agent, frontend, deployment, writeup — locked down before any terminal started writing.</li>
+        <li><b>This isn't a tool flex; it's an economics argument.</b> Building is now cheap enough that renting off-the-shelf costs you differentiation. The calculus changed.</li>
+      </ul>
+
+      <div class="visual">
+        <p class="vlabel">The four terminals</p>
+        <div class="terminal-grid" aria-hidden="true">
+          <div class="term">
+            <span class="title">T1 · data + mcp</span>
+            <span class="out">seeding primer.db…</span><br>
+            <span class="out">→ 9 accounts</span><br>
+            <span class="out">→ 6 MCP servers</span><br>
+            <span class="ok">✓ all tools respond</span>
+          </div>
+          <div class="term">
+            <span class="title">T2 · orchestrator + agent</span>
+            <span class="out">fastapi started :8000</span><br>
+            <span class="out">mcp clients connected</span><br>
+            <span class="out">streaming brief…</span><br>
+            <span class="ok">✓ SSE wired</span>
+          </div>
+          <div class="term">
+            <span class="title">T3 · frontend</span>
+            <span class="out">next dev :3000</span><br>
+            <span class="out">tailwind v4 ok</span><br>
+            <span class="out">mode switcher live</span><br>
+            <span class="ok">✓ SSE consumer</span>
+          </div>
+          <div class="term">
+            <span class="title">T4 · infra + writeup</span>
+            <span class="out">shellcheck ok</span><br>
+            <span class="out">nginx -t ok</span><br>
+            <span class="out">writeup drafted</span><br>
+            <span class="ok">✓ ready to ship</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>Four terminals in parallel is not a demo of how clever I am with tools. It's a demonstration of a specific argument about where GTM Engineering is in 2026.</p>
+          <p>A year ago, the argument for "build, don't rent" was mostly about control. You bought Outreach or Gong or Salesloft because the build was expensive; you accepted the genericness as the cost of getting to market. The build was a multi-quarter investment with an uncertain payoff. The rent was a checkbox.</p>
+          <p>The calculus changed. A live full-stack prototype of a product that wraps six internal systems, runs a streaming agent, has a validation pass, and deploys to Hetzner behind nginx — in six hours. Not six engineer-weeks. Six hours. That shifts what "build" means. If build is a week's work, renting off-the-shelf is renting sameness. Your competitors can rent the same thing.</p>
+          <p>What teams that invest in internal building ship is differentiation. A brief that takes a position. A validation pass tuned to your source systems. A UI that matches your brand. None of those are on the roadmap of the vendor who sells to everyone. That's the argument.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ SECTION 8 ============ -->
+    <section class="slide" id="section-8">
+      <p class="section-num">§ 08</p>
+      <h2 class="claim">Every interesting decision was a tradeoff.</h2>
+      <p class="thesis">Good calls don't look like best practices. They look like judgments about which risk to take on and which to refuse.</p>
+
+      <div class="tradeoffs">
+        <div class="t">
+          <h5>freshness ↔ cost</h5>
+          <p>Cache with staleness timestamps. Not real-time, not stale — labeled. The rep calibrates.</p>
+        </div>
+        <div class="t">
+          <h5>source of truth ↔ velocity</h5>
+          <p>Surface contradictions, don't reconcile. Reconciliation is a RevTech problem. Primer just shows them.</p>
+        </div>
+        <div class="t">
+          <h5>opinion ↔ informational</h5>
+          <p>Opinion is higher leverage, higher risk. The validation pass is what makes it shippable.</p>
+        </div>
+        <div class="t">
+          <h5>read-only ↔ write-back</h5>
+          <p>Read-only earns trust first. Write-back is a quarter-two conversation, not a quarter-one one.</p>
+        </div>
+        <div class="t">
+          <h5>single account ↔ portfolio</h5>
+          <p>Single is enough for V1. Portfolio is the 90-day extension, on the same layer.</p>
+        </div>
+        <div class="t">
+          <h5>custom weights ↔ validated model</h5>
+          <p>A validated scoring model matters more than a configurable one. Configurability pushes accuracy onto the customer.</p>
+        </div>
+      </div>
+
+      <details class="notes">
+        <summary>Speaker notes</summary>
+        <div class="notes-body">
+          <p>The reason I structured this writeup around tradeoffs is that I think a hiring manager reading it learns more about the way I think from a tradeoff than from a feature list. Any feature can be justified in isolation. What's interesting is what got cut, and why.</p>
+          <p>Freshness vs. cost: the real-time-everything version of this product costs 5× as much to run and earns you a very small amount of rep-perceived improvement, because reps don't make decisions off the last five minutes of data anyway. Cache with labeled staleness is a better product and a cheaper one.</p>
+          <p>Source of truth vs. velocity: the impulse is always to "fix" contradictions in the data — to have Primer decide which system is right. That's a quagmire. Surface the contradiction, let the rep decide, and ship. 's internal RevTech team is the right owner of reconciliation anyway; Primer just makes it visible.</p>
+          <p>Opinion vs. informational: I keep coming back to this because it's the biggest one. The informational version ships safer. The opinionated version is the product. The architecture in sections 3 and 4 is how we make the opinionated version ship-safe. If the architecture weren't there, I would have shipped informational.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ CLOSING ============ -->
+    <section class="closing">
+      <h3>The prototype is live. The source is open. Questions welcome.</h3>
+      <ul>
+        <li><b>Prototype</b> <a href="https://primer.REPLACE_ME.com">primer.REPLACE_ME.com</a></li>
+        <li><b>Source</b> <a href="https://github.com/nick-ruzicka/primer-">github.com/nick-ruzicka/primer-</a></li>
+        <li><b>Demo walkthrough</b> <a href="https://www.loom.com/share/REPLACE_ME">3-min Loom fallback</a></li>
+        <li><b>Contact</b> <a href="mailto:nick.c.ruzicka@gmail.com">nick.c.ruzicka@gmail.com</a></li>
+      </ul>
+      <p class="footer-note">Built with Claude Code + Claude Design, April 2026. This writeup lives inside the product as Mode 4 so one URL carries both the prototype and the thinking.</p>
+    </section>
+
+  </article>
+</body>
+</html>
