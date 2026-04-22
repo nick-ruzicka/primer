@@ -30,7 +30,7 @@ export function Brief({
     <div
       className={cn(
         "min-w-0 flex-1 px-7 pb-10 pt-6",
-        layout === "centered" && "mx-auto max-w-[760px] px-8",
+        layout === "centered" && "mx-auto max-w-[900px] px-8",
         layout === "split" && "border-r border-line",
         isWorkspace &&
           "max-w-[360px] border-r border-line bg-surface/40 px-4 py-4",
