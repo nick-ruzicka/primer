@@ -2,40 +2,33 @@
 
 import { useEffect } from "react";
 import { fetchAccounts } from "./api";
-import { ACCOUNTS_FIXTURE } from "./fixtures/accounts";
-import { loadAccount, MOCK_MODE } from "./sse";
+import { loadAccount } from "./sse";
 import { pushWarning, setAccounts, setMode } from "./store";
 import type { ViewMode } from "./types";
 
 /**
- * Bootstraps the store on mount: fetches /api/accounts (live) unconditionally
- * when the backend is configured; in mock mode (NEXT_PUBLIC_API_BASE unset)
- * the bundled fixture takes over so the UI still works offline.
- *
- * Kicks off the initial stream for the last-viewed account, or the first
- * account in the live catalogue if no preference is stored.
+ * Bootstraps the store on mount: fetches /api/accounts from the live backend
+ * and kicks off the initial stream for the last-viewed account (or the first
+ * account in the catalogue if no preference is stored). If the accounts API is
+ * unreachable, pushes a critical validation warning — the rest of the UI keeps
+ * working against whatever state exists, but a fresh load needs the backend.
  */
 export function useBootstrap(): void {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (MOCK_MODE) {
-        setAccounts(ACCOUNTS_FIXTURE.groups, ACCOUNTS_FIXTURE.standalone);
-      } else {
-        const live = await fetchAccounts();
-        if (cancelled) return;
-        if (live) {
-          setAccounts(live.groups, live.standalone);
-        } else {
-          pushWarning({
-            severity: "critical",
-            type: "missing_ground",
-            message:
-              "Could not reach the accounts API. Check that the backend is running and NEXT_PUBLIC_API_BASE is correct.",
-          });
-          return;
-        }
+      const live = await fetchAccounts();
+      if (cancelled) return;
+      if (!live) {
+        pushWarning({
+          severity: "critical",
+          type: "missing_ground",
+          message:
+            "Could not reach the accounts API. Check that the backend is running and NEXT_PUBLIC_API_BASE is correct.",
+        });
+        return;
       }
+      setAccounts(live.groups, live.standalone);
 
       let target: string | null = null;
       if (typeof window !== "undefined") {
@@ -43,12 +36,8 @@ export function useBootstrap(): void {
         if (stored) target = stored;
       }
       if (!target) {
-        // Default to first account in the catalogue.
-        const state = (await import("./store")).getState();
         target =
-          state.accountGroups[0]?.brands[0]?.id ??
-          state.standalone[0]?.id ??
-          null;
+          live.groups[0]?.brands[0]?.id ?? live.standalone[0]?.id ?? null;
       }
       if (target) loadAccount(target);
     })();
