@@ -225,3 +225,74 @@ amount of framing saves it. The layer framing presumes we earn trust on
 the briefing first. If we don't, we go back to the drawing board on what
 shape the first artifact should be — not on whether the layer framing
 was right.
+
+---
+
+## 9. Two models, routed by agent job — Opus for briefing, Haiku for validation
+
+**Decision.** Primer runs two agents with two different models. The
+briefing agent is on Claude Opus 4.7 (or Sonnet 4.6 as a resilience
+fallback), because the product's value is concentrated in its prose
+quality: it must take a position, argue well, and produce prose that reads
+like a thoughtful colleague wrote it. The validation agent runs on Claude
+Haiku 4.5 because its job is structured constraint-checking against a JSON
+schema, and Haiku handles that with full fidelity at a fraction of the
+latency and cost.
+
+The models are independently configurable via `BRIEFING_MODEL` and
+`VALIDATION_MODEL` in `.env`. No code coupling, no shared prompt
+scaffolding between the two agents beyond the master skill.
+
+Under the V1 demo configuration, the briefing agent is temporarily
+downshifted to Haiku 4.5 to work around a credential constraint (the only
+working Anthropic token tonight was a Claude Code OAuth token sharing
+quota with our interactive session, and Opus/Sonnet requests on that token
+were rate-limited). The operator can flip `BRIEFING_MODEL=claude-opus-4-7`
+in `.env` once a dedicated API key is in place; no other change required.
+
+**Alternatives.**
+
+- **One model for both** (Opus everywhere). Cleaner to reason about, but
+  pays Opus prices to do JSON constraint-checking — the validation agent
+  never needs more than Haiku can deliver. Wastes roughly an order of
+  magnitude on the validation side of every brief.
+- **Haiku everywhere.** What V1 runs tonight under duress. Fast and cheap,
+  but the briefing agent's prose quality drops below the "thoughtful
+  colleague" bar the product depends on. Measured: Haiku briefs average
+  16.7s and ~3,000 characters; Sonnet briefs average 36.6s and ~5,000
+  characters. The 54% latency win is real; the rhetorical-layering loss is
+  also real. Acceptable as a fallback, not the target state.
+- **Opus everywhere + aggressive caching.** Cache every brief for 15
+  minutes to relieve model pressure. We do cache (see Decision #6), but
+  caching can't help the first hit per account — the one that matters
+  most when a rep is prepping for a call.
+- **Max-tokens lever instead of model choice.** We tried dropping
+  `max_tokens` from 2000 to 1200 on Sonnet: only ~2s shaved, because
+  Sonnet was already finishing the brief organically under the cap. The
+  ceiling wasn't the bottleneck; the model's per-token speed was.
+
+**Why this call.** The briefing agent *is* the product's voice. Every
+investment in its prose quality (model tier, prompt tightening, citation
+density) compounds, because the brief is what reps read. The validation
+agent is a constraint checker — "did the brief cite real facts, did two
+sources disagree and did we surface it, is any claim hallucinated?" Those
+are Haiku-scale problems. Using Opus for validation would be using a
+sports car to move boxes.
+
+The right question isn't "which model is best?" but "what is each agent's
+job, and what is the smallest model that reliably does it?" Briefing:
+Opus. Validation: Haiku. The same pattern scales — future richer artifacts
+(QBR prep, portfolio review) run on whatever model delivers their voice;
+future validators stay on Haiku; future simple drafters (follow-up emails
+in a rep's voice) likely stay on Haiku too.
+
+**What we'd reconsider.** If a future Haiku matches current Opus on
+opinionated prose, consolidate to one tier — roughly 2x cost reduction
+with no quality loss. Conversely, if rep-feedback shows briefs need
+richer reasoning than current Opus delivers (e.g. "the brief missed the
+cross-account pattern on Northstar"), consider extended thinking mode or
+the next Opus tier.
+
+The operational lever we will not give up: two models, routed by agent
+job, independently swappable via `.env`. Anything that couples them makes
+both harder to optimize.

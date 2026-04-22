@@ -30,9 +30,35 @@ log = logging.getLogger(__name__)
 # using OAuth so the token's Claude Code scope is honored.
 _OAUTH_SYSTEM_PREAMBLE = "You are Claude Code, Anthropic's official CLI for Claude."
 
-PROMPTS_DIR = Path(__file__).parent / "prompts"
-_BRIEFING_PROMPT = (PROMPTS_DIR / "briefing.md").read_text()
-_VALIDATION_PROMPT = (PROMPTS_DIR / "validation.md").read_text()
+SKILLS_DIR = Path(__file__).parent / "skills"
+
+
+def _load_skill(relpath: str) -> str:
+    return (SKILLS_DIR / relpath).read_text()
+
+
+_MASTER_SKILL = _load_skill("master.md")
+_PRE_CALL_BRIEF_SKILL = _load_skill("artifact_types/pre_call_brief.md")
+_BRIEF_VALIDATION_SKILL = _load_skill("validation/brief_validation.md")
+
+# Briefing agent: master constitutional rules inherited first, then the
+# pre-call brief artifact skill specializes. Same pattern will work for
+# future artifacts (QBR prep, portfolio review, renewal-risk alert, etc.).
+_BRIEFING_PROMPT = _MASTER_SKILL + "\n\n---\n\n" + _PRE_CALL_BRIEF_SKILL
+
+# Validation agent: its own skill governs its behavior (emit JSON, not prose),
+# and the master skill is attached below as reference material — the yardstick
+# it measures the brief against, not rules it follows itself.
+_VALIDATION_PROMPT = (
+    _BRIEF_VALIDATION_SKILL
+    + "\n\n---\n\n"
+    + "# Reference — master skill rules\n\n"
+    + "Below are the rules the briefing agent was required to follow. "
+    + "Use them as the checklist you evaluate the brief against. "
+    + "Do not apply them to your own output; your output is JSON, not prose.\n\n"
+    + "---\n\n"
+    + _MASTER_SKILL
+)
 
 
 # ---- citation registry ----------------------------------------------------

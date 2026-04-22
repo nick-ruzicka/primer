@@ -18,9 +18,11 @@ backend/
 ├── cache.py            Redis wrapper — brief cache + per-IP rate limit
 ├── config.py           Settings from .env (Anthropic, Redis, models, anchor date)
 ├── logging_setup.py    Structured JSON logs, one event per line
-├── prompts/
-│   ├── briefing.md     Opus-tier system prompt, with {today} placeholder
-│   └── validation.md   Haiku-tier validation system prompt
+├── skills/             Agent prompt layer — master constitution + artifact skills
+│   ├── master.md                         constitutional rules every artifact inherits
+│   ├── artifact_types/pre_call_brief.md  pre-call brief artifact skill
+│   ├── validation/brief_validation.md    validation checker for briefs
+│   └── README.md                         how the skill layer works + how to add artifacts
 ├── VERIFICATION_LOG.md  Phase-by-phase smoke results
 └── sweep_output/       Per-account brief + metrics from `scripts/sweep_briefings.py`
 ```
@@ -135,9 +137,11 @@ distinction.
    walks the bundle and allocates monotonic `fact_id`s. Every fact the
    agent is allowed to cite has exactly one id, one source, and one
    timestamp (where available).
-5. **Stream Opus/Sonnet** — system prompt loaded from
-   `prompts/briefing.md`, `{today}` replaced with `ANCHOR_DATE`
-   (default `2026-04-22`). Each text delta becomes a `brief_chunk`.
+5. **Stream the briefing agent** — system prompt is
+   `skills/master.md` + `skills/artifact_types/pre_call_brief.md`
+   concatenated (master inheritance), with `{today}` replaced by
+   `ANCHOR_DATE` (default `2026-04-22`). See `backend/skills/README.md`
+   for how the skill layer works. Each text delta becomes a `brief_chunk`.
 6. **Detect citations** — a running regex over the accumulated text
    catches `·N` markers. Each new, complete marker maps to its fact and
    emits a `source_cited` event with the fact text + source. Digits that
