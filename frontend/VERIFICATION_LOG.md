@@ -8,6 +8,32 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T02:45:00Z — Phase 3 · Brief rendering
+
+**Status:** PASS
+
+**Compared:** all four mode screenshots in `verification-output/2026-04-22_phase3-mode-*.png` against references `02_split_view_dark.png`, `03_workspace_view_dark.png`, `04_reading_view_dark.png`, `06_reading_view_scrolled.png`.
+
+**Matches:**
+- Section 01 · The read (very likely): serif body (Fraunces 17.5px 1.6 line height, max-width 62ch), bolded key phrases (`trust-repair call`, `vendor-consolidation review`, `18,500 past-due balance`, `Commit`), inline citation chips with source-colored dots.
+- Section 02 · Why this read (likely): sans body (Inter Tight 14px 1.6 line-height, max-width 68ch), italic hedge lines at paragraph ends.
+- Section 03 · What to do on the call (agent recommendation, yellow accent pill): A1–A5 actions with bold body + italic rationale, dashed dividers between items.
+- Section 04 · Suggested talk track (draft — not sent, neutral pill): auto-numbered talk-list.
+- Confidence hedge pills: four variants render distinctly (purple filled for very-likely, purple muted for likely, yellow for agent-recommendation, neutral grey for draft).
+- Citation chips: `·N` pattern with 6 source palette (sf blue, catalyst green, netsuite teal, snowflake cyan, gong lavender, exa amber, internal grey).
+- Mode switching via keyboard 1/2/3 works; Workspace variant makes sections collapsible with chevron indicator.
+- Reading mode shows the Intelligence pill in the topbar (not the inline right column).
+
+**Deliberate design deltas from spec (documented in `lib/fixtures/northstar-beauty-brief.ts`):**
+- Brief body is stored as structured `Paragraph[]` rather than raw markdown. The `marked`-based parser in `05_FRONTEND_SPEC.md` is appropriate for streaming output from the real agent; for the fixture we have the exact shape the reference renders and precision outweighs consistency with a library we don't need. Spec's `parseBriefSections` regex is still implemented (in `lib/markdown.ts`, Phase 5) for the live path.
+- A helper `briefToMarkdown(fixture)` produces the markdown string the mock SSE will emit, so the frontend can render either form without divergence.
+
+**Minor drift (Phase 7 polish):**
+- Brief column gradient from the reference (subtle AI-surface → AI-surface-2) isn't yet applied; the dark theme is correct but the light theme has a flat surface where reference has a lavender wash.
+- Workspace mode's left column is currently a fixed 360px; reference feels slightly wider. Nudge in Phase 7 if it still reads off.
+
+---
+
 ## 2026-04-22T02:10:00Z — Phase 2 · Static shell
 
 **Status:** PASS (with minor drift noted)

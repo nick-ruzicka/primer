@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AccountHeader } from "@/components/account-header";
+import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { LeftRail } from "@/components/left-rail";
 import { Topbar } from "@/components/topbar";
@@ -9,6 +10,8 @@ import { TweaksPanel, type Density, type VerifyIntensity } from "@/components/tw
 import { TweaksTrigger } from "@/components/tweaks-trigger";
 import { findAccount, NORTHSTAR_GROUP, OTHER_UPCOMING_VISIBLE } from "@/lib/fixtures/accounts";
 import { CURRENT_USER, DEFAULT_BRIEF_META, DEFAULT_SOURCE_STATUSES } from "@/lib/fixtures/brief-meta";
+import { NORTHSTAR_BEAUTY_BRIEF } from "@/lib/fixtures/northstar-beauty-brief";
+import { cn } from "@/lib/utils";
 import type { ViewMode } from "@/lib/types";
 
 export default function BriefingPage() {
@@ -19,8 +22,10 @@ export default function BriefingPage() {
   const [verify, setVerify] = useState<VerifyIntensity>("subtle");
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [intelligenceOpen, setIntelligenceOpen] = useState(false);
+  const [hoveredEvid, setHoveredEvid] = useState<string | null>(null);
 
   const account = findAccount(activeId) ?? NORTHSTAR_GROUP.brands[0];
+  const brief = NORTHSTAR_BEAUTY_BRIEF; // Phase 5 swaps this for store-driven state
 
   // Theme toggling — flip `.dark` on <html>
   useEffect(() => {
@@ -76,14 +81,38 @@ export default function BriefingPage() {
             staleCount={DEFAULT_BRIEF_META.staleCount}
             generatedAgo={DEFAULT_BRIEF_META.generatedAgo}
           />
-          <main className="flex-1" aria-label="Brief + intelligence">
-            {/* Phase 3/4 fills this in */}
-            <div className="px-7 py-10 font-serif text-[14px] text-ink-3">
-              <p>
-                Static shell ready. Brief + intelligence render in phase 3–4.
-                Current mode: <b className="font-semibold text-ink">{mode}</b>.
-              </p>
-            </div>
+          <main
+            className={cn(
+              "flex flex-1 min-h-0",
+              mode === "split" && "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+              mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
+              mode === "reading" && "flex-col",
+            )}
+            aria-label="Brief + intelligence"
+          >
+            {mode === "reading" ? (
+              <Brief
+                brief={brief}
+                layout="centered"
+                hoveredEvid={hoveredEvid}
+                onCitationHover={setHoveredEvid}
+              />
+            ) : (
+              <Brief
+                brief={brief}
+                layout={mode === "workspace" ? "workspace" : "split"}
+                hoveredEvid={hoveredEvid}
+                onCitationHover={setHoveredEvid}
+              />
+            )}
+            {mode !== "reading" && (
+              <aside
+                className="min-w-0 overflow-y-auto bg-surface px-5 py-6 text-[12px] text-ink-3"
+                aria-label="Account intelligence"
+              >
+                <p className="italic">Intelligence panel renders in phase 4.</p>
+              </aside>
+            )}
           </main>
         </div>
       </div>
