@@ -50,6 +50,7 @@ export default function BriefingPage() {
   const warnings = useStore((s) => s.warnings);
   const accountGroups = useStore((s) => s.accountGroups);
   const standaloneAccounts = useStore((s) => s.standalone);
+  const generationMeta = useStore((s) => s.generationMeta);
   const accountsLoading =
     accountGroups.length === 0 && standaloneAccounts.length === 0;
 
@@ -120,9 +121,7 @@ export default function BriefingPage() {
               parentGroupName={displayAccount.parent_group_name}
             />
             <ConfidenceStrip
-              confidence={
-                brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence
-              }
+              confidence={generationMeta.totalTokens ?? 0}
               confidenceLabel={
                 brief.fixture?.confidence_label ??
                 DEFAULT_BRIEF_META.confidenceLabel

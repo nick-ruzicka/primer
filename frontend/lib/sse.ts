@@ -196,10 +196,10 @@ function resetLiveBriefBuffer(accountId: string) {
   liveRevealedIds = new Set();
   liveBriefFixture = {
     account_id: accountId,
-    // Live confidence isn't currently part of the SSE contract; show a
-    // neutral placeholder until the backend emits it in `done` or a
-    // dedicated event. Historical fixtures (mock) retain their exact value.
-    confidence: 78,
+    // Ring reads from generationMeta.totalTokens in page.tsx; fixture value is
+    // ignored in live mode. Kept as a typed zero so the mock path still
+    // satisfies BriefFixture.
+    confidence: 0,
     confidence_label: "likely",
     sections: [],
     citations: [],
