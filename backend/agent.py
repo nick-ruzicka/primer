@@ -489,7 +489,17 @@ def get_client() -> AsyncAnthropic:
         _using_oauth = True
         log.info("agent.client.init", extra={"mode": "oauth"})
     elif mode == "api_key":
-        _client = AsyncAnthropic(api_key=SETTINGS.anthropic_api_key)
+        # Symmetric to the oauth branch: scrub any stale auth_token from env
+        # so the SDK doesn't send ``Authorization: Bearer `` (empty) alongside
+        # the api_key. python-dotenv sets empty env vars to "", which the SDK
+        # reads as "auth_token is set" and produces a malformed header.
+        import os as _os
+
+        _os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
+        _client = AsyncAnthropic(
+            api_key=SETTINGS.anthropic_api_key,
+            auth_token=None,
+        )
         _using_oauth = False
         log.info("agent.client.init", extra={"mode": "api_key"})
     else:
