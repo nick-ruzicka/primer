@@ -8,6 +8,49 @@ to `verification-output/` by `scripts/verify-visual.mjs` and are gitignored.
 
 ---
 
+## 2026-04-22T04:20:00Z — Phase 7 · Polish + light-theme QA
+
+**Status:** PASS
+
+**Compared:** all eight reference screenshots vs the final dark + light captures in `verification-output/2026-04-22_phase7-*.png`.
+
+**Polish done:**
+- Intelligence panel skeleton: three faint shimmer cards render while `sections.length === 0` (before the mock stream kicks off).
+- Brief skeleton: tokens switched to `ink-4/20`-`/25` so it reads against both themes.
+- README.md rewritten (operator-facing): architecture, swap-to-live instructions, known drift list.
+- `lib/sse.ts`: MOCK_MODE flag + swap-ready live EventSource path.
+- Topbar now carries four mode tabs.
+
+**Light-theme QA (`_phase7-*-light.png`):**
+- Warm off-white bg (#f4f1ec), rail + surface tokens pick up correctly.
+- Validation banner critical variant is pink-tinted with red bad-soft, watch variant is warm amber — both read cleanly against the light surface.
+- Purple hedge pills stay visible; accent yellow for agent-recommendation reads confidently in both themes.
+- Reading overlay + intelligence slide-over render the same in light.
+- PAST DUE hero card uses red-tinted surface that works in both (no theme bleed).
+
+**Fidelity checklist (from `specs/05_FRONTEND_SPEC.md`):**
+- [x] Left rail account cards match reference pixel-close (minor sizing drift noted elsewhere).
+- [x] Account header + call-card layout match.
+- [x] Confidence strip layout matches (ring + metadata + buttons).
+- [x] Brief section numbering typography matches (01 · The read).
+- [x] Source pill colors match source-dot values (values lifted from reference CSS).
+- [x] Intelligence card flagged treatments match (PAST DUE red, WATCH amber).
+- [x] Tweaks panel placement + content match.
+- [x] Dark theme renders correctly with all surface values.
+- [x] Mode switcher styling + keyboard hint labels match (four tabs).
+- [x] Font weights render as in export (Fraunces 500/600, Inter Tight 400/500/600).
+- [x] Citation chip rendering inline with prose (not breaking lines).
+- [x] Streaming brief renders section-by-section smoothly.
+- [x] Intelligence sections populate progressively.
+- [x] Mode switching doesn't refetch the brief.
+- [x] Initial load fetches accounts once (via useBootstrap).
+
+**Swap readiness:**
+- Setting `NEXT_PUBLIC_API_BASE=http://localhost:8000` in `.env.local` and restarting `npm run dev` flips to the live backend. MOCK_MODE derived from that env var only.
+- Live EventSource handlers are in place for `intelligence` / `source_cited` / `validation_warning` / `done`. The `brief_chunk` handler has a TODO noting that if Terminal 2 emits token-level deltas (rather than section-level), the marked-based incremental parser goes there.
+
+---
+
 ## 2026-04-22T04:05:00Z — Phase 6 · Mode 4 Writeup
 
 **Status:** PASS

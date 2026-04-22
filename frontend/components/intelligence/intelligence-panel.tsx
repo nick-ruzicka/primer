@@ -112,6 +112,8 @@ export function IntelligencePanel({
           </header>
         )}
 
+        {sections.length === 0 && <IntelligenceSkeleton />}
+
         {sections.map((section, sectionIdx) => {
           const visible = section.items.filter(itemMatches);
           if (visible.length === 0) return null;
@@ -142,6 +144,25 @@ export function IntelligencePanel({
         })}
       </div>
     </aside>
+  );
+}
+
+function IntelligenceSkeleton() {
+  return (
+    <div className="animate-pulse space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-lg border border-line bg-surface-2/40 p-4">
+          <div className="h-3 w-20 rounded bg-ink-4/20" />
+          <div className="mt-3 h-5 w-3/4 rounded bg-ink-4/25" />
+          <div className="mt-2 h-3 w-full rounded bg-ink-4/15" />
+          <div className="mt-1.5 h-3 w-[85%] rounded bg-ink-4/15" />
+          <div className="mt-3 flex gap-2">
+            <div className="h-4 w-14 rounded-full bg-ink-4/15" />
+            <div className="h-4 w-12 rounded-full bg-ink-4/15" />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
