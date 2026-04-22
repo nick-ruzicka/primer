@@ -87,6 +87,17 @@ export default function BriefingPage() {
     0,
   );
 
+  // For prospects (arr_cents === 0), pull the open-pipeline dollar amount from
+  // the Commercial section's pipeline line — typically an item whose sub reads
+  // "Discovery · Pipeline" with value like "$220K". Not available on
+  // /api/accounts, so we derive it from the live intelligence stream.
+  const prospectPipeline =
+    displayAccount.arr_cents === 0
+      ? (intelligence.commercial?.items.find(
+          (i) => /pipeline/i.test(i.sub ?? "") && /\$/.test(i.value ?? ""),
+        )?.value ?? null)
+      : null;
+
   return (
     <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
       <LeftRail
@@ -119,6 +130,7 @@ export default function BriefingPage() {
             <AccountHeader
               account={displayAccount}
               parentGroupName={displayAccount.parent_group_name}
+              prospectPipeline={prospectPipeline}
             />
             <ConfidenceStrip
               confidence={generationMeta.totalTokens ?? 0}
