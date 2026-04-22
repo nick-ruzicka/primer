@@ -22,6 +22,10 @@ When an artifact emits inline source citations, the format is fixed:
 - Placed directly after the fact, before punctuation: `"Catalyst moved Beauty to Watchlist on Mar 28 ·4."`
 - Monotonically increasing through the artifact. A fact cited twice reuses the same number.
 - No footnote syntax (`^1`, `[1]`), no parentheses around the marker, no backticks wrapping it.
+- **When citing multiple consecutive facts, separate each chip with a single space: `·14 ·15`.** Never comma-separate citations (`·14,15` or `·14, 15`). Each fact_id gets its own independent chip, not a compound marker.
+  - INCORRECT: `"past-due $18K with AP blocked ·14,15"`
+  - INCORRECT: `"past-due $18K with AP blocked ·14, ·15"`
+  - CORRECT:   `"past-due $18K with AP blocked ·14 ·15"`
 
 ## 3. Context handling
 
