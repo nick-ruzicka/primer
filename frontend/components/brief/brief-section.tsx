@@ -44,8 +44,8 @@ export function BriefSection({
     >
       <header
         className={cn(
-          "brief-head flex items-baseline gap-2.5 border-b border-dashed border-line pb-2 mb-2.5",
-          isWorkspace && "border-b-0 mb-0 pb-1 cursor-pointer select-none",
+          "brief-head flex items-baseline gap-2.5 border-l-4 border-l-accent pl-4 mb-20 pb-0",
+          isWorkspace && "border-b border-line border-l-0 pl-0 mb-0 pb-1 cursor-pointer select-none",
         )}
         onClick={isWorkspace ? () => setOpen((o) => !o) : undefined}
         onKeyDown={
@@ -63,7 +63,7 @@ export function BriefSection({
         aria-expanded={isWorkspace ? isOpen : undefined}
       >
         <span className="brief-kicker">{section.id}</span>
-        <h2 className="brief-title">
+        <h2 className="brief-title text-2xl font-semibold text-ink-2">
           {section.id === "01" && (
             <span className="yellow-accent" aria-hidden />
           )}
@@ -89,9 +89,9 @@ export function BriefSection({
 
       {isOpen && (
         <div>
-          <p className="brief-preview">{section.preview}</p>
+          <p className="brief-preview text-ink-3 mt-1 mb-4">{section.preview}</p>
           {section.paragraphs && (
-            <div className={section.id === "01" ? "the-read" : "why-stack"}>
+            <div className={cn(section.id === "01" ? "the-read" : "why-stack", "prose-body")}>
               {section.paragraphs.map((p, idx) => (
                 <p key={idx}>
                   <Prose

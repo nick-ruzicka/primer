@@ -615,3 +615,17 @@ body {
 .account-dot.cool {
   background: var(--color-state-cool);
 }
+
+/* ---------- Brief section spacing and prose body ---------- */
+.prose-body p {
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.brief-section {
+  margin-bottom: 5rem;
+}
+
+.brief-section:first-child {
+  margin-top: 2rem;
+}
