@@ -177,6 +177,18 @@ export function setBriefFixture(fixture: BriefFixture) {
   }));
 }
 
+/**
+ * Replace the fixture's sections without resetting per-section reveal flags.
+ * Used by the live brief streamer to swap in refined section structures as
+ * more of the markdown arrives, without re-playing the reveal animation.
+ */
+export function updateLiveBriefFixture(fixture: BriefFixture) {
+  setState((s) => ({
+    ...s,
+    brief: { ...s.brief, fixture },
+  }));
+}
+
 export function revealBriefSection(sectionId: "01" | "02" | "03" | "04") {
   setState((s) => ({
     ...s,

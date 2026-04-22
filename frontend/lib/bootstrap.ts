@@ -1,26 +1,40 @@
 "use client";
 
 import { useEffect } from "react";
+import { fetchAccounts } from "./api";
 import { ACCOUNTS_FIXTURE } from "./fixtures/accounts";
 import { loadAccount } from "./sse";
 import { setAccounts, setMode } from "./store";
 import type { ViewMode } from "./types";
 
 /**
- * Bootstraps the store on mount: loads the account catalogue, restores the
- * last-viewed account (or defaults to the Northstar Beauty hero account), and
- * kicks off the initial stream.
+ * Bootstraps the store on mount: loads the account catalogue (live /api/accounts
+ * if configured, fixture otherwise), restores the last-viewed account (or
+ * defaults to the Northstar Beauty hero account), and kicks off the initial
+ * stream.
  */
 export function useBootstrap(): void {
   useEffect(() => {
-    setAccounts(ACCOUNTS_FIXTURE.groups, ACCOUNTS_FIXTURE.standalone);
+    let cancelled = false;
+    (async () => {
+      const live = await fetchAccounts();
+      if (cancelled) return;
+      if (live) {
+        setAccounts(live.groups, live.standalone);
+      } else {
+        setAccounts(ACCOUNTS_FIXTURE.groups, ACCOUNTS_FIXTURE.standalone);
+      }
 
-    let target = "ns-beauty";
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem("primer:lastAccount");
-      if (stored) target = stored;
-    }
-    loadAccount(target);
+      let target = "ns-beauty";
+      if (typeof window !== "undefined") {
+        const stored = window.localStorage.getItem("primer:lastAccount");
+        if (stored) target = stored;
+      }
+      loadAccount(target);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 }
 
