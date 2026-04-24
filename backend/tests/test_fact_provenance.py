@@ -325,3 +325,30 @@ def test_build_context_blob_snowflake_split():
     assert by_field["sends_30d"].provenance == "raw"
     assert by_field["mau"].provenance == "raw"
     assert by_field["percentile"].provenance == "scored"
+
+
+def test_build_context_blob_exa_surfaced_with_url():
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+    bundle = IntelligenceBundle(
+        salesforce={}, catalyst={}, netsuite={}, gong={}, snowflake={},
+        exa={
+            "search_account_signals": [
+                {
+                    "title": "LinkedIn post by Priya Shah",
+                    "snippet": "Thinking hard about vendor consolidation for 2026.",
+                    "url": "https://linkedin.com/posts/priya-shah-abc123",
+                    "published_at": "2026-04-09",
+                },
+            ],
+        },
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    exa_facts = [f for f in fb.all() if f.source == "exa"]
+    assert len(exa_facts) >= 1
+    ef = exa_facts[0]
+    assert ef.provenance == "surfaced"
+    assert ef.snippet == "Thinking hard about vendor consolidation for 2026."
+    assert ef.url == "https://linkedin.com/posts/priya-shah-abc123"
+    assert ef.field is None
+    assert ef.value_display is None
