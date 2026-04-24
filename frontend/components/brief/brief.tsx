@@ -74,7 +74,10 @@ export function Brief({
         <>
           <ReferencesSection
             id="references-section"
-            citations={brief.citations}
+            citations={
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              brief.citations as any
+            }
             onReferenceClick={(citationId) => {
               const citation = getCitationById(citationId);
               setSelectedReferenceForModal(citation);
