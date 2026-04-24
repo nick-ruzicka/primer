@@ -181,309 +181,252 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
 
     sections: list[str] = [f"# ACCOUNT CONTEXT FOR BRIEFING — {account_id}"]
 
-    # Account ------------------------------------------------------------
+    # ---- Salesforce: Account (all RAW) ----
     acc = bundle.salesforce.get("get_account")
     if isinstance(acc, dict):
-        parts = [
-            f"{acc.get('account_name')} ({account_id}).",
-            f"Parent: {acc.get('parent_account_name') or 'none'}.",
-            f"Industry: {acc.get('industry')} · segment: {acc.get('segment')}.",
-            f"ARR: {_money(acc.get('arr_cents'))}.",
-            f"Employees: {acc.get('employees')}.",
-            f"HQ: {acc.get('hq_city')}, {acc.get('hq_state')}.",
-            f"Stage: {acc.get('stage')} · state: {acc.get('state')}.",
-            f"AE: {acc.get('owner_name')} ({acc.get('owner_role')}).",
-        ]
-        fact = fb.add("salesforce", " ".join(parts))
-        sections.append(f"## Account\n[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
+        now = _now_iso()
+        def _sf_account(field: str, value_display: str, text: str) -> None:
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Accounts",
+                field=field,
+                value_display=value_display,
+                retrieved_at=now,
+                time_ago="just now",
+                text=text,
+            )
 
-    # Contract ----------------------------------------------------------
+        account_name = acc.get("account_name")
+        if account_name:
+            _sf_account("account_name", account_name, f"Salesforce account_name: {account_name}.")
+
+        industry = acc.get("industry")
+        segment = acc.get("segment")
+        if industry or segment:
+            display = f"{industry} · {segment}" if industry and segment else (industry or segment)
+            _sf_account("industry", display, f"Salesforce industry: {display}.")
+
+        arr = acc.get("arr_cents")
+        if arr is not None:
+            _sf_account("arr_cents", _money(arr), f"Salesforce ARR: {_money(arr)}.")
+
+        emp = acc.get("employees")
+        if emp is not None:
+            _sf_account("employees", str(emp), f"Salesforce employees: {emp}.")
+
+        hq_city, hq_state = acc.get("hq_city"), acc.get("hq_state")
+        if hq_city and hq_state:
+            _sf_account("hq", f"{hq_city}, {hq_state}", f"Salesforce HQ: {hq_city}, {hq_state}.")
+
+        stage = acc.get("stage")
+        if stage:
+            _sf_account("stage", stage, f"Salesforce stage: {stage}.")
+
+        owner = acc.get("owner_name")
+        owner_role = acc.get("owner_role")
+        if owner:
+            display = f"{owner} ({owner_role})" if owner_role else owner
+            _sf_account("owner", display, f"Salesforce owner: {display}.")
+
+    # ---- Salesforce: Contract ----
     contract = bundle.salesforce.get("get_contract")
     if isinstance(contract, dict):
-        fact = fb.add(
-            "salesforce",
-            (
-                f"Plan: {contract.get('plan_name')}. "
-                f"Contract runs {contract.get('contract_start')} → {contract.get('contract_end')}. "
-                f"Auto-renew: {'on' if contract.get('auto_renew') else 'off'}. "
-                f"Seats: {contract.get('seats_used')}/{contract.get('seats_licensed')}."
-            ),
-            timestamp=contract.get("contract_end"),
-        )
-        sections.append(f"## Contract\n[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
+        now = _now_iso()
+        def _sf_contract(field: str, value_display: str, text: str, data_as_of: str | None = None) -> None:
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Contracts",
+                field=field,
+                value_display=value_display,
+                retrieved_at=now,
+                data_as_of=data_as_of,
+                time_ago=_time_ago_from_iso(data_as_of) if data_as_of else "just now",
+                text=text,
+            )
+        plan = contract.get("plan_name")
+        if plan:
+            _sf_contract("plan_name", plan, f"Salesforce plan: {plan}.")
+        start = contract.get("contract_start")
+        end = contract.get("contract_end")
+        if start and end:
+            _sf_contract(
+                "contract_term",
+                f"{start} → {end}",
+                f"Salesforce contract term: {start} → {end}.",
+                data_as_of=end,
+            )
+        auto = contract.get("auto_renew")
+        if auto is not None:
+            _sf_contract("auto_renew", "on" if auto else "off", f"Salesforce auto-renew: {'on' if auto else 'off'}.")
+        used, licensed = contract.get("seats_used"), contract.get("seats_licensed")
+        if used is not None and licensed is not None:
+            _sf_contract(
+                "seats",
+                f"{used} / {licensed}",
+                f"Salesforce seats: {used}/{licensed}.",
+            )
     elif contract is None:
-        fact = fb.add(
-            "salesforce",
-            "No contract on file — account is a prospect, not a customer.",
+        now = _now_iso()
+        fb.add(
+            provenance="raw",
+            source="salesforce",
+            source_system="Salesforce",
+            source_module="Contracts",
+            field="contract",
+            value_display="— (prospect)",
+            retrieved_at=now,
+            time_ago="just now",
+            text="No contract on file — account is a prospect, not a customer.",
         )
-        sections.append(f"## Contract\n[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
 
-    # Contacts ----------------------------------------------------------
+    # ---- Salesforce: Contacts ----
     contacts = bundle.salesforce.get("get_contacts") or []
-    if isinstance(contacts, list) and contacts:
-        contact_lines = []
+    if isinstance(contacts, list):
+        now = _now_iso()
         for c in contacts:
+            name = c.get("name")
+            if not name:
+                continue
+            title = c.get("title", "")
+            role = c.get("role", "")
             months = c.get("tenure_months")
             tenure = (
-                f"{months // 12}y {months % 12}m tenure"
+                f"{months // 12}y {months % 12}m"
                 if months and months >= 12
-                else (f"{months}m tenure" if months else "tenure unknown")
+                else (f"{months}m" if months else "—")
             )
-            fact = fb.add(
-                "salesforce",
-                f"{c.get('name')}, {c.get('title')}. Role: {c.get('role')}. {tenure}.",
+            display = f"{title}, {tenure} tenure" if title else tenure
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Contacts",
+                field=f"contact.{name}",
+                value_display=display,
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"{name} — {title}. Role: {role}. Tenure: {tenure}.",
             )
-            contact_lines.append(f"[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## Contacts\n" + "\n".join(contact_lines))
 
-    # Relationship health + renewal + expansion ------------------------
-    health = bundle.catalyst.get("get_relationship_health")
-    if isinstance(health, dict) and health.get("relationship_status"):
-        bits = [f"Status: {health.get('relationship_status')}"]
-        if health.get("status_since"):
-            bits.append(f"since {health.get('status_since')}")
-        score = health.get("relationship_score")
-        prior = health.get("relationship_score_prior")
-        delta = health.get("relationship_score_delta")
-        if score is not None:
-            bits.append(
-                f"score {score}"
-                + (
-                    f" (was {prior}, delta {delta:+d})"
-                    if prior is not None and delta is not None
-                    else ""
-                )
-            )
-        if health.get("last_executive_touch"):
-            bits.append(f"last exec touch {health.get('last_executive_touch')}")
-        if health.get("notes"):
-            bits.append(f"notes: {health.get('notes')}")
-        fact = fb.add(
-            "catalyst",
-            " · ".join(bits) + ".",
-            timestamp=health.get("status_since"),
-        )
-        sections.append(
-            f"## Relationship health\n[source: catalyst, fact_id: {fact.fact_id}] {fact.text}"
-        )
-    elif isinstance(health, dict):
-        fact = fb.add(
-            "catalyst",
-            f"Catalyst row exists but relationship fields are null. Notes: {health.get('notes','(none)')}.",
-        )
-        sections.append(
-            f"## Relationship health\n[source: catalyst, fact_id: {fact.fact_id}] {fact.text}"
-        )
+    # NOTE: Catalyst blocks not refactored yet (Task 6); skip to avoid crashes
+    # from old positional argument calls to fb.add().
 
-    renewal = bundle.catalyst.get("get_renewal_forecast")
-    if isinstance(renewal, dict) and renewal.get("renewal_forecast"):
-        fact = fb.add(
-            "catalyst",
-            f"Catalyst renewal forecast: {renewal.get('renewal_forecast')}. Notes: {renewal.get('notes','')}",
-        )
-        sections.append(
-            f"## Catalyst renewal forecast\n[source: catalyst, fact_id: {fact.fact_id}] {fact.text}"
-        )
-
-    expansion = bundle.catalyst.get("get_expansion_readiness")
-    if isinstance(expansion, dict) and expansion.get("expansion_readiness"):
-        fact = fb.add(
-            "catalyst",
-            f"Catalyst expansion readiness: {expansion.get('expansion_readiness')}.",
-        )
-        sections.append(
-            f"## Expansion readiness\n[source: catalyst, fact_id: {fact.fact_id}] {fact.text}"
-        )
-
-    # Open opportunities ------------------------------------------------
+    # ---- Salesforce: Open opportunities ----
     open_opps = bundle.salesforce.get("get_open_opportunities") or []
-    if isinstance(open_opps, list) and open_opps:
-        opp_lines = []
-        for o in open_opps:
-            fact = fb.add(
-                "salesforce",
-                (
-                    f"{o.get('opp_name')} — stage {o.get('stage')}, "
-                    f"amount {_money(o.get('amount_cents'))}, "
-                    f"close date {o.get('close_date')}, "
-                    f"forecast category {o.get('forecast_category')}."
-                ),
-                timestamp=o.get("close_date"),
+    if isinstance(open_opps, list):
+        now = _now_iso()
+        for opp in open_opps:
+            name = opp.get("opp_name")
+            if not name:
+                continue
+            amount = opp.get("amount_cents")
+            close = opp.get("close_date")
+            fc = opp.get("forecast_category")
+            stage = opp.get("stage")
+            parts = []
+            if stage:
+                parts.append(f"stage={stage}")
+            if fc:
+                parts.append(f"forecast={fc}")
+            if amount is not None:
+                parts.append(f"amount={_money(amount)}")
+            if close:
+                parts.append(f"close={close}")
+            display = " · ".join(parts) if parts else name
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Opportunities",
+                field=f"opp.{name}",
+                value_display=display,
+                retrieved_at=now,
+                data_as_of=close,
+                time_ago=_time_ago_from_iso(close) if close else "just now",
+                text=f"Salesforce open opportunity: {name} — {display}.",
             )
-            opp_lines.append(f"[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## Open opportunities\n" + "\n".join(opp_lines))
 
-    # Recent closed opps -----------------------------------------------
+    # ---- Salesforce: Recent closed opportunities ----
     closed_opps = bundle.salesforce.get("get_recent_closed_opportunities") or []
-    if isinstance(closed_opps, list) and closed_opps:
-        lines = []
-        for o in closed_opps:
-            fact = fb.add(
-                "salesforce",
-                (
-                    f"{o.get('opp_name')} — {o.get('stage')}, "
-                    f"amount {_money(o.get('amount_cents'))}, "
-                    f"closed {o.get('close_date')}."
-                ),
-                timestamp=o.get("close_date"),
+    if isinstance(closed_opps, list):
+        now = _now_iso()
+        for opp in closed_opps:
+            name = opp.get("opp_name")
+            if not name:
+                continue
+            stage = opp.get("stage", "")
+            amount = opp.get("amount_cents")
+            close = opp.get("close_date")
+            display_parts = [stage] if stage else []
+            if amount is not None:
+                display_parts.append(_money(amount))
+            if close:
+                display_parts.append(close)
+            display = " · ".join(display_parts) or name
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Opportunities (closed)",
+                field=f"closed.{name}",
+                value_display=display,
+                retrieved_at=now,
+                data_as_of=close,
+                time_ago=_time_ago_from_iso(close) if close else "—",
+                text=f"Salesforce closed opportunity: {name} — {display}.",
             )
-            lines.append(f"[source: salesforce, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## Recent closed opportunities\n" + "\n".join(lines))
 
-    # Billing -----------------------------------------------------------
-    billing = bundle.netsuite.get("get_billing_status")
-    if isinstance(billing, dict):
-        past_due = billing.get("past_due_balance_cents") or 0
-        if past_due:
-            fact = fb.add(
-                "netsuite",
-                (
-                    f"Past-due balance {_money(past_due)} "
-                    f"({billing.get('past_due_days')} days overdue). "
-                    f"Current balance {_money(billing.get('current_balance_cents'))}."
-                ),
+    # NOTE: NetSuite blocks not refactored yet (Task 7); skip to avoid crashes
+    # from old positional argument calls to fb.add().
+
+    # NOTE: Snowflake blocks not refactored yet (Task 9); skip to avoid crashes
+    # from old positional argument calls to fb.add().
+
+    # ---- Salesforce: Account hierarchy ----
+    hierarchy = bundle.salesforce.get("get_account_hierarchy")
+    if isinstance(hierarchy, dict):
+        now = _now_iso()
+        parent = hierarchy.get("parent_account_name")
+        if parent:
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Account hierarchy",
+                field="parent_account",
+                value_display=parent,
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Salesforce parent account: {parent}.",
             )
-        else:
-            fact = fb.add(
-                "netsuite",
-                f"Billing current. Current balance {_money(billing.get('current_balance_cents'))}, no past-due.",
+        subs = hierarchy.get("subsidiaries") or []
+        if isinstance(subs, list) and subs:
+            fb.add(
+                provenance="raw",
+                source="salesforce",
+                source_system="Salesforce",
+                source_module="Account hierarchy",
+                field="subsidiaries",
+                value_display=f"{len(subs)} subsidiaries",
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Salesforce subsidiaries: {', '.join(str(s) for s in subs)}.",
             )
-        sections.append(
-            f"## Billing status\n[source: netsuite, fact_id: {fact.fact_id}] {fact.text}"
-        )
-    elif billing is None:
-        fact = fb.add("netsuite", "No billing row — account is not a customer yet.")
-        sections.append(
-            f"## Billing status\n[source: netsuite, fact_id: {fact.fact_id}] {fact.text}"
-        )
 
-    ap = bundle.netsuite.get("get_ap_policy_flags")
-    if isinstance(ap, dict) and ap.get("ap_blocked"):
-        fact = fb.add(
-            "netsuite",
-            (
-                f"AP blocked on {ap.get('ap_blocked_date')}. "
-                f"Reason: {ap.get('ap_blocked_reason','').strip()}"
-            ),
-            timestamp=ap.get("ap_blocked_date"),
-        )
-        sections.append(
-            f"## AP policy\n[source: netsuite, fact_id: {fact.fact_id}] {fact.text}"
-        )
+    # NOTE: Gong blocks not refactored yet (Task 8); skip to avoid crashes
+    # from old positional argument calls to fb.add().
 
-    invoices = bundle.netsuite.get("get_recent_invoices") or []
-    if isinstance(invoices, list) and invoices:
-        lines = []
-        for inv in invoices[:3]:
-            fact = fb.add(
-                "netsuite",
-                f"Invoice {inv.get('invoice_number')} — {_money(inv.get('amount_cents'))} on {inv.get('invoice_date')}.",
-                timestamp=inv.get("invoice_date"),
-            )
-            lines.append(f"[source: netsuite, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## Recent invoices\n" + "\n".join(lines))
+    # NOTE: Exa blocks not refactored yet (Task 10); skip to avoid crashes
+    # from old positional argument calls to fb.add().
 
-    # Usage -------------------------------------------------------------
-    usage = bundle.snowflake.get("get_usage_metrics")
-    if isinstance(usage, dict) and "_error" not in usage:
-        fact = fb.add(
-            "snowflake",
-            (
-                f"Sends last 30d {usage.get('sends_30d')} (prior {usage.get('sends_prior_30d')}, "
-                f"trend {_fmt_pct(usage.get('sends_trend_pct'))}). "
-                f"Flows {usage.get('flows_active')}/{usage.get('flows_provisioned')} "
-                f"({usage.get('flows_paused_this_period')} paused this period). "
-                f"Health {usage.get('health_score')} (was {usage.get('health_score_prior')}, delta {usage.get('health_delta')}). "
-                f"Adoption {usage.get('adoption_score')} vs group avg {usage.get('adoption_group_avg')}. "
-                f"Last send {usage.get('last_send_date')}."
-            ),
-            timestamp=usage.get("last_send_date"),
-        )
-        sections.append(
-            f"## Product usage\n[source: snowflake, fact_id: {fact.fact_id}] {fact.text}"
-        )
-
-    # Portfolio comparison ---------------------------------------------
-    comp = bundle.snowflake.get("get_portfolio_comparison")
-    if isinstance(comp, dict) and comp.get("siblings"):
-        lines = []
-        for sib in comp["siblings"]:
-            fact = fb.add(
-                "snowflake",
-                (
-                    f"Sibling {sib.get('account_name')} — health {sib.get('health_score')}, "
-                    f"adoption {sib.get('adoption_score')}, "
-                    f"sends {sib.get('sends_30d')} (trend {_fmt_pct(sib.get('sends_trend_pct'))})."
-                ),
-            )
-            lines.append(f"[source: snowflake, fact_id: {fact.fact_id}] {fact.text}")
-        if lines:
-            sections.append("## Portfolio comparison (siblings)\n" + "\n".join(lines))
-
-    # Hierarchy / parent snapshot -------------------------------------
-    hier = bundle.salesforce.get("get_account_hierarchy")
-    if isinstance(hier, dict) and hier.get("parent"):
-        parent = hier["parent"]
-        siblings = hier.get("siblings") or []
-        sib_names = ", ".join(
-            f"{s.get('account_name')} ({_money(s.get('arr_cents'))}, {s.get('stage')})"
-            for s in siblings
-        )
-        fact = fb.add(
-            "salesforce",
-            (
-                f"Parent {parent.get('account_name')}. "
-                f"{len(siblings) + 1} accounts in group. "
-                f"Siblings: {sib_names or 'none'}."
-            ),
-        )
-        sections.append(
-            f"## Account hierarchy\n[source: salesforce, fact_id: {fact.fact_id}] {fact.text}"
-        )
-
-    # Recent calls ------------------------------------------------------
-    calls = bundle.gong.get("get_recent_calls") or []
-    if isinstance(calls, list) and calls:
-        lines = []
-        for c in calls[:5]:
-            bits = [
-                f"{c.get('call_type')} on {c.get('call_date')}",
-                f"sentiment {c.get('sentiment')}",
-            ]
-            if c.get("competitor_mentioned"):
-                bits.append(
-                    f"competitor {c.get('competitor_name')} mentioned {c.get('competitor_mention_count')}x"
-                )
-            if c.get("pricing_pushback"):
-                bits.append("pricing pushback")
-            summary = (c.get("summary") or "").strip()
-            fact = fb.add(
-                "gong",
-                f"{' · '.join(bits)}. Summary: {summary}",
-                timestamp=c.get("call_date"),
-            )
-            lines.append(f"[source: gong, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## Recent calls (Gong)\n" + "\n".join(lines))
-
-    # External signals --------------------------------------------------
-    signals = bundle.exa.get("search_account_signals") or []
-    if isinstance(signals, list) and signals:
-        lines = []
-        for s in signals[:8]:
-            snippet = (s.get("snippet") or "").replace("\n", " ").strip()
-            fact = fb.add(
-                "web",
-                (
-                    f"{s.get('signal_type')} via {s.get('source')} on {s.get('signal_date')}: "
-                    f"{s.get('title')}. {snippet}"
-                ),
-                timestamp=s.get("signal_date"),
-                meta={"url": s.get("url"), "reliability": s.get("reliability")},
-            )
-            lines.append(f"[source: web, fact_id: {fact.fact_id}] {fact.text}")
-        sections.append("## External signals (Exa)\n" + "\n".join(lines))
-
-    blob = "\n\n".join(sections)
+    # Combine sections with FactBook facts (Salesforce per-field facts are in fb, not sections)
+    sections_blob = "\n\n".join(sections)
+    fb_blob = fb.to_raw_context()
+    blob = f"{sections_blob}\n\n{fb_blob}" if sections_blob and fb_blob else (sections_blob or fb_blob)
     return blob, fb
 
 
