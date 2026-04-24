@@ -179,8 +179,6 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
     """Assemble the context blob + FactBook for the briefing agent."""
     fb = FactBook()
 
-    sections: list[str] = [f"# ACCOUNT CONTEXT FOR BRIEFING — {account_id}"]
-
     # ---- Salesforce: Account (all RAW) ----
     acc = bundle.salesforce.get("get_account")
     if isinstance(acc, dict):
@@ -732,14 +730,57 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 text=f"Gong pricing signal ({direction}): {text_val}.",
             )
 
-    # NOTE: Exa blocks not refactored yet (Task 10); skip to avoid crashes
-    # from old positional argument calls to fb.add().
+    # ---- Exa: Account signals (SURFACED — third-party web content) ----
+    account_signals = bundle.exa.get("search_account_signals") or []
+    if isinstance(account_signals, list):
+        now = _now_iso()
+        for hit in account_signals:
+            snippet = hit.get("snippet") or hit.get("text") or ""
+            if not snippet:
+                continue
+            title = hit.get("title", "")
+            published = hit.get("published_at") or hit.get("date")
+            url = hit.get("url")
+            fb.add(
+                provenance="surfaced",
+                source="exa",
+                source_system="Exa",
+                source_module=title or "Web result",
+                snippet=snippet,
+                url=url,
+                retrieved_at=now,
+                data_as_of=published,
+                time_ago=_time_ago_from_iso(published) if published else "just now",
+                text=f"Exa: {title} — \"{snippet[:160]}{'…' if len(snippet) > 160 else ''}\".",
+            )
 
-    # Combine sections with FactBook facts (Salesforce per-field facts are in fb, not sections)
-    sections_blob = "\n\n".join(sections)
-    fb_blob = fb.to_raw_context()
-    blob = f"{sections_blob}\n\n{fb_blob}" if sections_blob and fb_blob else (sections_blob or fb_blob)
-    return blob, fb
+    # ---- Exa: Decision-maker signals (SURFACED) ----
+    dm_signals = bundle.exa.get("get_decision_maker_signals") or []
+    if isinstance(dm_signals, list):
+        now = _now_iso()
+        for hit in dm_signals:
+            snippet = hit.get("snippet") or hit.get("text") or ""
+            if not snippet:
+                continue
+            author = hit.get("author", "")
+            title = hit.get("title", "")
+            published = hit.get("published_at") or hit.get("date")
+            url = hit.get("url")
+            module = f"{title} · {author}" if (title and author) else (title or author or "Web result")
+            fb.add(
+                provenance="surfaced",
+                source="exa",
+                source_system="Exa",
+                source_module=module,
+                snippet=snippet,
+                url=url,
+                retrieved_at=now,
+                data_as_of=published,
+                time_ago=_time_ago_from_iso(published) if published else "just now",
+                text=f"Exa DM signal — {author} · \"{snippet[:160]}{'…' if len(snippet) > 160 else ''}\".",
+            )
+
+    return f"# ACCOUNT CONTEXT FOR BRIEFING — {account_id}\n\n" + fb.to_raw_context(), fb
 
 
 # ---- Anthropic client -----------------------------------------------------
