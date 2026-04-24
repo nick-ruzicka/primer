@@ -312,8 +312,108 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 text=f"{name} — {title}. Role: {role}. Tenure: {tenure}.",
             )
 
-    # NOTE: Catalyst blocks not refactored yet (Task 6); skip to avoid crashes
-    # from old positional argument calls to fb.add().
+    # ---- Catalyst: Relationship health (mixed RAW + SCORED) ----
+    health = bundle.catalyst.get("get_relationship_health")
+    if isinstance(health, dict):
+        now = _now_iso()
+        status = health.get("relationship_status")
+        status_since = health.get("status_since")
+        if status:
+            fb.add(
+                provenance="raw",
+                source="catalyst",
+                source_system="Catalyst",
+                source_module="Relationship health",
+                field="relationship_status",
+                value_display=status,
+                retrieved_at=now,
+                data_as_of=status_since,
+                time_ago=_time_ago_from_iso(status_since) if status_since else "just now",
+                text=f"Catalyst relationship_status: {status}"
+                     + (f" (since {status_since})" if status_since else "") + ".",
+            )
+
+        score = health.get("relationship_score")
+        prior = health.get("relationship_score_prior")
+        delta = health.get("relationship_score_delta")
+        if score is not None:
+            delta_text = ""
+            if prior is not None and delta is not None:
+                delta_text = f" (was {prior}, delta {delta:+d})"
+            fb.add(
+                provenance="scored",
+                source="catalyst",
+                source_system="Catalyst",
+                source_module="Relationship health",
+                field="relationship_score",
+                value_display=f"{score} / 100",
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Catalyst relationship_score: {score}{delta_text}.",
+            )
+
+        last_exec = health.get("last_executive_touch")
+        if last_exec:
+            fb.add(
+                provenance="raw",
+                source="catalyst",
+                source_system="Catalyst",
+                source_module="Relationship health",
+                field="last_executive_touch",
+                value_display=last_exec,
+                retrieved_at=now,
+                data_as_of=last_exec,
+                time_ago=_time_ago_from_iso(last_exec),
+                text=f"Catalyst last_executive_touch: {last_exec}.",
+            )
+
+        notes = health.get("notes")
+        if notes:
+            fb.add(
+                provenance="raw",
+                source="catalyst",
+                source_system="Catalyst",
+                source_module="Relationship health",
+                field="notes",
+                value_display=notes[:80] + ("…" if len(notes) > 80 else ""),
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Catalyst notes: {notes}",
+            )
+
+    # ---- Catalyst: Renewal forecast (SCORED) ----
+    renewal = bundle.catalyst.get("get_renewal_forecast")
+    if isinstance(renewal, dict) and renewal.get("renewal_forecast"):
+        now = _now_iso()
+        fc = renewal["renewal_forecast"]
+        fb.add(
+            provenance="scored",
+            source="catalyst",
+            source_system="Catalyst",
+            source_module="Forecast",
+            field="renewal_forecast",
+            value_display=fc,
+            retrieved_at=now,
+            time_ago="just now",
+            text=f"Catalyst renewal_forecast: {fc}. Notes: {renewal.get('notes', '')}".strip(),
+        )
+
+    # ---- Catalyst: Expansion readiness (SCORED) ----
+    expansion = bundle.catalyst.get("get_expansion_readiness")
+    if isinstance(expansion, dict) and expansion.get("expansion_readiness"):
+        now = _now_iso()
+        er = expansion["expansion_readiness"]
+        fb.add(
+            provenance="scored",
+            source="catalyst",
+            source_system="Catalyst",
+            source_module="Expansion readiness",
+            field="expansion_readiness",
+            value_display=er,
+            retrieved_at=now,
+            time_ago="just now",
+            text=f"Catalyst expansion_readiness: {er}.",
+        )
 
     # ---- Salesforce: Open opportunities ----
     open_opps = bundle.salesforce.get("get_open_opportunities") or []
@@ -877,8 +977,14 @@ def _time_ago_from_iso(iso: str | None, anchor: str | None = None) -> str:
         then = datetime.fromisoformat(iso.replace("Z", "+00:00"))
     except ValueError:
         return "—"
+    # Treat naive datetimes (e.g. date-only "2026-04-01") as UTC so subtraction
+    # with an aware datetime doesn't raise TypeError.
+    if then.tzinfo is None:
+        then = then.replace(tzinfo=timezone.utc)
     if anchor:
         now = datetime.fromisoformat(anchor.replace("Z", "+00:00"))
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
     else:
         now = datetime.now(timezone.utc)
     delta = now - then

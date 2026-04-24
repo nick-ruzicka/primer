@@ -196,3 +196,44 @@ def test_build_context_blob_emits_per_field_salesforce_facts():
     assert "account_name" in fields
     assert "arr_cents" in fields
     assert "stage" in fields
+
+
+def test_build_context_blob_splits_catalyst_by_provenance():
+    """Catalyst's get_relationship_health mixes RAW (status, last exec
+    touch) and SCORED (relationship_score, score_delta) fields."""
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+
+    bundle = IntelligenceBundle(
+        salesforce={},
+        catalyst={
+            "get_relationship_health": {
+                "relationship_status": "Watchlist",
+                "status_since": "2026-04-01",
+                "relationship_score": 61,
+                "relationship_score_prior": 68,
+                "relationship_score_delta": -7,
+                "last_executive_touch": "2026-03-10",
+            },
+            "get_renewal_forecast": {
+                "renewal_forecast": "Best Case",
+                "notes": "ap_block_opened",
+            },
+            "get_expansion_readiness": {
+                "expansion_readiness": "Hold",
+            },
+        },
+        netsuite={}, gong={}, snowflake={}, exa={},
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    catalyst_facts = [f for f in fb.all() if f.source == "catalyst"]
+    by_field = {f.field: f for f in catalyst_facts}
+
+    assert by_field["relationship_status"].provenance == "raw"
+    assert by_field["last_executive_touch"].provenance == "raw"
+    assert by_field["relationship_score"].provenance == "scored"
+    assert by_field["renewal_forecast"].provenance == "scored"
+    assert by_field["expansion_readiness"].provenance == "scored"
+
+    assert by_field["relationship_score"].value_display == "61 / 100"
+    assert by_field["renewal_forecast"].value_display == "Best Case"
