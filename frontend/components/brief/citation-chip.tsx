@@ -24,9 +24,9 @@ export function CitationChip({
   onMouseLeave,
   onClick,
 }: Props) {
-  const src = citation?.source ?? citation?.source_system?.toLowerCase() ?? "internal";
+  const src = citation?.source_system?.toLowerCase() ?? "internal";
   const title = citation
-    ? `${citation.label ?? citation.source_system} · ${citation.time_ago}`
+    ? `${citation.source_system} · ${citation.time_ago}`
     : `Citation ${n} · loading…`;
   return (
     <button

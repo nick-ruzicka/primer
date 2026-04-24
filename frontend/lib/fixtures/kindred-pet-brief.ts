@@ -1,4 +1,3 @@
-import type { CitationMeta } from "../types";
 import type {
   BriefFixture,
   InlineNode,
@@ -176,9 +175,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "Jamie Park (replaced Rowan Sato, Feb 2026)",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "3m ago",
-      source: "sf",
-      label: "Salesforce — Jamie Park replaced Rowan Sato (Feb)",
-    } as CitationMeta,
+    },
     {
       n: 2,
       evid: "kp-sends",
@@ -189,9 +186,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "↓ 41% since DM change (Feb)",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
-      source: "snowflake",
-      label: "Snowflake — sends down 41% since DM change",
-    } as CitationMeta,
+    },
     {
       n: 3,
       evid: "kp-health",
@@ -202,9 +197,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "48 / 100 (down from 81)",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "5m ago",
-      source: "catalyst",
-      label: "Catalyst — relationship 48 (down from 81)",
-    } as CitationMeta,
+    },
     {
       n: 4,
       evid: "kp-call",
@@ -215,9 +208,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "Jamie: 'full potential otherwise we'll consolidate'",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "7 days ago",
-      source: "gong",
-      label: "Gong — Jamie on 'full potential otherwise consolidate'",
-    } as CitationMeta,
+    },
     {
       n: 5,
       evid: "kp-li",
@@ -230,9 +221,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       retrieved_at: "2026-04-22T14:00:00Z",
       data_as_of: "2026-04-13T00:00:00Z",
       time_ago: "9 days ago",
-      source: "exa",
-      label: "LinkedIn — Jamie on consolidating marketing stack",
-    } as CitationMeta,
+    },
     {
       n: 6,
       evid: "kp-flows",
@@ -243,9 +232,7 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "4 of 12 provisioned (8 paused)",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
-      source: "snowflake",
-      label: "Snowflake — 4 of 12 flows active",
-    } as CitationMeta,
+    },
     {
       n: 7,
       evid: "kp-exec",
@@ -256,8 +243,6 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       value_display: "127 days cold (Mei Chen — CMO)",
       retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "5m ago",
-      source: "catalyst",
-      label: "Catalyst — exec sponsor 127 days cold",
-    } as CitationMeta,
+    },
   ],
 };

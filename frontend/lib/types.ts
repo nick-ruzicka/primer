@@ -99,12 +99,6 @@ type CitationCommon = {
   data_as_of?: string;
   /** Pre-computed human relative string from backend: "pulled 2h ago", "posted 13d ago". */
   time_ago: string;
-
-  // ---- back-compat shim (drop after final migration pass, Task 22) ----
-  /** @deprecated use source_system. Kept during migration. */
-  source?: string;
-  /** @deprecated use field + value_display or snippet. Kept during migration. */
-  label?: string;
 };
 
 /**
