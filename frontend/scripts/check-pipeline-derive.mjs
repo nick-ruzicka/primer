@@ -56,7 +56,9 @@ let fail = 0;
 for (const [label, input, expected] of cases) {
   const got = deriveProspect(input);
   const ok = got === expected;
-  console.log(`  ${ok ? "ok  " : "FAIL"} ${label} → ${JSON.stringify(got)} (expected ${JSON.stringify(expected)})`);
+  console.log(
+    `  ${ok ? "ok  " : "FAIL"} ${label} → ${JSON.stringify(got)} (expected ${JSON.stringify(expected)})`,
+  );
   if (!ok) fail++;
 }
 process.exit(fail);

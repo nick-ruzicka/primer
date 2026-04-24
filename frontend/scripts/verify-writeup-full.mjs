@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-/** Full Mode 4 writeup capture — hero, middle sections, closing. */
-import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+/** Full Mode 4 writeup capture — hero, middle sections, closing. */
+import { chromium } from "@playwright/test";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -35,12 +35,16 @@ const stops = [
 
 for (const stop of stops) {
   await page.evaluate((y) => {
-    const scroller = document.querySelector("main") ?? document.querySelector('[role="article"]') ?? document.scrollingElement;
+    const scroller =
+      document.querySelector("main") ??
+      document.querySelector('[role="article"]') ??
+      document.scrollingElement;
     const writeup = document.querySelector("article");
     if (writeup) {
       // the writeup article's parent is a scrollable div
       const target = writeup.parentElement;
-      if (target && target.scrollTo) target.scrollTo({ top: y, behavior: "instant" });
+      if (target && target.scrollTo)
+        target.scrollTo({ top: y, behavior: "instant" });
     }
   }, stop.y);
   await page.waitForTimeout(250);
@@ -53,7 +57,9 @@ console.log(`Wrote ${stops.length} writeup screenshots`);
 
 // Also expand all speaker notes and capture
 await page.evaluate(() => {
-  document.querySelectorAll("details").forEach((d) => d.setAttribute("open", ""));
+  document
+    .querySelectorAll("details")
+    .forEach((d) => d.setAttribute("open", ""));
 });
 await page.waitForTimeout(300);
 await page.evaluate(() => {

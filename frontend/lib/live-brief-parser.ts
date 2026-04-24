@@ -60,12 +60,12 @@ export function parseStreamingBrief(markdown: string): ParseResult {
     // A section counts as "complete enough to render" if the next header exists
     // (hard boundary) or if we see a blank line that terminates its last block.
     const isLast = i === headers.length - 1;
-    const looksDone = !isLast || body.trimEnd().endsWith("");
+    const looksDone = !isLast || /\n\s*\n\s*$/.test(body);
     if (isLast && body.trim().length < 10) {
       streamingId = h.id;
       continue;
     }
-    if (!isLast || looksDone) {
+    if (looksDone) {
       const section = buildSection(h.id, h.title, body);
       if (section) {
         complete.push(section);
