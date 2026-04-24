@@ -16,8 +16,8 @@ import {
   setBriefFixture,
   updateLiveBriefFixture,
 } from "./store";
-import type { CitationMeta as NewCitationMeta } from "./types";
 import type {
+  CitationMeta,
   IntelligenceItem,
   IntelligenceSection,
   IntelSectionId,
@@ -119,12 +119,8 @@ async function runMockStream(
       );
       appendCitations(citationsForSection);
       for (const c of citationsForSection) {
-        pushSourceCited({
-          citation_number: c.n,
-          source: c.source,
-          time_ago: c.time_ago,
-          evid: c.evid,
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pushSourceCited(c as any);
         await sleep(40, signal);
       }
     }
@@ -368,7 +364,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
         source: data.source,
         label: data.label ?? data.fact ?? "",
       };
-      let citation: NewCitationMeta;
+      let citation: CitationMeta;
       if (data.provenance === "surfaced") {
         citation = {
           ...base,
@@ -385,10 +381,8 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
           value_display: data.value_display ?? data.fact ?? "",
         };
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushSourceCited(citation as any);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      appendCitations([citation] as any);
+      pushSourceCited(citation);
+      appendCitations([citation]);
     } catch (err) {
       console.error("[primer] source_cited parse error", err);
     }
