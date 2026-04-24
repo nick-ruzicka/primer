@@ -157,3 +157,42 @@ def test_time_ago_from_iso_sub_hour_windows():
     from backend.agent import _time_ago_from_iso
     assert _time_ago_from_iso("2026-04-24T13:59:30Z", anchor="2026-04-24T14:00:00Z") == "30s ago"
     assert _time_ago_from_iso("2026-04-24T13:45:00Z", anchor="2026-04-24T14:00:00Z") == "15m ago"
+
+
+def test_build_context_blob_emits_per_field_salesforce_facts():
+    """After the refactor, Salesforce get_account should emit one fact per
+    meaningful attribute, not one bundled fact."""
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+
+    bundle = IntelligenceBundle(
+        salesforce={
+            "get_account": {
+                "account_name": "Northstar Beauty",
+                "parent_account_name": "Northstar Group",
+                "industry": "Beauty & Personal Care",
+                "segment": "DTC",
+                "arr_cents": 94_000_000,
+                "employees": 260,
+                "hq_city": "Los Angeles",
+                "hq_state": "CA",
+                "stage": "Renewal",
+                "state": "hot",
+                "owner_name": "Morgan Yu",
+                "owner_role": "Senior Account Executive",
+            }
+        },
+        catalyst={}, netsuite={}, gong={}, snowflake={}, exa={},
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    sf_facts = [f for f in fb.all() if f.source == "salesforce"]
+    # Expect at least: account_name, industry+segment, arr, employees,
+    # hq, stage, owner = ~7 facts from get_account alone
+    assert len(sf_facts) >= 6
+    assert all(f.provenance == "raw" for f in sf_facts)
+    assert all(f.field is not None for f in sf_facts)
+    assert all(f.source_system == "Salesforce" for f in sf_facts)
+    fields = {f.field for f in sf_facts}
+    assert "account_name" in fields
+    assert "arr_cents" in fields
+    assert "stage" in fields
