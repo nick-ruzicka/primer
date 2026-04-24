@@ -34,26 +34,19 @@ export function ReferenceModal({
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
-              Citation
-            </label>
-            <p className="text-sm mt-1 text-ink">{citation.label}</p>
+            <p className="text-sm leading-relaxed text-ink">
+              {citation.label}
+            </p>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
-              Last Updated
-            </label>
-            <p className="text-sm mt-1 text-ink-2">{citation.time_ago}</p>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
-              Source ID
-            </label>
-            <p className="text-sm mt-1 font-mono text-ink-2">{citation.source}</p>
+          <div className="pt-2 border-t border-line">
+            <p className="text-xs text-ink-3">
+              <span className="font-semibold">Source:</span> {citation.source}
+              <br />
+              <span className="font-semibold">Updated:</span> {citation.time_ago}
+            </p>
           </div>
         </div>
       </div>
