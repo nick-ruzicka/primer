@@ -81,20 +81,31 @@ class CacheClient:
             log.warning("cache.invalidate_failed", extra={"error": str(exc)})
 
     async def check_rate_limit(self, ip: str) -> tuple[bool, int]:
-        """Return (allowed, remaining). No-op permits if Redis is down."""
+        """Return (allowed, remaining). Fails closed if Redis is unreachable.
+
+        Uses a MULTI pipeline so INCR + EXPIRE are a single atomic round-trip —
+        otherwise a crash between the two commands would leave the key without
+        a TTL, permanently locking out the IP.
+        """
         if not self.available or self._client is None:
-            return True, self._rate_limit
+            # Fail closed — a broken cache shouldn't open the rate-limit gate.
+            log.warning("cache.rate_limit_unavailable")
+            return False, 0
         try:
             key = f"ratelimit:{ip}"
-            count = await self._client.incr(key)
-            if count == 1:
-                await self._client.expire(key, 3600)
+            async with self._client.pipeline(transaction=True) as pipe:
+                pipe.incr(key)
+                pipe.expire(key, 3600)
+                results = await pipe.execute()
+            count = int(results[0])
             remaining = max(0, self._rate_limit - count)
             allowed = count <= self._rate_limit
             return allowed, remaining
         except Exception as exc:  # noqa: BLE001
             log.warning("cache.rate_limit_failed", extra={"error": str(exc)})
-            return True, self._rate_limit
+            # Fail closed on transient errors too — safer than allowing
+            # unbounded traffic.
+            return False, 0
 
 
 _cache: CacheClient | None = None

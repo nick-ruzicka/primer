@@ -34,12 +34,38 @@ from .mcp_client import MCPPool, set_pool
 log = logging.getLogger("backend")
 
 
+def _require_debug_token(request: Request) -> None:
+    """Gate /debug/* endpoints. When DEBUG_TOKEN is unset the endpoints are
+    disabled entirely (safer default than wide-open). When set, callers must
+    supply it via ``X-Debug-Token`` or ``?token=`` to match."""
+    expected = SETTINGS.debug_token
+    if not expected:
+        raise HTTPException(status_code=404, detail="Not found")
+    supplied = request.headers.get("x-debug-token") or request.query_params.get("token")
+    if supplied != expected:
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 # ---- lifespan --------------------------------------------------------------
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(SETTINGS.log_level)
+    # Fail fast at startup if essential config is missing. Deferring these
+    # checks until the first briefing request means a misconfigured deploy
+    # looks healthy to monitoring but fails for users.
+    from pathlib import Path as _Path
+
+    if not SETTINGS.anthropic_api_key and not SETTINGS.anthropic_auth_token:
+        raise RuntimeError(
+            "Missing Anthropic credentials: set ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN"
+        )
+    if not _Path(SETTINGS.database_path).exists():
+        raise RuntimeError(
+            f"SQLite database not found at {SETTINGS.database_path}. "
+            f"Run `uv run python data/seed.py` to create it."
+        )
     log.info(
         "startup.begin",
         extra={
@@ -129,11 +155,15 @@ async def health() -> dict[str, Any]:
 
 
 @app.get("/debug/mcp-smoke")
-async def mcp_smoke() -> dict[str, Any]:
+async def mcp_smoke(request: Request) -> dict[str, Any]:
+    _require_debug_token(request)
     from .mcp_client import get_pool
 
     pool = get_pool()
+    first_group = list_accounts().get("groups", [])
     probe_account = "northstar_beauty"
+    if first_group and first_group[0].get("brands"):
+        probe_account = first_group[0]["brands"][0].get("id", probe_account)
     results: dict[str, Any] = {}
     for server in pool.servers:
         tools = pool.list_tools(server)
@@ -160,7 +190,8 @@ async def mcp_smoke() -> dict[str, Any]:
 
 
 @app.get("/debug/intelligence/{account_id}")
-async def debug_intelligence(account_id: str) -> dict[str, Any]:
+async def debug_intelligence(account_id: str, request: Request) -> dict[str, Any]:
+    _require_debug_token(request)
     from .mcp_client import get_pool
 
     canonical = resolve_account_id(account_id)
@@ -181,7 +212,8 @@ async def debug_intelligence(account_id: str) -> dict[str, Any]:
 
 
 @app.get("/debug/context/{account_id}")
-async def debug_context(account_id: str) -> dict[str, Any]:
+async def debug_context(account_id: str, request: Request) -> dict[str, Any]:
+    _require_debug_token(request)
     from .mcp_client import get_pool
 
     canonical = resolve_account_id(account_id)
@@ -221,9 +253,19 @@ async def accounts() -> JSONResponse:
 
 
 def _client_ip(request: Request) -> str:
+    # Prefer X-Real-IP (nginx sets it from $remote_addr, not attacker-controllable).
+    # Fall back to the LAST entry of X-Forwarded-For — nginx's
+    # $proxy_add_x_forwarded_for appends the real client IP, so the tail is the
+    # trustworthy one. Taking the head would let a client spoof their IP by
+    # sending their own X-Forwarded-For.
+    real = request.headers.get("x-real-ip")
+    if real:
+        return real.strip()
     fwd = request.headers.get("x-forwarded-for")
     if fwd:
-        return fwd.split(",")[0].strip()
+        parts = [p.strip() for p in fwd.split(",") if p.strip()]
+        if parts:
+            return parts[-1]
     return request.client.host if request.client else "unknown"
 
 
@@ -265,14 +307,14 @@ async def _briefing_event_stream(
     # 2. Fan out. Emit intelligence events as soon as the bundle is ready.
     try:
         bundle = await fetch_intelligence(pool, account_id)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         log.exception("briefing.fetch_intelligence_failed", extra={"account_id": account_id})
         yield record_and_yield(
             "validation_warning",
             {
                 "severity": "critical",
                 "type": "missing_ground",
-                "message": f"Intelligence fetch failed: {exc!s}",
+                "message": "Intelligence fetch failed.",
                 "brief_excerpt": "",
                 "sources": [],
             },
@@ -294,14 +336,14 @@ async def _briefing_event_stream(
     # 3. Build the context blob + FactBook.
     try:
         context_blob, fact_book = build_context_blob(account_id, bundle)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         log.exception("briefing.context_blob_failed", extra={"account_id": account_id})
         yield record_and_yield(
             "validation_warning",
             {
                 "severity": "critical",
                 "type": "missing_ground",
-                "message": f"Context construction failed: {exc!s}",
+                "message": "Context construction failed.",
                 "brief_excerpt": "",
                 "sources": [],
             },
@@ -315,29 +357,57 @@ async def _briefing_event_stream(
         )
         return
 
-    # 4. Stream the brief from Claude.
+    # 4. Stream the brief from Claude. Run the producer in its own task so we
+    # can cancel it — including the upstream Anthropic connection — the moment
+    # the client disconnects. Without this, an abandoned browser tab lets the
+    # Anthropic call finish at full cost.
     brief_markdown = ""
     total_tokens = 0
+    queue: asyncio.Queue[Any] = asyncio.Queue()
+    SENTINEL = object()
+
+    async def _producer() -> None:
+        try:
+            async for evt in stream_brief(account_id, bundle, fact_book, context_blob):
+                await queue.put(evt)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:  # noqa: BLE001
+            await queue.put(exc)
+        finally:
+            await queue.put(SENTINEL)
+
+    producer_task = asyncio.create_task(_producer())
     try:
-        async for evt in stream_brief(account_id, bundle, fact_book, context_blob):
+        while True:
             if await request.is_disconnected():
+                producer_task.cancel()
                 return
+            try:
+                item = await asyncio.wait_for(queue.get(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
+            if item is SENTINEL:
+                break
+            if isinstance(item, Exception):
+                raise item
+            evt = item
             if evt.kind == "brief_chunk":
                 yield record_and_yield("brief_chunk", evt.data)
             elif evt.kind == "source_cited":
                 yield record_and_yield("source_cited", evt.data)
             elif evt.kind == "done":
-                # Capture and fall through to validation
                 brief_markdown = evt.data.get("brief_markdown", "")
                 total_tokens = evt.data.get("total_tokens", 0)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
+        producer_task.cancel()
         log.exception("briefing.stream_failed", extra={"account_id": account_id})
         yield record_and_yield(
             "validation_warning",
             {
                 "severity": "critical",
                 "type": "missing_ground",
-                "message": f"Brief generation failed: {exc!s}",
+                "message": "Brief generation failed.",
                 "brief_excerpt": "",
                 "sources": [],
             },
@@ -350,18 +420,25 @@ async def _briefing_event_stream(
             },
         )
         return
+    finally:
+        if not producer_task.done():
+            producer_task.cancel()
+            try:
+                await producer_task
+            except (asyncio.CancelledError, Exception):  # noqa: BLE001
+                pass
 
     # 5. Validation pass.
     if brief_markdown:
         try:
             warnings = await validate_brief(account_id, brief_markdown, context_blob)
-        except Exception as exc:  # noqa: BLE001
+        except Exception:  # noqa: BLE001
             log.exception("briefing.validation_failed", extra={"account_id": account_id})
             warnings = [
                 {
                     "severity": "watch",
                     "type": "missing_ground",
-                    "message": f"Validation unavailable: {exc!s}",
+                    "message": "Validation unavailable.",
                     "brief_excerpt": "",
                     "sources": [],
                 }

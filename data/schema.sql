@@ -2,6 +2,10 @@
 -- All six MCP servers read from this DB. No writes at runtime.
 -- ARR and money fields are stored in cents (integers) to avoid float math.
 
+-- WAL survives connection close (it's stored in the DB header), so setting
+-- it once at seed time enables concurrent reads for every process that
+-- opens primer.db afterwards.
+PRAGMA journal_mode = WAL;
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE accounts (

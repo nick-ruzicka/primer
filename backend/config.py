@@ -28,6 +28,7 @@ class Settings:
     rate_limit_per_hour: int
     anchor_date: str
     use_live_exa: bool
+    debug_token: str | None
 
 
 def _parse_origins(raw: str | None) -> list[str]:
@@ -51,6 +52,7 @@ def load_settings() -> Settings:
         rate_limit_per_hour=int(os.getenv("RATE_LIMIT_PER_HOUR", "20")),
         anchor_date=os.getenv("ANCHOR_DATE", "2026-04-22"),
         use_live_exa=os.getenv("USE_LIVE_EXA", "0") == "1",
+        debug_token=os.getenv("DEBUG_TOKEN") or None,
     )
 
 
