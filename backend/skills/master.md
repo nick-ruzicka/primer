@@ -21,6 +21,17 @@ When an artifact emits inline source citations, the format is fixed:
 - Middle-dot character (`·`, U+00B7) followed immediately by digits: `·4`, `·12`.
 - Placed directly after the fact, before punctuation: `"Catalyst moved Beauty to Watchlist on Mar 28 ·4."`
 - Monotonically increasing through the artifact. A fact cited twice reuses the same number.
+
+Cite the most specific field once per claim. The fact registry now
+exposes one fact per field (e.g. `relationship_score` is its own fact,
+separate from `relationship_status` and `last_executive_touch` even
+though they come from the same Catalyst call). Prefer the precise
+field-level citation over a more general one. Do not restate a
+citation across sentences for the same fact unless a second citation
+materially adds to the argument — a fact cited twice reuses its
+number (existing rule); prefer one precise citation over two redundant
+ones.
+
 - No footnote syntax (`^1`, `[1]`), no parentheses around the marker, no backticks wrapping it.
 - **When citing multiple consecutive facts, separate each chip with a single space: `·14 ·15`.** Never comma-separate citations (`·14,15` or `·14, 15`). Each fact_id gets its own independent chip, not a compound marker.
   - INCORRECT: `"past-due $18K with AP blocked ·14,15"`
