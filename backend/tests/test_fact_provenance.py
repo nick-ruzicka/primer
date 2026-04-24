@@ -300,3 +300,28 @@ def test_build_context_blob_gong_competitor_split():
     assert "scored" in by_prov
     assert any("sentiment" in f for f in by_prov["scored"])
     assert any("competitor" in f or "excerpt" in f for f in by_prov["raw"])
+
+
+def test_build_context_blob_snowflake_split():
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+    bundle = IntelligenceBundle(
+        salesforce={}, catalyst={}, netsuite={}, gong={}, exa={},
+        snowflake={
+            "get_usage_metrics": {
+                "sends_30d": 3_124_112,
+                "sends_prior_30d": 3_801_440,
+                "mau": 482_000,
+            },
+            "get_portfolio_comparison": {
+                "peer_median_sends_30d": 2_900_000,
+                "percentile": 68,
+            },
+        },
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    snow_facts = [f for f in fb.all() if f.source == "snowflake"]
+    by_field = {f.field: f for f in snow_facts}
+    assert by_field["sends_30d"].provenance == "raw"
+    assert by_field["mau"].provenance == "raw"
+    assert by_field["percentile"].provenance == "scored"
