@@ -480,8 +480,100 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 text=f"Salesforce closed opportunity: {name} — {display}.",
             )
 
-    # NOTE: NetSuite blocks not refactored yet (Task 7); skip to avoid crashes
-    # from old positional argument calls to fb.add().
+    # ---- NetSuite: Billing status (RAW) ----
+    billing = bundle.netsuite.get("get_billing_status")
+    if isinstance(billing, dict):
+        now = _now_iso()
+        past_due = billing.get("past_due_balance_cents")
+        if past_due is not None and past_due > 0:
+            fb.add(
+                provenance="raw",
+                source="netsuite",
+                source_system="NetSuite",
+                source_module="Accounts Receivable",
+                field="past_due_balance",
+                value_display=_money(past_due),
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"NetSuite past_due_balance: {_money(past_due)}.",
+            )
+        days_overdue = billing.get("days_overdue")
+        if days_overdue is not None and days_overdue > 0:
+            fb.add(
+                provenance="raw",
+                source="netsuite",
+                source_system="NetSuite",
+                source_module="Accounts Receivable",
+                field="days_overdue",
+                value_display=f"{days_overdue} days",
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"NetSuite days_overdue: {days_overdue}.",
+            )
+        current = billing.get("current_balance_cents")
+        if current is not None:
+            fb.add(
+                provenance="raw",
+                source="netsuite",
+                source_system="NetSuite",
+                source_module="Accounts Receivable",
+                field="current_balance",
+                value_display=_money(current),
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"NetSuite current_balance: {_money(current)}.",
+            )
+
+    # ---- NetSuite: AP policy flags (RAW — deterministic rule outputs) ----
+    flags = bundle.netsuite.get("get_ap_policy_flags") or []
+    if isinstance(flags, list):
+        now = _now_iso()
+        for flag in flags:
+            name = flag.get("flag_name")
+            if not name:
+                continue
+            reason = flag.get("flag_reason", "")
+            fb.add(
+                provenance="raw",
+                source="netsuite",
+                source_system="NetSuite",
+                source_module="AP policy flags",
+                field=f"ap_flag.{name}",
+                value_display=reason or name,
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"NetSuite AP flag {name}: {reason}".strip(": "),
+            )
+
+    # ---- NetSuite: Recent invoices (RAW) ----
+    invoices = bundle.netsuite.get("get_recent_invoices") or []
+    if isinstance(invoices, list):
+        now = _now_iso()
+        for inv in invoices:
+            inv_id = inv.get("invoice_id")
+            if not inv_id:
+                continue
+            amount = inv.get("amount_cents")
+            status = inv.get("status", "")
+            due = inv.get("due_date")
+            display_parts = [_money(amount)] if amount is not None else []
+            if status:
+                display_parts.append(status)
+            if due:
+                display_parts.append(f"due {due}")
+            display = " · ".join(display_parts) or inv_id
+            fb.add(
+                provenance="raw",
+                source="netsuite",
+                source_system="NetSuite",
+                source_module="Invoices",
+                field=f"invoice.{inv_id}",
+                value_display=display,
+                retrieved_at=now,
+                data_as_of=due,
+                time_ago=_time_ago_from_iso(due) if due else "just now",
+                text=f"NetSuite invoice {inv_id}: {display}.",
+            )
 
     # NOTE: Snowflake blocks not refactored yet (Task 9); skip to avoid crashes
     # from old positional argument calls to fb.add().
