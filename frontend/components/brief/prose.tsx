@@ -1,10 +1,25 @@
 "use client";
 
 import { Fragment, useState, useRef } from "react";
-import type { Paragraph } from "@/lib/fixtures/northstar-beauty-brief";
+import type { Paragraph, InlineNode } from "@/lib/fixtures/northstar-beauty-brief";
 import type { CitationMeta } from "@/lib/types";
 import { CitationChip } from "./citation-chip";
 import { CitationTooltip } from "./citation-tooltip";
+
+/**
+ * Flatten a paragraph's inline nodes to a plain string for text analysis
+ * (e.g. inference-voice detection). Citation nodes contribute no text.
+ */
+export function paragraphPlainText(nodes: InlineNode[]): string {
+  return nodes
+    .map((n) => {
+      if (n.kind === "text" || n.kind === "bold" || n.kind === "italic") {
+        return (n as { value: string }).value ?? "";
+      }
+      return ""; // cite/etc. don't contribute text for detection
+    })
+    .join(" ");
+}
 
 interface Props {
   nodes: Paragraph;
