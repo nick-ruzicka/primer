@@ -6,7 +6,6 @@ import type { BriefSection as BriefSectionData } from "@/lib/fixtures/northstar-
 import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { isInferenceParagraph } from "@/lib/inference-detector";
-import { HedgePill } from "./hedge-pill";
 import { Prose, paragraphPlainText } from "./prose";
 
 interface Props {
@@ -76,22 +75,15 @@ export function BriefSection({
           )}
           {section.title}
         </h2>
-        <div className="ml-auto flex items-center gap-2">
-          <HedgePill
-            level={section.hedge.level}
-            label={section.hedge.label}
-            tip={section.hedge.tip}
+        {isWorkspace && (
+          <ChevronDown
+            className={cn(
+              "ml-auto h-3.5 w-3.5 text-ink-4 transition-transform",
+              isOpen ? "rotate-180" : "rotate-0",
+            )}
+            strokeWidth={2}
           />
-          {isWorkspace && (
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 text-ink-4 transition-transform",
-                isOpen ? "rotate-180" : "rotate-0",
-              )}
-              strokeWidth={2}
-            />
-          )}
-        </div>
+        )}
       </header>
 
       {isOpen && (

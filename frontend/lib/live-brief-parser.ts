@@ -5,7 +5,6 @@ import type {
   InlineNode,
   Paragraph,
 } from "./fixtures/northstar-beauty-brief";
-import type { ConfidenceLevel } from "./types";
 
 /**
  * Incremental markdown → BriefSection[] parser for the live `brief_chunk`
@@ -15,20 +14,11 @@ import type { ConfidenceLevel } from "./types";
  */
 
 export interface ParseResult {
-  /** All sections whose `## 0N · ... — hedge` header AND body have fully arrived. */
+  /** All sections whose `## 0N · ...` header AND body have fully arrived. */
   complete: BriefSection[];
   /** If a section header has been seen but the body is still streaming, tracks that id. */
   streamingId: "01" | "02" | "03" | "04" | null;
 }
-
-const HEDGE_LEVELS: Record<string, ConfidenceLevel> = {
-  "very likely": "very-likely",
-  likely: "likely",
-  "agent recommendation": "rec",
-  "draft — not sent": "draft",
-  "draft - not sent": "draft",
-  draft: "draft",
-};
 
 const SECTION_KEYS: Record<string, BriefSection["key"]> = {
   "01": "read",
@@ -37,13 +27,15 @@ const SECTION_KEYS: Record<string, BriefSection["key"]> = {
   "04": "talk_track",
 };
 
-const SECTION_HEADER_RE = /^##\s+(0[1-4])\s+·\s+([^—\n]+?)\s+—\s+([^\n]+)$/gm;
+// Matches `## 01 · The read` (no hedge suffix — dropped in spec §7 cleanup).
+// Also tolerates legacy `## 01 · Title — hedge` from older cache hits by
+// capturing title up to end-of-line (drop optional ` — ...` tail).
+const SECTION_HEADER_RE = /^##\s+(0[1-4])\s+·\s+([^\n]+?)(?:\s+—[^\n]*)?\s*$/gm;
 
 export function parseStreamingBrief(markdown: string): ParseResult {
   const headers: {
     id: BriefSection["id"];
     title: string;
-    hedge: string;
     index: number;
   }[] = [];
   let match: RegExpExecArray | null = SECTION_HEADER_RE.exec(markdown);
@@ -52,7 +44,6 @@ export function parseStreamingBrief(markdown: string): ParseResult {
     headers.push({
       id: match[1] as BriefSection["id"],
       title: match[2].trim(),
-      hedge: match[3].trim(),
       index: match.index,
     });
   }
@@ -75,7 +66,7 @@ export function parseStreamingBrief(markdown: string): ParseResult {
       continue;
     }
     if (!isLast || looksDone) {
-      const section = buildSection(h.id, h.title, h.hedge, body);
+      const section = buildSection(h.id, h.title, body);
       if (section) {
         complete.push(section);
       }
@@ -90,12 +81,10 @@ export function parseStreamingBrief(markdown: string): ParseResult {
 function buildSection(
   id: BriefSection["id"],
   title: string,
-  hedgeLabel: string,
   body: string,
 ): BriefSection | null {
   const key = SECTION_KEYS[id];
   if (!key) return null;
-  const level = HEDGE_LEVELS[hedgeLabel.toLowerCase().trim()] ?? "likely";
 
   const trimmed = body.trim();
   // First blockquote `> ...` is the preview. Strip it from body.
@@ -111,7 +100,6 @@ function buildSection(
     id,
     key,
     title,
-    hedge: { level, label: hedgeLabel, tip: hedgeLabel },
     preview,
   };
 

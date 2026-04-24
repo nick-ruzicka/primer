@@ -54,7 +54,6 @@ export const DEFAULT_SOURCE_STATUSES: SourceStatus[] = [
 
 export const DEFAULT_BRIEF_META = {
   confidence: 84,
-  confidenceLabel: "likely",
   generatedAgo: "6 min ago",
   staleCount: 1,
   intelligenceItemCount: 24,
