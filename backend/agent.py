@@ -608,6 +608,34 @@ class BriefStreamEvent:
     data: dict[str, Any]
 
 
+def _build_source_cited_payload(fact: Fact) -> dict[str, Any]:
+    """Build the SSE source_cited payload carrying both new (provenance +
+    per-field) and legacy (source/fact/evid/label) fields. Spec §4.5.
+
+    Legacy fields are dual-emitted during frontend migration and removed
+    in the final cleanup pass (Task 22) once all call-sites consume the
+    new shape."""
+    return {
+        # new fields
+        "provenance": fact.provenance,
+        "source_system": fact.source_system,
+        "source_module": fact.source_module,
+        "field": fact.field,
+        "value_display": fact.value_display,
+        "snippet": fact.snippet,
+        "retrieved_at": fact.retrieved_at,
+        "data_as_of": fact.data_as_of,
+        "url": fact.url,
+        # shared / back-compat
+        "citation_number": fact.fact_id,
+        "source": _normalize_source(fact.source),
+        "time_ago": fact.time_ago,
+        "fact": fact.text,
+        "evid": fact.text,  # frontend tooltip/body uses `evid`
+        "label": fact.text,  # legacy short label
+    }
+
+
 async def stream_brief(
     account_id: str,
     bundle: IntelligenceBundle,
@@ -696,14 +724,7 @@ async def stream_brief(
                 emitted_citations.add(num)
                 yield BriefStreamEvent(
                     "source_cited",
-                    {
-                        "citation_number": num,
-                        "source": _normalize_source(fact.source),
-                        "fact": fact.text,
-                        "evid": fact.text,  # frontend's tooltip/body uses `evid`
-                        "label": fact.text,
-                        "time_ago": _time_ago(fact.timestamp) if fact.timestamp else None,
-                    },
+                    _build_source_cited_payload(fact),
                 )
 
         final_message = await stream.get_final_message()
@@ -721,13 +742,7 @@ async def stream_brief(
         emitted_citations.add(num)
         yield BriefStreamEvent(
             "source_cited",
-            {
-                "citation_number": num,
-                "source": fact.source,
-                "fact": fact.text,
-                "label": fact.text,
-                "time_ago": _time_ago(fact.timestamp) if fact.timestamp else None,
-            },
+            _build_source_cited_payload(fact),
         )
 
     log.info(
