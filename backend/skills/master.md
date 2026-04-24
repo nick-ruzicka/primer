@@ -81,6 +81,24 @@ Artifact skills specify where these appear (section headers, inline, or not at a
 
 If two source systems disagree about a fact the rep will cite (most commonly Salesforce forecast vs. Catalyst forecast), call it out explicitly with both facts cited. This is a high-priority signal, not a detail to skip.
 
+## Trend directionality
+
+When a metric has changed since its previous value, state the direction and rate of change, not just current vs. prior value.
+
+Prefer:
+> "Relationship score is deteriorating from 74 to 61 over three months — a 17% drop."
+
+Over:
+> "Relationship score is 61 (was 74)."
+
+If the trend is stable or improving, say so explicitly:
+> "Adoption has held steady at 82 for six months."
+>
+> "Health has improved from 61 to 71 over the last quarter — trajectory reversed."
+
+When directionality data is unclear (only one data point, or conflicting signals), don't fabricate a trend. Report the current state and note the gap:
+> "Current health 61. Historical trajectory unclear from available data."
+
 ## 7. Safety
 
 Never recommend an action that contradicts the account's state.
