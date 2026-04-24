@@ -118,6 +118,32 @@ export function Writeup() {
               gives more design freedom in the 48-hour window.
             </li>
           </RejectedBlock>
+          <StretchBlock>
+            <li>
+              <b>
+                Revenue by product, cross-referenced with health by product.
+              </b>{" "}
+              You see ARR and pipeline separately. You don't see "paying $X for
+              Flows Pro, running at health 82 — paying $Y for Journeys, running
+              at 61." The next skill I'd author. The data is already in the
+              pre-fetch context.
+            </li>
+            <li>
+              <b>Longitudinal account trend analysis.</b> Primer sees the
+              current health score and the previous value. It doesn't see the
+              six-month shape. Needs historical snapshots of Catalyst data, not
+              an architecture change.
+            </li>
+            <li>
+              <b>Outbound scoring for prospects.</b> This takehome was scoped to
+              existing customers. The same architecture extends cleanly to
+              outbound — different signals (funding rounds, hiring,
+              technographic gaps, intent data), different skill file, same MCP
+              reads plus Exa, Crunchbase, Harmonic layered in. I've shipped this
+              pattern before at Linera (+18% SQLs from a signal engine), and
+              it's the obvious adjacent artifact for Primer.
+            </li>
+          </StretchBlock>
           <p>
             The three-mode design emerged from the observation that reps use
             prep tools in genuinely different states. A "one-size layout"
@@ -895,6 +921,19 @@ function RejectedBlock({ children }: { children: ReactNode }) {
         What I considered and rejected
       </h3>
       <ul className="list-disc space-y-2 pl-5 marker:text-ink-4 text-[14px] text-ink-2">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
+function StretchBlock({ children }: { children: ReactNode }) {
+  return (
+    <div className="mt-6 rounded-lg border border-line bg-surface-sunk/40 px-5 py-4">
+      <h3 className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4 mb-3">
+        Stretch goals I scoped out for V1
+      </h3>
+      <ul className="list-disc space-y-3 pl-5 marker:text-ink-4 text-[14px] text-ink-2">
         {children}
       </ul>
     </div>
