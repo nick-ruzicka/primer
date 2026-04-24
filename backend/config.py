@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+log = logging.getLogger(__name__)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 load_dotenv(REPO_ROOT / ".env")
+load_dotenv(REPO_ROOT / ".env.local", override=True)
 
 
 @dataclass(frozen=True)
@@ -37,13 +41,15 @@ def _parse_origins(raw: str | None) -> list[str]:
 
 
 def load_settings() -> Settings:
+    origins_str = os.getenv("ALLOWED_ORIGINS")
+    log.warning(f"DEBUG: ALLOWED_ORIGINS env var = {origins_str!r}")
     return Settings(
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
         anthropic_auth_token=os.getenv("ANTHROPIC_AUTH_TOKEN", ""),
         exa_api_key=os.getenv("EXA_API_KEY") or None,
         redis_url=os.getenv("REDIS_URL", "redis://localhost:6379"),
         database_path=os.getenv("DATABASE_PATH", str(REPO_ROOT / "data" / "primer.db")),
-        allowed_origins=_parse_origins(os.getenv("ALLOWED_ORIGINS")),
+        allowed_origins=_parse_origins(origins_str),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         briefing_model=os.getenv("BRIEFING_MODEL", "claude-opus-4-7"),
         validation_model=os.getenv("VALIDATION_MODEL", "claude-haiku-4-5-20251001"),
