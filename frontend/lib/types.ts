@@ -21,7 +21,10 @@ export type ViewMode = "split" | "workspace" | "reading" | "writeup";
 
 export type ConfidenceLevel = "very-likely" | "likely" | "rec" | "draft";
 
-export type Severity = "critical" | "watch";
+// TODO: vocabulary is split — backend emits "warn", CSS class is
+// "watch", user-facing pill reads "WATCH". Standardize in a future
+// cleanup pass. Keeping "warn" here now to match runtime.
+export type Severity = "critical" | "warn";
 
 export type IntelSectionId =
   | "relationship"
