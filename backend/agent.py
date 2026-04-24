@@ -662,6 +662,7 @@ async def stream_brief(
                         "source": _normalize_source(fact.source),
                         "fact": fact.text,
                         "evid": fact.text,  # frontend's tooltip/body uses `evid`
+                        "label": fact.text,
                         "time_ago": _time_ago(fact.timestamp) if fact.timestamp else None,
                     },
                 )
@@ -685,6 +686,7 @@ async def stream_brief(
                 "citation_number": num,
                 "source": fact.source,
                 "fact": fact.text,
+                "label": fact.text,
                 "time_ago": _time_ago(fact.timestamp) if fact.timestamp else None,
             },
         )
