@@ -67,11 +67,15 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener("abort", () => {
+    const onAbort = () => {
       clearTimeout(timer);
       reject(new Error("aborted"));
-    });
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
@@ -207,18 +211,24 @@ function handleBriefChunk(delta: string) {
   const { complete } = parseStreamingBrief(liveBriefBuffer);
   if (!liveBriefFixture) return;
 
-  let mutated = false;
+  let changed = false;
   for (const section of complete) {
     const idx = liveBriefFixture.sections.findIndex((s) => s.id === section.id);
     if (idx < 0) {
       liveBriefFixture.sections.push(section);
-      mutated = true;
+      changed = true;
     } else {
-      liveBriefFixture.sections[idx] = section;
+      // Any late edit to an already-streamed section (citation added,
+      // paragraph appended) needs to flow back to the store too.
+      const prev = liveBriefFixture.sections[idx];
+      if (prev !== section) {
+        liveBriefFixture.sections[idx] = section;
+        changed = true;
+      }
     }
   }
 
-  if (mutated) {
+  if (changed) {
     // Keep sections sorted so the rendered order matches spec-01/02/03/04.
     liveBriefFixture = {
       ...liveBriefFixture,

@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
     root: path.resolve("."),
   },
   async rewrites() {
+    // Dev only: proxy /api/* to the local backend so the Next.js dev server
+    // looks like the prod nginx layout. In production nginx handles /api/*
+    // directly; including this rewrite there would tie every SSR fetch to a
+    // hardcoded localhost:8000 and silently break if deployed elsewhere.
+    if (process.env.NODE_ENV !== "development") {
+      return { beforeFiles: [] };
+    }
     return {
       beforeFiles: [
         {

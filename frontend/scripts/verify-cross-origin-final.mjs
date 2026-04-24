@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Final cross-origin integration probe after CORS fix.
  * Loads 3 accounts, confirms:
@@ -7,9 +10,6 @@
  *  - Confidence ring value varies per account (pulled from done.total_tokens)
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -61,8 +61,10 @@ for (const { id, label } of accounts) {
   });
 
   console.log(`${label} (${id}): ring="${ringText.replace(/\n/g, " ")}"`);
-  if (consoleErrors.length) console.log(`  console-errors: ${consoleErrors.length}`);
-  if (requestFailures.length) console.log(`  req-failures: ${requestFailures.length}`);
+  if (consoleErrors.length)
+    console.log(`  console-errors: ${consoleErrors.length}`);
+  if (requestFailures.length)
+    console.log(`  req-failures: ${requestFailures.length}`);
   consoleErrors.slice(0, 3).forEach((e) => console.log(`    ! ${e}`));
   requestFailures.slice(0, 3).forEach((e) => console.log(`    ! ${e}`));
 

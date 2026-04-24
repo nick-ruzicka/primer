@@ -17,6 +17,19 @@ export function Sparkline({
   width = 80,
   height = 22,
 }: Props) {
+  // Guard against degenerate inputs: empty arrays would make Math.min/max
+  // return Infinity and produce NaN-filled SVG coordinates.
+  if (!data || data.length < 2) {
+    return (
+      <svg
+        width={width}
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        className="inline-block align-middle"
+        aria-hidden
+      />
+    );
+  }
   const min = Math.min(...data);
   const max = Math.max(...data);
   const range = Math.max(1, max - min);

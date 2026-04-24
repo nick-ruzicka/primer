@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Browser verification for QA_LOG C1 (multi-citation parsing) and C2
  * (Tidepool header shows $220k ARR). Runs Northstar Beauty and Tidepool
@@ -8,9 +11,6 @@
  *  - Tidepool rail badge still shows $0.
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -81,7 +81,14 @@ for (const { id, label } of accounts) {
     fullPage: false,
   });
 
-  results.push({ id, label, headerLabel, orphanHits, railBadge, consoleErrors });
+  results.push({
+    id,
+    label,
+    headerLabel,
+    orphanHits,
+    railBadge,
+    consoleErrors,
+  });
   await page.close();
 }
 
