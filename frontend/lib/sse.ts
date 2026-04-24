@@ -17,14 +17,14 @@ import {
   updateLiveBriefFixture,
 } from "./store";
 import type {
+  CitationMeta,
   IntelligenceItem,
   IntelligenceSection,
   IntelSectionId,
   ValidationWarning,
 } from "./types";
 
-const API_BASE =
-  typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 /**
  * Mock mode off when NEXT_PUBLIC_API_BASE is truthy. Setting it to an absolute
@@ -67,11 +67,15 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
 
 function sleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, ms);
-    signal.addEventListener("abort", () => {
+    const onAbort = () => {
       clearTimeout(timer);
       reject(new Error("aborted"));
-    });
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal.addEventListener("abort", onAbort, { once: true });
   });
 }
 
@@ -119,12 +123,8 @@ async function runMockStream(
       );
       appendCitations(citationsForSection);
       for (const c of citationsForSection) {
-        pushSourceCited({
-          citation_number: c.n,
-          source: c.source,
-          time_ago: c.time_ago,
-          evid: c.evid,
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pushSourceCited(c as any);
         await sleep(40, signal);
       }
     }
@@ -200,7 +200,6 @@ function resetLiveBriefBuffer(accountId: string) {
     // ignored in live mode. Kept as a typed zero so the mock path still
     // satisfies BriefFixture.
     confidence: 0,
-    confidence_label: "likely",
     sections: [],
     citations: [],
   };
@@ -212,18 +211,24 @@ function handleBriefChunk(delta: string) {
   const { complete } = parseStreamingBrief(liveBriefBuffer);
   if (!liveBriefFixture) return;
 
-  let mutated = false;
+  let changed = false;
   for (const section of complete) {
     const idx = liveBriefFixture.sections.findIndex((s) => s.id === section.id);
     if (idx < 0) {
       liveBriefFixture.sections.push(section);
-      mutated = true;
+      changed = true;
     } else {
-      liveBriefFixture.sections[idx] = section;
+      // Any late edit to an already-streamed section (citation added,
+      // paragraph appended) needs to flow back to the store too.
+      const prev = liveBriefFixture.sections[idx];
+      if (prev !== section) {
+        liveBriefFixture.sections[idx] = section;
+        changed = true;
+      }
     }
   }
 
-  if (mutated) {
+  if (changed) {
     // Keep sections sorted so the rendered order matches spec-01/02/03/04.
     liveBriefFixture = {
       ...liveBriefFixture,
@@ -355,18 +360,35 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   es.addEventListener("source_cited", (e) => {
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      pushSourceCited(data);
-      if (data.citation_number != null && data.source && data.evid) {
-        appendCitations([
-          {
-            n: Number(data.citation_number),
-            source: data.source,
-            evid: String(data.evid),
-            label: String(data.label ?? ""),
-            time_ago: String(data.time_ago ?? ""),
-          },
-        ]);
+      // Authoritative shape — backend emits the discriminated-union payload.
+      const base = {
+        n: data.citation_number,
+        evid: data.evid,
+        source_system: data.source_system,
+        source_module: data.source_module ?? undefined,
+        retrieved_at: data.retrieved_at ?? new Date().toISOString(),
+        data_as_of: data.data_as_of ?? undefined,
+        time_ago: data.time_ago ?? "",
+      };
+      let citation: CitationMeta;
+      if (data.provenance === "surfaced") {
+        citation = {
+          ...base,
+          provenance: "surfaced",
+          snippet: data.snippet ?? "",
+          url: data.url ?? undefined,
+        };
+      } else {
+        // "raw" | "scored" — default to "raw" if provenance missing
+        citation = {
+          ...base,
+          provenance: (data.provenance as "raw" | "scored") ?? "raw",
+          field: data.field ?? "",
+          value_display: data.value_display ?? "",
+        };
       }
+      pushSourceCited(citation);
+      appendCitations([citation]);
     } catch (err) {
       console.error("[primer] source_cited parse error", err);
     }

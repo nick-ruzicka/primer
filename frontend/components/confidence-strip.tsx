@@ -12,7 +12,6 @@ interface SourceDot {
 
 interface Props {
   confidence: number;
-  confidenceLabel?: string;
   sources: SourceDot[];
   staleCount: number;
   generatedAgo: string;
@@ -25,7 +24,6 @@ interface Props {
  */
 export function ConfidenceStrip({
   confidence,
-  confidenceLabel = "likely",
   sources,
   staleCount,
   generatedAgo,
@@ -40,7 +38,7 @@ export function ConfidenceStrip({
             Brief confidence
           </span>
           <span className="font-serif text-[15px] font-semibold text-ink tnum">
-            {confidence} · {confidenceLabel}
+            {confidence}
           </span>
         </div>
       </div>

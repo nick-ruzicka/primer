@@ -2,7 +2,7 @@
 
 import { ArrowUpRight } from "lucide-react";
 import type { IntelligenceItem } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeInlineHtml } from "@/lib/utils";
 import { Sparkline } from "./sparkline";
 
 interface Props {
@@ -128,7 +128,7 @@ function StandardCard({
       {item.sub && (
         <p
           className="card-person-meta"
-          dangerouslySetInnerHTML={{ __html: item.sub }}
+          dangerouslySetInnerHTML={{ __html: sanitizeInlineHtml(item.sub) }}
         />
       )}
       <div className="card-foot">
@@ -188,7 +188,7 @@ function PersonCard({
         {item.sub && (
           <p
             className="card-person-meta"
-            dangerouslySetInnerHTML={{ __html: item.sub }}
+            dangerouslySetInnerHTML={{ __html: sanitizeInlineHtml(item.sub) }}
           />
         )}
         <div className="card-foot">
@@ -242,7 +242,7 @@ function HealthCard({
       {item.sub && (
         <p
           className="card-person-meta"
-          dangerouslySetInnerHTML={{ __html: item.sub }}
+          dangerouslySetInnerHTML={{ __html: sanitizeInlineHtml(item.sub) }}
         />
       )}
       <div className="card-foot">
@@ -304,7 +304,7 @@ function HeroCard({
       {item.sub && (
         <p
           className="card-person-meta max-w-[420px]"
-          dangerouslySetInnerHTML={{ __html: item.sub }}
+          dangerouslySetInnerHTML={{ __html: sanitizeInlineHtml(item.sub) }}
         />
       )}
       <div className="card-foot">
@@ -367,7 +367,9 @@ function WebCard({
       </div>
       <p
         className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2 [&_mark]:bg-accent-soft [&_mark]:text-ink [&_mark]:px-0.5 [&_mark]:rounded-sm"
-        dangerouslySetInnerHTML={{ __html: item.web.snippet }}
+        dangerouslySetInnerHTML={{
+          __html: sanitizeInlineHtml(item.web.snippet),
+        }}
       />
       <div className="card-foot">
         <span className="pill src-exa">

@@ -34,17 +34,11 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
   const brief: BriefFixture = {
     account_id: accountId,
     confidence: 62,
-    confidence_label: "likely",
     sections: [
       {
         id: "01",
         key: "read",
         title: "The read",
-        hedge: {
-          level: "likely",
-          label: "likely",
-          tip: "Likely — standard read from available data; no contradictions detected.",
-        },
         preview: `Straightforward check-in for ${accountName}.`,
         paragraphs: [
           [
@@ -64,7 +58,6 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
         id: "02",
         key: "why",
         title: "Why this read",
-        hedge: { level: "likely", label: "likely", tip: "Likely." },
         preview: "No contradictions in the pre-fetch.",
         paragraphs: [
           [
@@ -80,11 +73,6 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
         id: "03",
         key: "what_to_do",
         title: "What to do on the call",
-        hedge: {
-          level: "rec",
-          label: "agent recommendation",
-          tip: "Agent recommendation — prescriptive next actions.",
-        },
         preview: "Action list renders here.",
         actions: [
           {
@@ -108,7 +96,6 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
         id: "04",
         key: "talk_track",
         title: "Suggested talk track",
-        hedge: { level: "draft", label: "draft — not sent", tip: "Draft." },
         preview: "Starter questions render here.",
         questions: [
           [

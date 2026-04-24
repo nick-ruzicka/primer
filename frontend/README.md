@@ -34,7 +34,7 @@ frontend/
 │   ├── confidence-strip.tsx # Ring + source dots + generated time + regen CTA
 │   ├── validation-banner.tsx# Top-of-main critical/watch stack
 │   ├── tweaks-panel.tsx     # Floating theme/density/verify controls
-│   ├── brief/               # BriefSection, Prose, CitationChip, HedgePill
+│   ├── brief/               # BriefSection, Prose, CitationChip
 │   ├── intelligence/        # IntelligencePanel + card variants + sparkline
 │   └── writeup/             # Mode 4 full-width editorial
 ├── lib/

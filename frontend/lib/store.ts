@@ -2,13 +2,12 @@
 
 import { useSyncExternalStore } from "react";
 import type { Density, VerifyIntensity } from "@/components/tweaks-panel";
-import type {
-  BriefFixture,
-  CitationMeta,
-} from "./fixtures/northstar-beauty-brief";
+import type { BriefFixture } from "./fixtures/northstar-beauty-brief";
+import { hedgeMarkersIn } from "./inference-detector";
 import type {
   Account,
   AccountGroup,
+  CitationMeta,
   IntelligenceSection,
   IntelligenceState,
   SourceCited,
@@ -48,7 +47,7 @@ export interface StoreState {
   // Progressive brief
   brief: BriefStreamState;
   citations: CitationMeta[];
-  sourceCitedEvents: SourceCited[];
+  sourceCitedEvents: (SourceCited | CitationMeta)[];
   warnings: ValidationWarning[];
   generationMeta: GenerationMeta;
 
@@ -218,15 +217,67 @@ export function appendCitations(toAdd: CitationMeta[]) {
   });
 }
 
-export function pushSourceCited(event: SourceCited) {
+export function pushSourceCited(event: SourceCited | CitationMeta) {
   setState((s) => ({
     ...s,
-    sourceCitedEvents: [...s.sourceCitedEvents, event],
+    sourceCitedEvents: [...s.sourceCitedEvents, event as SourceCited],
   }));
 }
 
 export function pushWarning(warning: ValidationWarning) {
   setState((s) => ({ ...s, warnings: [...s.warnings, warning] }));
+}
+
+function logInferenceDetectorStats(fixture: BriefFixture): void {
+  if (typeof window === "undefined") return;
+  const allParagraphs: string[] = [];
+  for (const section of fixture.sections) {
+    for (const p of section.paragraphs ?? []) {
+      // Flatten inline nodes to text for logging
+      const plain = p
+        .map((n) => ("value" in n ? (n as { value: string }).value : ""))
+        .join(" ");
+      if (plain.trim()) allParagraphs.push(plain);
+    }
+  }
+  const totalSentences = allParagraphs.reduce(
+    (sum, p) => sum + (p.match(/[.!?]+(?:\s|$)/g)?.length ?? 1),
+    0,
+  );
+  const markers: Record<string, number> = {};
+  let inferenceParagraphCount = 0;
+  for (const p of allParagraphs) {
+    const phraseCounts = hedgeMarkersIn(p);
+    const hadAny = Object.keys(phraseCounts).length > 0;
+    if (hadAny) inferenceParagraphCount += 1;
+    for (const [label, count] of Object.entries(phraseCounts)) {
+      markers[label] = (markers[label] ?? 0) + count;
+    }
+  }
+  const payload = {
+    ts: new Date().toISOString(),
+    kind: "inference.detector.stats",
+    account_id: fixture.account_id,
+    paragraph_count: allParagraphs.length,
+    inference_paragraph_count: inferenceParagraphCount,
+    total_sentences: totalSentences,
+    markers_by_phrase: markers,
+  };
+  // Dev-mode: console.info + localStorage. Production backend collection
+  // is out of scope for V1 per spec §11.
+  console.info("[primer.inference-detector]", payload);
+  try {
+    const key = "primer:inference-detector-log";
+    const existing = JSON.parse(
+      window.localStorage.getItem(key) ?? "[]",
+    ) as unknown[];
+    existing.push(payload);
+    // Keep last 50 briefs per V2 parked spec §7
+    const trimmed = existing.slice(-50);
+    window.localStorage.setItem(key, JSON.stringify(trimmed));
+  } catch {
+    /* localStorage full or disabled — non-fatal */
+  }
 }
 
 export function markBriefDone(meta: Partial<GenerationMeta>) {
@@ -235,6 +286,8 @@ export function markBriefDone(meta: Partial<GenerationMeta>) {
     brief: { ...s.brief, complete: true },
     generationMeta: { ...s.generationMeta, ...meta },
   }));
+  const fixture = getState().brief.fixture;
+  if (fixture) logInferenceDetectorStats(fixture);
 }
 
 export function setMode(mode: ViewMode) {

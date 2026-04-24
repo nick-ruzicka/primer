@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { BriefFixture, CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
+import type { BriefFixture } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BriefSection } from "./brief-section";
 import { ReferencesSection } from "./references-section";

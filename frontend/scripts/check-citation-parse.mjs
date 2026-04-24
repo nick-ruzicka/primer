@@ -6,8 +6,7 @@
 
 function tokenizeInline(text) {
   const out = [];
-  const regex =
-    /\*\*([^*]+)\*\*|_([^_]+)_|·(\d+(?:\s*[,，]\s*\d+)*)/g;
+  const regex = /\*\*([^*]+)\*\*|_([^_]+)_|·(\d+(?:\s*[,，]\s*\d+)*)/g;
   let lastIndex = 0;
   let match;
   while ((match = regex.exec(text)) !== null) {
