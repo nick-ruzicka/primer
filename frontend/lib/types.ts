@@ -13,6 +13,8 @@ export type SourceId =
   | "hubspot"
   | "internal";
 
+export type FactProvenance = "raw" | "scored" | "surfaced";
+
 export type AccountState = "hot" | "warm" | "cool";
 
 export type ViewMode = "split" | "workspace" | "reading" | "writeup";
@@ -81,6 +83,55 @@ export interface WebSnippet {
   title: string;
   snippet: string;
 }
+
+type CitationCommon = {
+  /** 1-indexed display number that appears as ·N in prose. */
+  n: number;
+  /** Stable id for citation-chip ↔ reference-entry lookup. */
+  evid: string;
+  /** Full display name: "NetSuite", "Catalyst", "Salesforce", "Gong", "Snowflake", "Exa". */
+  source_system: string;
+  /** Subsystem label: "Accounts Receivable", "Forecast", "LinkedIn post by Priya Shah". */
+  source_module?: string;
+  /** ISO — when the backend fetched it. */
+  retrieved_at: string;
+  /** ISO — when the data represents. Optional; often null for live RAW reads. */
+  data_as_of?: string;
+  /** Pre-computed human relative string from backend: "pulled 2h ago", "posted 13d ago". */
+  time_ago: string;
+
+  // ---- back-compat shim (drop after final migration pass, Task 22) ----
+  /** @deprecated use source_system. Kept during migration. */
+  source?: string;
+  /** @deprecated use field + value_display or snippet. Kept during migration. */
+  label?: string;
+};
+
+/**
+ * CitationMeta — discriminated union keyed on `provenance`.
+ *
+ * RAW (directly measured) and SCORED (upstream-system model output) share
+ * the `field` + `value_display` shape. SURFACED (third-party content from
+ * Exa/web) uses `snippet` + optional `url` instead.
+ *
+ * The union forces the renderer to branch on `provenance` and statically
+ * know which fields exist. See docs/superpowers/specs/2026-04-24-references-block-design.md §3.
+ */
+export type CitationMeta =
+  | (CitationCommon & {
+      provenance: "raw" | "scored";
+      /** Field path: "past_due_balance", "relationship_score". */
+      field: string;
+      /** Formatted value for display: "$18,500", "61 / 100", "Commit". */
+      value_display: string;
+    })
+  | (CitationCommon & {
+      provenance: "surfaced";
+      /** The quoted passage (e.g. LinkedIn post body, web snippet). */
+      snippet: string;
+      /** External URL when source exposes one. */
+      url?: string;
+    });
 
 export interface IntelligenceItem {
   evid: string;
