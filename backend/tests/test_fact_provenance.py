@@ -271,3 +271,32 @@ def test_build_context_blob_netsuite_all_raw():
     assert "days_overdue" in fields
     assert any(f.startswith("ap_flag.") for f in fields)
     assert any(f.startswith("invoice.") for f in fields)
+
+
+def test_build_context_blob_gong_competitor_split():
+    """Gong get_competitor_mentions produces RAW (competitor_name, excerpt)
+    and SCORED (sentiment) facts from the same record."""
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+    bundle = IntelligenceBundle(
+        salesforce={}, catalyst={}, netsuite={}, snowflake={}, exa={},
+        gong={
+            "get_competitor_mentions": [
+                {
+                    "competitor_name": "Klaviyo",
+                    "excerpt": "We're evaluating Klaviyo for the summer relaunch.",
+                    "sentiment": "negative",
+                    "call_date": "2026-04-18",
+                },
+            ],
+        },
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    gong_facts = [f for f in fb.all() if f.source == "gong"]
+    by_prov: dict[str, list[str]] = {}
+    for f in gong_facts:
+        by_prov.setdefault(f.provenance, []).append(f.field or "")
+    assert "raw" in by_prov
+    assert "scored" in by_prov
+    assert any("sentiment" in f for f in by_prov["scored"])
+    assert any("competitor" in f or "excerpt" in f for f in by_prov["raw"])

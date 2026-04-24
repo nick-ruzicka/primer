@@ -609,8 +609,93 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 text=f"Salesforce subsidiaries: {', '.join(str(s) for s in subs)}.",
             )
 
-    # NOTE: Gong blocks not refactored yet (Task 8); skip to avoid crashes
-    # from old positional argument calls to fb.add().
+    # ---- Gong: Recent calls (RAW — metadata) ----
+    calls = bundle.gong.get("get_recent_calls") or []
+    if isinstance(calls, list):
+        now = _now_iso()
+        for call in calls:
+            title = call.get("call_title") or call.get("title")
+            if not title:
+                continue
+            date = call.get("date") or call.get("call_date")
+            duration = call.get("duration_minutes")
+            attendees = call.get("attendees") or []
+            parts = []
+            if duration is not None:
+                parts.append(f"{duration}m")
+            if attendees:
+                parts.append(f"{len(attendees)} attendees")
+            display = " · ".join(parts) or title
+            fb.add(
+                provenance="raw",
+                source="gong",
+                source_system="Gong",
+                source_module="Calls",
+                field=f"call.{title}",
+                value_display=display,
+                retrieved_at=now,
+                data_as_of=date,
+                time_ago=_time_ago_from_iso(date) if date else "just now",
+                text=f"Gong call {title} on {date}: {display}.",
+            )
+
+    # ---- Gong: Competitor mentions (RAW excerpt + SCORED sentiment) ----
+    comp_mentions = bundle.gong.get("get_competitor_mentions") or []
+    if isinstance(comp_mentions, list):
+        now = _now_iso()
+        for m in comp_mentions:
+            name = m.get("competitor_name")
+            if not name:
+                continue
+            excerpt = m.get("excerpt", "")
+            call_date = m.get("call_date") or m.get("date")
+            fb.add(
+                provenance="raw",
+                source="gong",
+                source_system="Gong",
+                source_module="Competitor mentions",
+                field=f"competitor.{name}",
+                value_display=excerpt[:80] + ("…" if len(excerpt) > 80 else "") if excerpt else name,
+                retrieved_at=now,
+                data_as_of=call_date,
+                time_ago=_time_ago_from_iso(call_date) if call_date else "just now",
+                text=f"Gong competitor mention — {name}: \"{excerpt}\".",
+            )
+            sentiment = m.get("sentiment")
+            if sentiment:
+                fb.add(
+                    provenance="scored",
+                    source="gong",
+                    source_system="Gong",
+                    source_module="Competitor mentions",
+                    field=f"sentiment.{name}",
+                    value_display=sentiment,
+                    retrieved_at=now,
+                    data_as_of=call_date,
+                    time_ago=_time_ago_from_iso(call_date) if call_date else "just now",
+                    text=f"Gong sentiment on {name}: {sentiment}.",
+                )
+
+    # ---- Gong: Pricing signals (SCORED — NLP direction classifier) ----
+    pricing = bundle.gong.get("get_pricing_signals") or []
+    if isinstance(pricing, list):
+        now = _now_iso()
+        for sig in pricing:
+            text_val = sig.get("signal_text") or sig.get("text")
+            direction = sig.get("direction", "")
+            if not text_val:
+                continue
+            fb.add(
+                provenance="scored",
+                source="gong",
+                source_system="Gong",
+                source_module="Pricing signals",
+                field=f"pricing_signal.{direction}",
+                value_display=direction or "signal",
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Gong pricing signal ({direction}): {text_val}.",
+            )
 
     # NOTE: Exa blocks not refactored yet (Task 10); skip to avoid crashes
     # from old positional argument calls to fb.add().
