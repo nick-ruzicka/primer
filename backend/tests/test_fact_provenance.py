@@ -237,3 +237,37 @@ def test_build_context_blob_splits_catalyst_by_provenance():
 
     assert by_field["relationship_score"].value_display == "61 / 100"
     assert by_field["renewal_forecast"].value_display == "Best Case"
+
+
+def test_build_context_blob_netsuite_all_raw():
+    """NetSuite fields are all RAW — ledger values and deterministic rule
+    outputs (AP policy flags). Spec §4.4 refinement."""
+    from backend.agent import build_context_blob
+    from backend.intelligence import IntelligenceBundle
+    bundle = IntelligenceBundle(
+        salesforce={}, catalyst={}, gong={}, snowflake={}, exa={},
+        netsuite={
+            "get_billing_status": {
+                "past_due_balance_cents": 1_850_000,
+                "days_overdue": 41,
+                "current_balance_cents": 5_200_000,
+            },
+            "get_ap_policy_flags": [
+                {"flag_name": "past_due_block", "flag_reason": "overdue > 30d"},
+            ],
+            "get_recent_invoices": [
+                {"invoice_id": "INV-2026-0042", "amount_cents": 1_850_000,
+                 "status": "past_due", "due_date": "2026-03-14"},
+            ],
+        },
+    )
+    _ctx, fb = build_context_blob("ns-beauty", bundle)
+    ns_facts = [f for f in fb.all() if f.source == "netsuite"]
+    assert all(f.provenance == "raw" for f in ns_facts), (
+        f"expected all RAW, got {[(f.field, f.provenance) for f in ns_facts]}"
+    )
+    fields = {f.field for f in ns_facts}
+    assert "past_due_balance" in fields
+    assert "days_overdue" in fields
+    assert any(f.startswith("ap_flag.") for f in fields)
+    assert any(f.startswith("invoice.") for f in fields)
