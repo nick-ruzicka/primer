@@ -2,13 +2,11 @@
 
 import { useSyncExternalStore } from "react";
 import type { Density, VerifyIntensity } from "@/components/tweaks-panel";
-import type {
-  BriefFixture,
-  CitationMeta,
-} from "./fixtures/northstar-beauty-brief";
+import type { BriefFixture } from "./fixtures/northstar-beauty-brief";
 import type {
   Account,
   AccountGroup,
+  CitationMeta,
   IntelligenceSection,
   IntelligenceState,
   SourceCited,
@@ -48,7 +46,7 @@ export interface StoreState {
   // Progressive brief
   brief: BriefStreamState;
   citations: CitationMeta[];
-  sourceCitedEvents: SourceCited[];
+  sourceCitedEvents: (SourceCited | CitationMeta)[];
   warnings: ValidationWarning[];
   generationMeta: GenerationMeta;
 
@@ -218,10 +216,10 @@ export function appendCitations(toAdd: CitationMeta[]) {
   });
 }
 
-export function pushSourceCited(event: SourceCited) {
+export function pushSourceCited(event: SourceCited | CitationMeta) {
   setState((s) => ({
     ...s,
-    sourceCitedEvents: [...s.sourceCitedEvents, event],
+    sourceCitedEvents: [...s.sourceCitedEvents, event as SourceCited],
   }));
 }
 

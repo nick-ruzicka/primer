@@ -2,10 +2,8 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import type {
-  BriefSection as BriefSectionData,
-  CitationMeta,
-} from "@/lib/fixtures/northstar-beauty-brief";
+import type { BriefSection as BriefSectionData } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { HedgePill } from "./hedge-pill";
 import { Prose } from "./prose";

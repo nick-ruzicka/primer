@@ -1,6 +1,6 @@
 "use client";
 
-import type { CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -24,9 +24,9 @@ export function CitationChip({
   onMouseLeave,
   onClick,
 }: Props) {
-  const src = citation?.source ?? "internal";
+  const src = citation?.source ?? citation?.source_system?.toLowerCase() ?? "internal";
   const title = citation
-    ? `${citation.label} · ${citation.time_ago}`
+    ? `${citation.label ?? citation.source_system} · ${citation.time_ago}`
     : `Citation ${n} · loading…`;
   return (
     <button

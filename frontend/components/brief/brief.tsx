@@ -47,8 +47,7 @@ export function Brief({
   };
 
   const getCitationById = (citationId: string): CitationMeta | null => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (brief.citations as any[]).find((c) => c.evid === citationId) || null;
+    return brief.citations.find((c) => c.evid === citationId) || null;
   };
   return (
     <div
@@ -76,10 +75,7 @@ export function Brief({
         <>
           <ReferencesSection
             id="references-section"
-            citations={
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              brief.citations as any
-            }
+            citations={brief.citations}
             onReferenceClick={(citationId) => {
               const citation = getCitationById(citationId);
               setSelectedReferenceForModal(citation);

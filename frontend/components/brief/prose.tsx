@@ -1,11 +1,8 @@
 "use client";
 
 import { Fragment, useState, useRef } from "react";
-import type {
-  CitationMeta,
-  Paragraph,
-} from "@/lib/fixtures/northstar-beauty-brief";
-import type { CitationMeta as NewCitationMeta } from "@/lib/types";
+import type { Paragraph } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { CitationChip } from "./citation-chip";
 import { CitationTooltip } from "./citation-tooltip";
 
@@ -78,7 +75,7 @@ export function Prose({
             </span>
             {match && hoveredCitation === match.evid && (
               <CitationTooltip
-                citation={match as unknown as NewCitationMeta}
+                citation={match}
                 x={tooltipPos.x}
                 y={tooltipPos.y}
               />

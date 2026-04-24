@@ -1,4 +1,5 @@
-import type { ConfidenceLevel, SourceId } from "../types";
+import type { CitationMeta } from "../types";
+import type { ConfidenceLevel } from "../types";
 
 /**
  * Northstar Beauty brief fixture — lifted verbatim from the reference HTML
@@ -36,14 +37,6 @@ export interface BriefSection {
   actions?: BriefAction[];
   // For 04: list of questions
   questions?: Paragraph[];
-}
-
-export interface CitationMeta {
-  n: number;
-  source: SourceId;
-  evid: string;
-  label: string;
-  time_ago: string;
 }
 
 export interface BriefFixture {
@@ -277,74 +270,143 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
   citations: [
     {
       n: 1,
-      source: "exa",
       evid: "cfo",
-      label: "Retail Dive — Northstar Group taps new CFO",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "Retail Dive — Northstar Group taps new CFO",
+      snippet:
+        "Northstar Group has appointed Carla Reyes as Chief Financial Officer, effective April 2. Reyes previously held VP Finance at Consolidated Retail, where she oversaw vendor consolidation initiatives.",
+      url: "https://retaildive.com/northstar-group-cfo-carla-reyes",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-03T00:00:00Z",
       time_ago: "19 days ago",
-    },
+      source: "exa",
+      label: "Retail Dive — Northstar Group taps new CFO",
+    } as CitationMeta,
     {
       n: 2,
-      source: "exa",
       evid: "priya-li",
-      label: "LinkedIn — Priya Shah on lifecycle tooling",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "LinkedIn post by Priya Shah",
+      snippet:
+        "Vendor overlap across our three brands is getting harder to justify. Starting a real consolidation review this quarter — fewer tools, more leverage.",
+      url: "https://linkedin.com/posts/priya-shah-lifecycle-tooling",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-10T00:00:00Z",
       time_ago: "12 days ago",
-    },
+      source: "exa",
+      label: "LinkedIn — Priya Shah on lifecycle tooling",
+    } as CitationMeta,
     {
       n: 3,
-      source: "exa",
       evid: "pod-apr11",
-      label: "DTC Pod · Ep. 212 — Priya Shah on consolidation",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "DTC Pod · Ep. 212",
+      snippet:
+        "Active has this really elegant integrated approach — loyalty, SMS, and lifecycle all in one. We've been trying to replicate that across Beauty and Home, and it's just not the same.",
+      url: "https://dtcpod.com/episodes/212-priya-shah-northstar",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-12T00:00:00Z",
       time_ago: "10 days ago",
-    },
+      source: "exa",
+      label: "DTC Pod · Ep. 212 — Priya Shah on consolidation",
+    } as CitationMeta,
     {
       n: 4,
-      source: "catalyst",
       evid: "rel-health",
-      label: "Catalyst — relationship health 61 (cooled)",
+      provenance: "scored",
+      source_system: "Catalyst",
+      source_module: "Relationship health",
+      field: "relationship_score",
+      value_display: "61 / 100 (Watchlist — down 13 pts since Mar 28)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "5m ago",
-    },
+      source: "catalyst",
+      label: "Catalyst — relationship health 61 (cooled)",
+    } as CitationMeta,
     {
       n: 5,
-      source: "netsuite",
       evid: "past-due",
-      label: "NetSuite — past-due $18,500 (Invoice NS-20314)",
+      provenance: "raw",
+      source_system: "NetSuite",
+      source_module: "Accounts Receivable",
+      field: "past_due_balance",
+      value_display: "$18,500 (Invoice NS-20314, 41 days overdue)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "1m ago",
-    },
+      source: "netsuite",
+      label: "NetSuite — past-due $18,500 (Invoice NS-20314)",
+    } as CitationMeta,
     {
       n: 6,
-      source: "sf",
       evid: "forecast",
-      label: "Salesforce — Sep 12, 2026 · Commit · auto-renew on",
+      provenance: "raw",
+      source_system: "Salesforce",
+      source_module: "Opportunities",
+      field: "forecast_category",
+      value_display: "Commit · close Sep 12, 2026 · auto-renew on",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-09-12T00:00:00Z",
       time_ago: "2m ago",
-    },
+      source: "sf",
+      label: "Salesforce — Sep 12, 2026 · Commit · auto-renew on",
+    } as CitationMeta,
     {
       n: 9,
-      source: "snowflake",
       evid: "flows",
-      label: "Snowflake — flows active 9 of 20 provisioned",
+      provenance: "raw",
+      source_system: "Snowflake",
+      source_module: "Product usage",
+      field: "flows_active",
+      value_display: "9 of 20 provisioned (3 paused since March)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
-    },
+      source: "snowflake",
+      label: "Snowflake — flows active 9 of 20 provisioned",
+    } as CitationMeta,
     {
       n: 10,
-      source: "snowflake",
       evid: "sends",
-      label: "Snowflake — sends (30d) 3.1M · ↓ 18%",
+      provenance: "raw",
+      source_system: "Snowflake",
+      source_module: "Product usage",
+      field: "sends_30d",
+      value_display: "3.1M (↓ 18% vs prior 30 days)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
-    },
+      source: "snowflake",
+      label: "Snowflake — sends (30d) 3.1M · ↓ 18%",
+    } as CitationMeta,
     {
       n: 11,
-      source: "gong",
       evid: "gong-apr11",
+      provenance: "scored",
+      source_system: "Gong",
+      source_module: "Apr 11 QBR call",
+      field: "competitor_mentions",
+      value_display: "2× competitor named; pricing pushback in same session",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-11T00:00:00Z",
+      time_ago: "11 days ago",
+      source: "gong",
       label: "Gong — Apr 11 QBR (competitor referenced 2×)",
-      time_ago: "11m ago",
-    },
+    } as CitationMeta,
     {
       n: 12,
-      source: "internal",
       evid: "ap-policy",
+      provenance: "raw",
+      source_system: "NetSuite",
+      source_module: "AP flags",
+      field: "invoice_block_flag",
+      value_display: "blocked — further invoicing halted (set Apr 03)",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-03T00:00:00Z",
+      time_ago: "19 days ago",
+      source: "netsuite",
       label: "Internal — AP policy signal (finance blocked)",
-      time_ago: "inferred",
-    },
+    } as CitationMeta,
   ],
 };
 
