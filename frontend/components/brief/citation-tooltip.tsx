@@ -1,5 +1,6 @@
 "use client";
 
+import { explainProvenance } from "@/lib/provenance-explainers";
 import type { CitationMeta } from "@/lib/types";
 
 interface CitationTooltipProps {
@@ -37,6 +38,9 @@ export function CitationTooltip({ citation, x, y }: CitationTooltipProps) {
           <span>{(citation as Extract<CitationMeta, { provenance: "raw" | "scored" }>).value_display}</span>
         </div>
       )}
+      <div className="text-[11px] text-ink-3 mt-2 leading-snug">
+        {explainProvenance(citation)}
+      </div>
       <div className="text-[10px] text-ink-4 mt-1">{citation.time_ago}</div>
     </div>
   );
