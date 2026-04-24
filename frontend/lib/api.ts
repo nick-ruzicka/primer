@@ -7,8 +7,7 @@ import type {
   AccountsResponse,
 } from "./types";
 
-const API_BASE =
-  typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 const LIVE_MODE = !!API_BASE;
 
 /**

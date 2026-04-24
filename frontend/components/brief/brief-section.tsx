@@ -2,13 +2,11 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import type {
-  BriefSection as BriefSectionData,
-  CitationMeta,
-} from "@/lib/fixtures/northstar-beauty-brief";
+import type { BriefSection as BriefSectionData } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { HedgePill } from "./hedge-pill";
-import { Prose } from "./prose";
+import { isInferenceParagraph } from "@/lib/inference-detector";
+import { Prose, paragraphPlainText } from "./prose";
 
 interface Props {
   section: BriefSectionData;
@@ -77,22 +75,15 @@ export function BriefSection({
           )}
           {section.title}
         </h2>
-        <div className="ml-auto flex items-center gap-2">
-          <HedgePill
-            level={section.hedge.level}
-            label={section.hedge.label}
-            tip={section.hedge.tip}
+        {isWorkspace && (
+          <ChevronDown
+            className={cn(
+              "ml-auto h-3.5 w-3.5 text-ink-4 transition-transform",
+              isOpen ? "rotate-180" : "rotate-0",
+            )}
+            strokeWidth={2}
           />
-          {isWorkspace && (
-            <ChevronDown
-              className={cn(
-                "h-3.5 w-3.5 text-ink-4 transition-transform",
-                isOpen ? "rotate-180" : "rotate-0",
-              )}
-              strokeWidth={2}
-            />
-          )}
-        </div>
+        )}
       </header>
 
       {isOpen && (
@@ -100,17 +91,25 @@ export function BriefSection({
           <p className="brief-preview text-ink-3 mt-1 mb-4">{section.preview}</p>
           {section.paragraphs && (
             <div className={cn(section.id === "01" ? "the-read" : "why-stack", "prose-body")}>
-              {section.paragraphs.map((p, idx) => (
-                <p key={idx}>
-                  <Prose
-                    nodes={p}
-                    citations={citations}
-                    hoveredEvid={hoveredEvid}
-                    onCitationHover={onCitationHover}
-                    onCitationClick={onCitationClick}
-                  />
-                </p>
-              ))}
+              {section.paragraphs.map((p, idx) => {
+                const plain = paragraphPlainText(p);
+                const isInference = isInferenceParagraph(plain);
+                return (
+                  <p
+                    key={idx}
+                    className={cn("brief-paragraph", isInference && "inference")}
+                    aria-label={isInference ? "Inferential passage" : undefined}
+                  >
+                    <Prose
+                      nodes={p}
+                      citations={citations}
+                      hoveredEvid={hoveredEvid}
+                      onCitationHover={onCitationHover}
+                      onCitationClick={onCitationClick}
+                    />
+                  </p>
+                );
+              })}
             </div>
           )}
           {section.actions && (

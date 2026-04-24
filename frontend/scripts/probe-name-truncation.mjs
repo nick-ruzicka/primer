@@ -1,12 +1,12 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Probe: what exactly does the account header render for Kindred, Tidepool,
  * Ember, Quiver Supplements? Compare to the rail text.
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -61,8 +61,13 @@ for (const { id, expected } of accounts) {
 
   console.log(`${id.padEnd(24)} expected=${JSON.stringify(expected)}`);
   console.log(`  h1 span: ${JSON.stringify(headerH1)}`);
-  console.log(`  h1 full: ${JSON.stringify(headerH1Raw.replace(/\n/g, " | "))}`);
-  if (bbox) console.log(`  bbox:    ${bbox.width.toFixed(0)}×${bbox.height.toFixed(0)}`);
+  console.log(
+    `  h1 full: ${JSON.stringify(headerH1Raw.replace(/\n/g, " | "))}`,
+  );
+  if (bbox)
+    console.log(
+      `  bbox:    ${bbox.width.toFixed(0)}×${bbox.height.toFixed(0)}`,
+    );
 
   await page.close();
 }

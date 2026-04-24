@@ -1,4 +1,4 @@
-import type { ConfidenceLevel, SourceId } from "../types";
+import type { CitationMeta } from "../types";
 
 /**
  * Northstar Beauty brief fixture — lifted verbatim from the reference HTML
@@ -28,7 +28,6 @@ export interface BriefSection {
   id: "01" | "02" | "03" | "04";
   key: "read" | "why" | "what_to_do" | "talk_track";
   title: string;
-  hedge: { level: ConfidenceLevel; label: string; tip: string };
   preview: string;
   // For 01 / 02: list of paragraphs
   paragraphs?: Paragraph[];
@@ -38,18 +37,9 @@ export interface BriefSection {
   questions?: Paragraph[];
 }
 
-export interface CitationMeta {
-  n: number;
-  source: SourceId;
-  evid: string;
-  label: string;
-  time_ago: string;
-}
-
 export interface BriefFixture {
   account_id: string;
   confidence: number;
-  confidence_label: string;
   sections: BriefSection[];
   citations: CitationMeta[];
 }
@@ -63,17 +53,11 @@ const c = (n: number): InlineNode => ({ kind: "cite", n });
 export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
   account_id: "ns-beauty",
   confidence: 84,
-  confidence_label: "likely",
   sections: [
     {
       id: "01",
       key: "read",
       title: "The read",
-      hedge: {
-        level: "very-likely",
-        label: "very likely",
-        tip: "Very likely — multiple independent signals agree. Internal systems and external sources both support this read; low risk of being wrong.",
-      },
       preview:
         "Renewal on paper — trust-repair underneath. Beauty is the weakest brand in a group-wide consolidation review.",
       paragraphs: [
@@ -115,11 +99,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "02",
       key: "why",
       title: "Why this read",
-      hedge: {
-        level: "likely",
-        label: "likely",
-        tip: "Likely — the supporting signals cluster toward one interpretation, but a single new data point could shift the picture. Worth validating on the call.",
-      },
       preview:
         "New CFO blocked payment; exec sponsor has been cold 89 days; Beauty usage is the only brand under Group average.",
       paragraphs: [
@@ -177,11 +156,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "03",
       key: "what_to_do",
       title: "What to do on the call",
-      hedge: {
-        level: "rec",
-        label: "agent recommendation",
-        tip: "Agent recommendation — these are prescriptive next actions generated from the read above. Edit or discard any; nothing here is committed until you act on it.",
-      },
       preview:
         "Lead with finance. Pre-solve the invoice before it becomes the call. Reset the exec relationship at the SVP level.",
       actions: [
@@ -238,11 +212,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "04",
       key: "talk_track",
       title: "Suggested talk track",
-      hedge: {
-        level: "draft",
-        label: "draft — not sent",
-        tip: "Draft — a first-pass opening the agent will refine in real time as you talk. Use it as a starting point, not a script.",
-      },
       preview:
         "Four-beat open: acknowledge → address → reframe → propose. Don't pitch Loyalty until the invoice is resolved.",
       questions: [
@@ -277,73 +246,122 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
   citations: [
     {
       n: 1,
-      source: "exa",
       evid: "cfo",
-      label: "Retail Dive — Northstar Group taps new CFO",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "Retail Dive — Northstar Group taps new CFO",
+      snippet:
+        "Northstar Group has appointed Carla Reyes as Chief Financial Officer, effective April 2. Reyes previously held VP Finance at Consolidated Retail, where she oversaw vendor consolidation initiatives.",
+      url: "https://retaildive.com/northstar-group-cfo-carla-reyes",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-03T00:00:00Z",
       time_ago: "19 days ago",
     },
     {
       n: 2,
-      source: "exa",
       evid: "priya-li",
-      label: "LinkedIn — Priya Shah on lifecycle tooling",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "LinkedIn post by Priya Shah",
+      snippet:
+        "Vendor overlap across our three brands is getting harder to justify. Starting a real consolidation review this quarter — fewer tools, more leverage.",
+      url: "https://linkedin.com/posts/priya-shah-lifecycle-tooling",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-10T00:00:00Z",
       time_ago: "12 days ago",
     },
     {
       n: 3,
-      source: "exa",
       evid: "pod-apr11",
-      label: "DTC Pod · Ep. 212 — Priya Shah on consolidation",
+      provenance: "surfaced",
+      source_system: "Exa",
+      source_module: "DTC Pod · Ep. 212",
+      snippet:
+        "Active has this really elegant integrated approach — loyalty, SMS, and lifecycle all in one. We've been trying to replicate that across Beauty and Home, and it's just not the same.",
+      url: "https://dtcpod.com/episodes/212-priya-shah-northstar",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-12T00:00:00Z",
       time_ago: "10 days ago",
     },
     {
       n: 4,
-      source: "catalyst",
       evid: "rel-health",
-      label: "Catalyst — relationship health 61 (cooled)",
+      provenance: "scored",
+      source_system: "Catalyst",
+      source_module: "Relationship health",
+      field: "relationship_score",
+      value_display: "61 / 100 (Watchlist — down 13 pts since Mar 28)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "5m ago",
     },
     {
       n: 5,
-      source: "netsuite",
       evid: "past-due",
-      label: "NetSuite — past-due $18,500 (Invoice NS-20314)",
+      provenance: "raw",
+      source_system: "NetSuite",
+      source_module: "Accounts Receivable",
+      field: "past_due_balance",
+      value_display: "$18,500 (Invoice NS-20314, 41 days overdue)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "1m ago",
     },
     {
       n: 6,
-      source: "sf",
       evid: "forecast",
-      label: "Salesforce — Sep 12, 2026 · Commit · auto-renew on",
+      provenance: "raw",
+      source_system: "Salesforce",
+      source_module: "Opportunities",
+      field: "forecast_category",
+      value_display: "Commit · close Sep 12, 2026 · auto-renew on",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-09-12T00:00:00Z",
       time_ago: "2m ago",
     },
     {
       n: 9,
-      source: "snowflake",
       evid: "flows",
-      label: "Snowflake — flows active 9 of 20 provisioned",
+      provenance: "raw",
+      source_system: "Snowflake",
+      source_module: "Product usage",
+      field: "flows_active",
+      value_display: "9 of 20 provisioned (3 paused since March)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
     },
     {
       n: 10,
-      source: "snowflake",
       evid: "sends",
-      label: "Snowflake — sends (30d) 3.1M · ↓ 18%",
+      provenance: "raw",
+      source_system: "Snowflake",
+      source_module: "Product usage",
+      field: "sends_30d",
+      value_display: "3.1M (↓ 18% vs prior 30 days)",
+      retrieved_at: "2026-04-22T14:00:00Z",
       time_ago: "8m ago",
     },
     {
       n: 11,
-      source: "gong",
       evid: "gong-apr11",
-      label: "Gong — Apr 11 QBR (competitor referenced 2×)",
-      time_ago: "11m ago",
+      provenance: "scored",
+      source_system: "Gong",
+      source_module: "Apr 11 QBR call",
+      field: "competitor_mentions",
+      value_display: "2× competitor named; pricing pushback in same session",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-11T00:00:00Z",
+      time_ago: "11 days ago",
     },
     {
       n: 12,
-      source: "internal",
       evid: "ap-policy",
-      label: "Internal — AP policy signal (finance blocked)",
-      time_ago: "inferred",
+      provenance: "raw",
+      source_system: "NetSuite",
+      source_module: "AP flags",
+      field: "invoice_block_flag",
+      value_display: "blocked — further invoicing halted (set Apr 03)",
+      retrieved_at: "2026-04-22T14:00:00Z",
+      data_as_of: "2026-04-03T00:00:00Z",
+      time_ago: "19 days ago",
     },
   ],
 };
@@ -366,7 +384,7 @@ export function briefToMarkdown(fixture: BriefFixture): string {
 
   const out: string[] = [];
   for (const s of fixture.sections) {
-    out.push(`## ${s.id} · ${s.title} — ${s.hedge.label}`);
+    out.push(`## ${s.id} · ${s.title}`);
     out.push("");
     out.push(`> ${s.preview}`);
     out.push("");

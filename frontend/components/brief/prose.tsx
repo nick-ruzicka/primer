@@ -1,12 +1,25 @@
 "use client";
 
 import { Fragment, useState, useRef } from "react";
-import type {
-  CitationMeta,
-  Paragraph,
-} from "@/lib/fixtures/northstar-beauty-brief";
+import type { Paragraph, InlineNode } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { CitationChip } from "./citation-chip";
 import { CitationTooltip } from "./citation-tooltip";
+
+/**
+ * Flatten a paragraph's inline nodes to a plain string for text analysis
+ * (e.g. inference-voice detection). Citation nodes contribute no text.
+ */
+export function paragraphPlainText(nodes: InlineNode[]): string {
+  return nodes
+    .map((n) => {
+      if (n.kind === "text" || n.kind === "bold" || n.kind === "italic") {
+        return (n as { value: string }).value ?? "";
+      }
+      return ""; // cite/etc. don't contribute text for detection
+    })
+    .join(" ");
+}
 
 interface Props {
   nodes: Paragraph;
@@ -14,39 +27,6 @@ interface Props {
   hoveredEvid?: string | null;
   onCitationHover?: (evid: string | null) => void;
   onCitationClick?: (evid: string) => void;
-}
-
-/**
- * Source icon map and name map for citations.
- */
-function getSourceIcon(source: string) {
-  const iconMap: Record<string, React.ReactNode> = {
-    sf: <span>📊</span>,
-    salesforce: <span>📊</span>,
-    gong: <span>🎙️</span>,
-    netsuite: <span>📑</span>,
-    catalyst: <span>⚡</span>,
-    snowflake: <span>❄️</span>,
-    exa: <span>🔍</span>,
-    hubspot: <span>🤝</span>,
-    internal: <span>🔗</span>,
-  };
-  return iconMap[source.toLowerCase()] || <span>🔗</span>;
-}
-
-function getSourceName(source: string): string {
-  const nameMap: Record<string, string> = {
-    sf: "Salesforce",
-    salesforce: "Salesforce",
-    gong: "Gong",
-    netsuite: "NetSuite",
-    catalyst: "Catalyst",
-    snowflake: "Snowflake",
-    exa: "Exa",
-    hubspot: "HubSpot",
-    internal: "Internal",
-  };
-  return nameMap[source.toLowerCase()] || source;
 }
 
 /**
@@ -62,7 +42,7 @@ export function Prose({
   onCitationClick,
 }: Props) {
   const [hoveredCitation, setHoveredCitation] = useState<string | null>(null);
-  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
   const citationRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   return (
@@ -87,12 +67,12 @@ export function Prose({
                   citationRefs.current[match.evid] = el.querySelector("button");
                 }
               }}
-              onMouseEnter={(e) => {
+              onMouseEnter={() => {
                 if (match && citationRefs.current[match.evid]) {
                   const rect = citationRefs.current[match.evid]!.getBoundingClientRect();
                   setTooltipPos({
-                    top: rect.top,
-                    left: rect.left + rect.width / 2,
+                    x: rect.left + rect.width / 2,
+                    y: rect.top,
                   });
                   setHoveredCitation(match.evid);
                 }
@@ -110,12 +90,9 @@ export function Prose({
             </span>
             {match && hoveredCitation === match.evid && (
               <CitationTooltip
-                sourceIcon={getSourceIcon(match.source)}
-                sourceName={getSourceName(match.source)}
-                dataPoint={match.label}
-                timestamp={match.time_ago}
-                isOpen={hoveredCitation === match.evid}
-                position={tooltipPos}
+                citation={match}
+                x={tooltipPos.x}
+                y={tooltipPos.y}
               />
             )}
           </Fragment>

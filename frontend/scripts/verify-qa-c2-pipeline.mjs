@@ -1,4 +1,7 @@
 #!/usr/bin/env node
+import { mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 /**
  * Browser verification for the QA C2 enhancement (+ S1 re-confirmation).
  * Walks Northstar Beauty, Tidepool, Kindred, Ember, verifies:
@@ -7,9 +10,6 @@
  *    prospects; pipeline shown for prospects; real ARR shown otherwise)
  */
 import { chromium } from "@playwright/test";
-import { mkdir } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "verification-output");
@@ -88,10 +88,16 @@ for (const acc of accounts) {
 
   console.log(`\n=== ${acc.name} (${acc.id}) ===`);
   console.log(`header: ${headerText.replace(/\n/g, " | ")}`);
-  console.log(`  name match    : ${nameOk ? "✓" : "❌"}  (expected "${acc.expectedName}")`);
-  console.log(`  arr label match: ${arrOk ? "✓" : "❌"}  (expected /${acc.expectedArrLabel.source}/)`);
+  console.log(
+    `  name match    : ${nameOk ? "✓" : "❌"}  (expected "${acc.expectedName}")`,
+  );
+  console.log(
+    `  arr label match: ${arrOk ? "✓" : "❌"}  (expected /${acc.expectedArrLabel.source}/)`,
+  );
   if (forbiddenHits.length) {
-    console.log(`  ❌ forbidden patterns present: ${forbiddenHits.map((r) => r.source).join(", ")}`);
+    console.log(
+      `  ❌ forbidden patterns present: ${forbiddenHits.map((r) => r.source).join(", ")}`,
+    );
   }
   if (consoleErrors.length) {
     console.log(`  console errors: ${consoleErrors.length}`);
