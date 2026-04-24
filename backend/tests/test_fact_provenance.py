@@ -135,3 +135,25 @@ def test_source_cited_payload_for_surfaced_includes_url_and_snippet():
     assert payload["url"] == "https://linkedin.com/posts/priya-shah-abc123"
     assert payload["field"] is None
     assert payload["value_display"] is None
+
+
+def test_now_iso_returns_z_suffix():
+    from backend.agent import _now_iso
+    result = _now_iso()
+    assert result.endswith("Z")
+    assert "T" in result  # ISO datetime format
+
+
+def test_time_ago_from_iso_relative_string():
+    from backend.agent import _time_ago_from_iso
+    # Anchor-aware — the project pins ANCHOR_DATE in .env; the helper
+    # reads that and computes relative to it. Test passes an explicit anchor.
+    assert _time_ago_from_iso("2026-04-24T12:00:00Z", anchor="2026-04-24T14:00:00Z") == "2h ago"
+    assert _time_ago_from_iso("2026-04-23T14:00:00Z", anchor="2026-04-24T14:00:00Z") == "1d ago"
+    assert _time_ago_from_iso(None, anchor="2026-04-24T14:00:00Z") == "—"
+
+
+def test_time_ago_from_iso_sub_hour_windows():
+    from backend.agent import _time_ago_from_iso
+    assert _time_ago_from_iso("2026-04-24T13:59:30Z", anchor="2026-04-24T14:00:00Z") == "30s ago"
+    assert _time_ago_from_iso("2026-04-24T13:45:00Z", anchor="2026-04-24T14:00:00Z") == "15m ago"

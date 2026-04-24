@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from dataclasses import dataclass, field as _dc_field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, AsyncIterator, Literal
 
@@ -909,3 +911,39 @@ def _time_ago(iso_date: str | None) -> str | None:
     if days < 365:
         return f"{days // 30}mo ago"
     return f"{days // 365}y ago"
+
+
+def _now_iso() -> str:
+    """ISO timestamp for the backend's current 'now', respecting ANCHOR_DATE
+    when set (demo mode). Format: 2026-04-24T14:30:00Z."""
+    anchor = os.getenv("ANCHOR_DATE")
+    if anchor:
+        # Treat ANCHOR_DATE as midnight UTC of the named day + a synthetic
+        # afternoon offset consistent with other demo-mode timestamping.
+        return f"{anchor}T14:00:00Z"
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _time_ago_from_iso(iso: str | None, anchor: str | None = None) -> str:
+    """Human relative string from an ISO timestamp, anchored to the project's
+    ANCHOR_DATE (or an explicit anchor for tests). Returns '—' for None input
+    or unparseable timestamps."""
+    if iso is None:
+        return "—"
+    try:
+        then = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    except ValueError:
+        return "—"
+    if anchor:
+        now = datetime.fromisoformat(anchor.replace("Z", "+00:00"))
+    else:
+        now = datetime.now(timezone.utc)
+    delta = now - then
+    secs = int(delta.total_seconds())
+    if secs < 60:
+        return f"{secs}s ago"
+    if secs < 3600:
+        return f"{secs // 60}m ago"
+    if secs < 86400:
+        return f"{secs // 3600}h ago"
+    return f"{secs // 86400}d ago"
