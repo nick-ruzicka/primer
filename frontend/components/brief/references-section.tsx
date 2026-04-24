@@ -35,12 +35,8 @@ export function ReferencesSection({
             <span className="text-ink-3 flex-shrink-0 w-6">{citation.n}.</span>
             <span className="flex-shrink-0 w-4">{sourceIcons[citation.source] || "🔗"}</span>
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">
-                {citation.label}
-              </div>
-              <div className="text-xs text-ink-4 mt-0.5">
-                {citation.time_ago}
-              </div>
+              <div className="text-sm text-ink">{citation.label}</div>
+              <div className="text-xs text-ink-4 mt-1">{citation.time_ago}</div>
             </div>
           </li>
         ))}
