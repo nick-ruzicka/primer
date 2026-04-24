@@ -350,34 +350,31 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   es.addEventListener("source_cited", (e) => {
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      // New shape (provenance-aware). Backend dual-emits during migration.
+      // Authoritative shape — backend emits the discriminated-union payload.
       const base = {
         n: data.citation_number,
         evid: data.evid,
-        source_system: data.source_system ?? data.source, // fallback to short id
+        source_system: data.source_system,
         source_module: data.source_module ?? undefined,
         retrieved_at: data.retrieved_at ?? new Date().toISOString(),
         data_as_of: data.data_as_of ?? undefined,
         time_ago: data.time_ago ?? "",
-        // legacy back-compat fields (drop in final cleanup)
-        source: data.source,
-        label: data.label ?? data.fact ?? "",
       };
       let citation: CitationMeta;
       if (data.provenance === "surfaced") {
         citation = {
           ...base,
           provenance: "surfaced",
-          snippet: data.snippet ?? data.fact ?? "",
+          snippet: data.snippet ?? "",
           url: data.url ?? undefined,
         };
       } else {
-        // "raw" | "scored" — default to "raw" if provenance missing (legacy briefs)
+        // "raw" | "scored" — default to "raw" if provenance missing
         citation = {
           ...base,
           provenance: (data.provenance as "raw" | "scored") ?? "raw",
           field: data.field ?? "",
-          value_display: data.value_display ?? data.fact ?? "",
+          value_display: data.value_display ?? "",
         };
       }
       pushSourceCited(citation);

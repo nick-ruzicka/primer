@@ -80,8 +80,8 @@ def test_fact_book_lookup_still_works():
 
 
 def test_source_cited_payload_includes_new_fields():
-    """When a fact is emitted via source_cited, the payload must carry the
-    full provenance shape alongside the legacy source/fact/evid fields."""
+    """source_cited payload carries the authoritative discriminated-union fields.
+    Legacy source/fact/label fields are dropped (spec §9 step 4)."""
     from backend.agent import _build_source_cited_payload
     fb = FactBook()
     f = fb.add(
@@ -97,7 +97,6 @@ def test_source_cited_payload_includes_new_fields():
         text="Catalyst relationship_score: 61 (was 68, delta -7).",
     )
     payload = _build_source_cited_payload(f)
-    # new fields
     assert payload["provenance"] == "scored"
     assert payload["source_system"] == "Catalyst"
     assert payload["source_module"] == "Relationship health"
@@ -108,11 +107,11 @@ def test_source_cited_payload_includes_new_fields():
     assert payload["time_ago"] == "pulled 14m ago"
     assert payload["url"] is None
     assert payload["citation_number"] == f.fact_id
-    # back-compat fields
-    assert payload["source"] == "catalyst"
-    assert payload["fact"] == f.text
-    assert payload["evid"] == f.text
-    assert payload["label"] == f.text  # label == fact.text during migration
+    assert payload["evid"] == f.text  # stable citation chip ↔ reference lookup key
+    # Legacy fields are gone
+    assert "source" not in payload
+    assert "fact" not in payload
+    assert "label" not in payload
 
 
 def test_source_cited_payload_for_surfaced_includes_url_and_snippet():
