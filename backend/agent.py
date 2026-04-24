@@ -12,9 +12,9 @@ from __future__ import annotations
 import json
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as _dc_field
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Literal
 
 import asyncio as _asyncio
 
@@ -66,15 +66,34 @@ _VALIDATION_PROMPT = (
 
 @dataclass
 class Fact:
+    """A single citable fact. One field per fact — the per-field split is
+    how the RAW/SCORED/SURFACED provenance tag maps cleanly to the reference
+    entry's `field = value` layout."""
     fact_id: int
-    source: str
-    text: str
-    timestamp: str | None = None
-    meta: dict[str, Any] = field(default_factory=dict)
+    provenance: Literal["raw", "scored", "surfaced"]
+    source: str                          # short id, preserved for back-compat
+    source_system: str                   # display name: "Salesforce", "Catalyst", ...
+    text: str                            # short display form for prompt + back-compat
+    retrieved_at: str                    # ISO
+    time_ago: str                        # pre-computed human relative time
+    source_module: str | None = None
+    field: str | None = None             # raw/scored only
+    value_display: str | None = None     # raw/scored only
+    snippet: str | None = None           # surfaced only
+    data_as_of: str | None = None
+    url: str | None = None               # surfaced only (in V1)
+    meta: dict[str, Any] = _dc_field(default_factory=dict)
+
+    @property
+    def timestamp(self) -> str | None:
+        """Back-compat accessor — existing code reading .timestamp gets data_as_of
+        (or retrieved_at as fallback) so the old time_ago code path keeps working."""
+        return self.data_as_of or self.retrieved_at
 
 
 class FactBook:
-    """Monotonic fact_id allocator keyed by source."""
+    """Monotonic fact_id allocator. Each add() produces a single cited fact
+    tagged with provenance metadata (spec §4.1)."""
 
     def __init__(self) -> None:
         self._facts: list[Fact] = []
@@ -82,17 +101,36 @@ class FactBook:
 
     def add(
         self,
+        *,
+        provenance: Literal["raw", "scored", "surfaced"],
         source: str,
+        source_system: str,
         text: str,
-        timestamp: str | None = None,
+        retrieved_at: str,
+        time_ago: str,
+        source_module: str | None = None,
+        field: str | None = None,
+        value_display: str | None = None,
+        snippet: str | None = None,
+        data_as_of: str | None = None,
+        url: str | None = None,
         meta: dict[str, Any] | None = None,
     ) -> Fact:
         self._counter += 1
         fact = Fact(
             fact_id=self._counter,
+            provenance=provenance,
             source=source,
+            source_system=source_system,
+            source_module=source_module,
+            field=field,
+            value_display=value_display,
+            snippet=snippet,
+            retrieved_at=retrieved_at,
+            data_as_of=data_as_of,
+            time_ago=time_ago,
+            url=url,
             text=text.strip(),
-            timestamp=timestamp,
             meta=meta or {},
         )
         self._facts.append(fact)
@@ -108,7 +146,8 @@ class FactBook:
         return list(self._facts)
 
     def to_raw_context(self) -> str:
-        """Render as the context-blob format the briefing prompt expects."""
+        """Render as the context-blob format the briefing prompt expects.
+        Unchanged from before — Claude's interface stays stable."""
         return "\n".join(
             f"[source: {f.source}, fact_id: {f.fact_id}] {f.text}" for f in self._facts
         )
