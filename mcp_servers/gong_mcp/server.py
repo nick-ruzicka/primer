@@ -77,7 +77,7 @@ async def list_tools() -> list[Tool]:
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     account_id = arguments.get("account_id")
-    if not isinstance(account_id, str) or not account_id:
+    if not isinstance(account_id, str) or not account_id.strip():
         raise ValueError("account_id (non-empty string) is required")
 
     conn = connect()

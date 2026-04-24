@@ -56,7 +56,7 @@ def _resolve_decision_maker(conn, account_id: str) -> dict[str, Any] | None:
 @app.call_tool()
 async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
     account_id = arguments.get("account_id")
-    if not isinstance(account_id, str) or not account_id:
+    if not isinstance(account_id, str) or not account_id.strip():
         raise ValueError("account_id (non-empty string) is required")
 
     conn = connect()
@@ -73,14 +73,27 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             if dm is None:
                 payload = {"decision_maker": None, "signals": []}
             else:
-                like = f"%{dm['name']}%"
+                # SQL prefilter with substring LIKE — narrows candidates.
+                name_str = str(dm["name"])
+                like = f"%{name_str}%"
                 rows = conn.execute(
                     "SELECT * FROM external_signals WHERE account_id = ? "
                     "AND (title LIKE ? OR snippet LIKE ?) "
                     "ORDER BY signal_date DESC",
                     (account_id, like, like),
                 ).fetchall()
-                payload = {"decision_maker": dm, "signals": rows_to_list(rows)}
+                # Python post-filter enforces word boundaries: "John" must
+                # not match "Johnson" etc. re.escape makes names like
+                # "O'Brien" safe in the pattern.
+                import re as _re
+
+                pat = _re.compile(r"\b" + _re.escape(name_str) + r"\b", _re.I)
+                signals = [
+                    dict(r)
+                    for r in rows
+                    if pat.search(r["title"] or "") or pat.search(r["snippet"] or "")
+                ]
+                payload = {"decision_maker": dm, "signals": signals}
         else:
             raise ValueError(f"Unknown tool: {name}")
     finally:
