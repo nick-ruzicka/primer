@@ -134,10 +134,6 @@ export default function BriefingPage() {
             />
             <ConfidenceStrip
               confidence={generationMeta.totalTokens ?? 0}
-              confidenceLabel={
-                brief.fixture?.confidence_label ??
-                DEFAULT_BRIEF_META.confidenceLabel
-              }
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
               generatedAgo={brief.complete ? "just now" : "streaming…"}

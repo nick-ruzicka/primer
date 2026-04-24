@@ -73,17 +73,11 @@ const WHY_P2: Paragraph = [
 export const KINDRED_PET_BRIEF: BriefFixture = {
   account_id: "kindred",
   confidence: 71,
-  confidence_label: "likely",
   sections: [
     {
       id: "01",
       key: "read",
       title: "The read",
-      hedge: {
-        level: "likely",
-        label: "likely",
-        tip: "Likely — multiple signals agree but the DM has only been in seat two months; a rebuild-the-champion angle could flip the picture.",
-      },
       preview:
         "Not a billing problem — an adoption problem with a new DM who inherited a stack she didn't choose.",
       paragraphs: [P1, P2, P3],
@@ -92,11 +86,6 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       id: "02",
       key: "why",
       title: "Why this read",
-      hedge: {
-        level: "likely",
-        label: "likely",
-        tip: "Likely — the supporting data is consistent but narrow; one deep conversation with Jamie could either confirm or invalidate quickly.",
-      },
       preview:
         "Usage halved since Rowan left. Exec sponsor dark 127 days. Jamie explicitly naming 'consolidation' on the last call.",
       paragraphs: [WHY_P1, WHY_P2],
@@ -105,11 +94,6 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       id: "03",
       key: "what_to_do",
       title: "What to do on the call",
-      hedge: {
-        level: "rec",
-        label: "agent recommendation",
-        tip: "Agent recommendation — prioritized to rebuild a champion rather than defend the renewal on features.",
-      },
       preview:
         "Rebuild a champion. Show Jamie what 'full potential' actually looks like with her stack, her flows, her brand.",
       actions: [
@@ -155,11 +139,6 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
       id: "04",
       key: "talk_track",
       title: "Suggested talk track",
-      hedge: {
-        level: "draft",
-        label: "draft — not sent",
-        tip: "Draft — warm, curious, not defensive.",
-      },
       preview:
         "Curious, not defensive. Jamie needs to feel you're invested in her succeeding, not invested in the renewal.",
       questions: [

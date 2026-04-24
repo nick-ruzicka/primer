@@ -196,7 +196,6 @@ function resetLiveBriefBuffer(accountId: string) {
     // ignored in live mode. Kept as a typed zero so the mock path still
     // satisfies BriefFixture.
     confidence: 0,
-    confidence_label: "likely",
     sections: [],
     citations: [],
   };

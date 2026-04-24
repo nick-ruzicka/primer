@@ -1,5 +1,4 @@
 import type { CitationMeta } from "../types";
-import type { ConfidenceLevel } from "../types";
 
 /**
  * Northstar Beauty brief fixture — lifted verbatim from the reference HTML
@@ -29,7 +28,6 @@ export interface BriefSection {
   id: "01" | "02" | "03" | "04";
   key: "read" | "why" | "what_to_do" | "talk_track";
   title: string;
-  hedge: { level: ConfidenceLevel; label: string; tip: string };
   preview: string;
   // For 01 / 02: list of paragraphs
   paragraphs?: Paragraph[];
@@ -42,7 +40,6 @@ export interface BriefSection {
 export interface BriefFixture {
   account_id: string;
   confidence: number;
-  confidence_label: string;
   sections: BriefSection[];
   citations: CitationMeta[];
 }
@@ -56,17 +53,11 @@ const c = (n: number): InlineNode => ({ kind: "cite", n });
 export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
   account_id: "ns-beauty",
   confidence: 84,
-  confidence_label: "likely",
   sections: [
     {
       id: "01",
       key: "read",
       title: "The read",
-      hedge: {
-        level: "very-likely",
-        label: "very likely",
-        tip: "Very likely — multiple independent signals agree. Internal systems and external sources both support this read; low risk of being wrong.",
-      },
       preview:
         "Renewal on paper — trust-repair underneath. Beauty is the weakest brand in a group-wide consolidation review.",
       paragraphs: [
@@ -108,11 +99,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "02",
       key: "why",
       title: "Why this read",
-      hedge: {
-        level: "likely",
-        label: "likely",
-        tip: "Likely — the supporting signals cluster toward one interpretation, but a single new data point could shift the picture. Worth validating on the call.",
-      },
       preview:
         "New CFO blocked payment; exec sponsor has been cold 89 days; Beauty usage is the only brand under Group average.",
       paragraphs: [
@@ -170,11 +156,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "03",
       key: "what_to_do",
       title: "What to do on the call",
-      hedge: {
-        level: "rec",
-        label: "agent recommendation",
-        tip: "Agent recommendation — these are prescriptive next actions generated from the read above. Edit or discard any; nothing here is committed until you act on it.",
-      },
       preview:
         "Lead with finance. Pre-solve the invoice before it becomes the call. Reset the exec relationship at the SVP level.",
       actions: [
@@ -231,11 +212,6 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
       id: "04",
       key: "talk_track",
       title: "Suggested talk track",
-      hedge: {
-        level: "draft",
-        label: "draft — not sent",
-        tip: "Draft — a first-pass opening the agent will refine in real time as you talk. Use it as a starting point, not a script.",
-      },
       preview:
         "Four-beat open: acknowledge → address → reframe → propose. Don't pitch Loyalty until the invoice is resolved.",
       questions: [
@@ -428,7 +404,7 @@ export function briefToMarkdown(fixture: BriefFixture): string {
 
   const out: string[] = [];
   for (const s of fixture.sections) {
-    out.push(`## ${s.id} · ${s.title} — ${s.hedge.label}`);
+    out.push(`## ${s.id} · ${s.title}`);
     out.push("");
     out.push(`> ${s.preview}`);
     out.push("");

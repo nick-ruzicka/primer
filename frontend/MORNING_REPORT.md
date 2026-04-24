@@ -11,7 +11,7 @@ All seven phases from the operator brief, each committed independently.
 |-------|--------|--------------|
 | 1 | `phase 1: foundation + verification tooling` | Rename `frontend-app/` → `frontend/`, install deps, globals.css tokens, next/font wiring, blank shell, Playwright screenshot helper. |
 | 2 | `phase 2: static shell` | LeftRail, Topbar, AccountHeader, ConfidenceStrip, TweaksPanel + trigger. Static fixture for accounts + confidence meta. |
-| 3 | `phase 3: brief rendering` | Full Northstar Beauty brief fixture (structured), Brief / BriefSection / Prose / CitationChip / HedgePill components, three layouts (centered / split / workspace). |
+| 3 | `phase 3: brief rendering` | Full Northstar Beauty brief fixture (structured), Brief / BriefSection / Prose / CitationChip components, three layouts (centered / split / workspace). |
 | 4 | `phase 4: intelligence panel` | IntelligencePanel + five card variants (standard / hero / person / web / health), sparkline stub, filter bar (All / Flagged / Critical only) + search. Reading-mode slide-over. |
 | 5 | `phase 5: state + mock SSE` | `useSyncExternalStore` module store, mock-SSE timeline (intel 300–2300ms, brief 2300–6300ms, warnings 6300–7500ms), Kindred Pet second fixture for account-switch demo, ValidationBanner. |
 | 6 | `phase 6: mode 4 writeup` | Full-width Writeup placeholder + fourth mode tab. |
