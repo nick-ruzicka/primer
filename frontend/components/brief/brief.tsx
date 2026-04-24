@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { BriefFixture, CitationMeta } from "@/lib/fixtures/northstar-beauty-brief";
+import type { BriefFixture } from "@/lib/fixtures/northstar-beauty-brief";
+import type { CitationMeta } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BriefSection } from "./brief-section";
 import { ReferencesSection } from "./references-section";
@@ -46,7 +47,8 @@ export function Brief({
   };
 
   const getCitationById = (citationId: string): CitationMeta | null => {
-    return brief.citations.find((c) => c.evid === citationId) || null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (brief.citations as any[]).find((c) => c.evid === citationId) || null;
   };
   return (
     <div
