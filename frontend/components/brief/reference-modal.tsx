@@ -1,5 +1,6 @@
 "use client";
 
+import { explainProvenance } from "@/lib/provenance-explainers";
 import type { CitationMeta } from "@/lib/types";
 
 interface ReferenceModalProps {
@@ -71,6 +72,10 @@ export function ReferenceModal({
               </div>
             </div>
           )}
+
+          <p className="text-sm text-ink-2 leading-relaxed">
+            {explainProvenance(citation)}
+          </p>
 
           <div className="pt-3 border-t border-line text-xs text-ink-3 space-y-1">
             <div>
