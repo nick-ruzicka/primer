@@ -68,13 +68,13 @@ Rollback = delete the marker-detection branch and V1 regex resumes for everythin
 
 ## 6. Decision trigger — when to promote V2
 
-V1 ships with the measurement infrastructure in §7 already in place. Promote to V2 if **any** of:
+V1 ships with the measurement infrastructure in §7 already in place. Treat the thresholds below as **orientation, not hard triggers** — the real bar is "evidence of a real problem," not hitting a specific number. Promote to V2 when **any** of these materializes:
 
-- **False-negative rate > 10% across 50+ briefs, measured twice at least a week apart.** The week gap catches drift vs. one bad day. 50+ briefs is the minimum for the rate to be statistically meaningful; `~10% across ~20 briefs` is only 2 misses and could be noise.
+- **False-negative rate > 10% across 50+ briefs, measured twice at least a week apart.** The week gap catches drift vs. one bad day. 50+ briefs is the minimum for the rate to be statistically meaningful; `~10% across ~20 briefs` is only 2 misses and could be noise. Treat this as orientation — if the rate is 8% but the misses are clustered on high-stakes briefs, that still warrants promotion.
 - **False-positive rate > 5% (sentences styled as inference that are actually fact-restatement with a hedge-word appearing in a non-modal position).** False positives are more user-visible than false negatives — they visually mislabel a sentence the rep is reading *right now* — so the threshold is tighter.
-- **Single rep-feedback incident where a misclassification undercut trust in a customer demo.** One-shot qualitative override. Not a metric; a judgment call from the incident review.
+- **Single rep-feedback incident where a misclassification undercut trust in a customer demo.** One-shot qualitative override. If a demo incident fires tomorrow, promote V2 tomorrow — the numbers can wait. The bar is evidence of a real problem, not sample-size arithmetic.
 
-If none fire within 4 weeks of V1 shipping, V1 is good enough and V2 stays parked.
+If none of the above materializes within ~4 weeks of V1 shipping, V1 is good enough and V2 stays parked. The 4-week window is also orientation — no alarm bells if it stretches.
 
 ## 7. V1 instrumentation requirements
 

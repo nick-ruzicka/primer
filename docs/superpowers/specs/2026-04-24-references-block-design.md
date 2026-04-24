@@ -199,7 +199,7 @@ Final mapping after the Section-2 refinement (NetSuite AP flags flipped RAW):
 | Salesforce | `get_account` | account_name, industry, segment, arr_cents, employees, hq_city, hq_state, stage, state, owner_name | **RAW** |
 | Salesforce | `get_contract` | plan_name, contract_start, contract_end, auto_renew, seats_used, seats_licensed | **RAW** |
 | Salesforce | `get_contacts[]` | name, title, role, tenure_months | **RAW** |
-| Salesforce | `get_open_opportunities[]` | opp_name, stage, close_date, amount, forecast_category | **RAW** (forecast_category is rep-typed judgment, still RAW) |
+| Salesforce | `get_open_opportunities[]` | opp_name, stage, close_date, amount, forecast_category | **RAW** — note: `forecast_category` (Commit/Best Case/Pipeline) is a human-entered judgment field. Raw in the *provenance* sense (no model produced it, the rep typed it) even though the content is interpretive. A future reviewer will ask about this; answer is here. |
 | Salesforce | `get_recent_closed_opportunities[]` | same as above | **RAW** |
 | Salesforce | `get_account_hierarchy` | parent, subsidiaries | **RAW** |
 | Snowflake | `get_usage_metrics` | sends_30d, mau, api_calls, etc. | **RAW** (counts) |
