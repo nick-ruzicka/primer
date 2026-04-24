@@ -77,3 +77,61 @@ def test_fact_book_lookup_still_works():
     )
     assert fb.lookup(fact.fact_id) is fact
     assert fb.lookup(999) is None
+
+
+def test_source_cited_payload_includes_new_fields():
+    """When a fact is emitted via source_cited, the payload must carry the
+    full provenance shape alongside the legacy source/fact/evid fields."""
+    from backend.agent import _build_source_cited_payload
+    fb = FactBook()
+    f = fb.add(
+        provenance="scored",
+        source="catalyst",
+        source_system="Catalyst",
+        source_module="Relationship health",
+        field="relationship_score",
+        value_display="61 / 100",
+        retrieved_at="2026-04-24T14:00:00Z",
+        data_as_of="2026-04-22T00:00:00Z",
+        time_ago="pulled 14m ago",
+        text="Catalyst relationship_score: 61 (was 68, delta -7).",
+    )
+    payload = _build_source_cited_payload(f)
+    # new fields
+    assert payload["provenance"] == "scored"
+    assert payload["source_system"] == "Catalyst"
+    assert payload["source_module"] == "Relationship health"
+    assert payload["field"] == "relationship_score"
+    assert payload["value_display"] == "61 / 100"
+    assert payload["retrieved_at"] == "2026-04-24T14:00:00Z"
+    assert payload["data_as_of"] == "2026-04-22T00:00:00Z"
+    assert payload["time_ago"] == "pulled 14m ago"
+    assert payload["url"] is None
+    assert payload["citation_number"] == f.fact_id
+    # back-compat fields
+    assert payload["source"] == "catalyst"
+    assert payload["fact"] == f.text
+    assert payload["evid"] == f.text
+    assert payload["label"] == f.text  # label == fact.text during migration
+
+
+def test_source_cited_payload_for_surfaced_includes_url_and_snippet():
+    from backend.agent import _build_source_cited_payload
+    fb = FactBook()
+    f = fb.add(
+        provenance="surfaced",
+        source="exa",
+        source_system="Exa",
+        source_module="LinkedIn post by Priya Shah",
+        snippet="Thinking hard about vendor consolidation for 2026.",
+        url="https://linkedin.com/posts/priya-shah-abc123",
+        retrieved_at="2026-04-24T14:00:00Z",
+        data_as_of="2026-04-09T00:00:00Z",
+        time_ago="posted 13d ago",
+        text="Exa LinkedIn post: Thinking hard about vendor consolidation for 2026.",
+    )
+    payload = _build_source_cited_payload(f)
+    assert payload["snippet"] == "Thinking hard about vendor consolidation for 2026."
+    assert payload["url"] == "https://linkedin.com/posts/priya-shah-abc123"
+    assert payload["field"] is None
+    assert payload["value_display"] is None
