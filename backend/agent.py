@@ -575,8 +575,43 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 text=f"NetSuite invoice {inv_id}: {display}.",
             )
 
-    # NOTE: Snowflake blocks not refactored yet (Task 9); skip to avoid crashes
-    # from old positional argument calls to fb.add().
+    # ---- Snowflake: Usage metrics (RAW — counts) ----
+    usage = bundle.snowflake.get("get_usage_metrics")
+    if isinstance(usage, dict):
+        now = _now_iso()
+        for raw_field, raw_value in usage.items():
+            if raw_value is None:
+                continue
+            fb.add(
+                provenance="raw",
+                source="snowflake",
+                source_system="Snowflake",
+                source_module="Usage metrics",
+                field=raw_field,
+                value_display=f"{raw_value:,}" if isinstance(raw_value, (int, float)) else str(raw_value),
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Snowflake {raw_field}: {raw_value}.",
+            )
+
+    # ---- Snowflake: Portfolio comparison (SCORED — derived math) ----
+    portfolio = bundle.snowflake.get("get_portfolio_comparison")
+    if isinstance(portfolio, dict):
+        now = _now_iso()
+        for raw_field, raw_value in portfolio.items():
+            if raw_value is None:
+                continue
+            fb.add(
+                provenance="scored",
+                source="snowflake",
+                source_system="Snowflake",
+                source_module="Portfolio comparison",
+                field=raw_field,
+                value_display=f"{raw_value:,}" if isinstance(raw_value, (int, float)) else str(raw_value),
+                retrieved_at=now,
+                time_ago="just now",
+                text=f"Snowflake portfolio {raw_field}: {raw_value}.",
+            )
 
     # ---- Salesforce: Account hierarchy ----
     hierarchy = bundle.salesforce.get("get_account_hierarchy")
