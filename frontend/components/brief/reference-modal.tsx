@@ -34,24 +34,27 @@ export function ReferenceModal({
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <label className="text-xs font-semibold text-ink-4 uppercase">
-              Data Point
+            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
+              Citation
             </label>
-            <p className="text-sm mt-1">{citation.label}</p>
+            <p className="text-sm mt-1 text-ink">{citation.label}</p>
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-ink-4 uppercase">
+            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
               Last Updated
             </label>
-            <p className="text-sm mt-1">{citation.time_ago}</p>
+            <p className="text-sm mt-1 text-ink-2">{citation.time_ago}</p>
           </div>
 
-          <button className="w-full mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium">
-            View Raw Data
-          </button>
+          <div>
+            <label className="text-xs font-semibold text-ink-4 uppercase tracking-wide">
+              Source ID
+            </label>
+            <p className="text-sm mt-1 font-mono text-ink-2">{citation.source}</p>
+          </div>
         </div>
       </div>
     </div>
