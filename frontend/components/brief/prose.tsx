@@ -17,7 +17,7 @@ interface Props {
 }
 
 /**
- * Source icon map for citations.
+ * Source icon map and name map for citations.
  */
 function getSourceIcon(source: string) {
   const iconMap: Record<string, React.ReactNode> = {
@@ -32,6 +32,21 @@ function getSourceIcon(source: string) {
     internal: <span>🔗</span>,
   };
   return iconMap[source.toLowerCase()] || <span>🔗</span>;
+}
+
+function getSourceName(source: string): string {
+  const nameMap: Record<string, string> = {
+    sf: "Salesforce",
+    salesforce: "Salesforce",
+    gong: "Gong",
+    netsuite: "NetSuite",
+    catalyst: "Catalyst",
+    snowflake: "Snowflake",
+    exa: "Exa",
+    hubspot: "HubSpot",
+    internal: "Internal",
+  };
+  return nameMap[source.toLowerCase()] || source;
 }
 
 /**
@@ -96,7 +111,7 @@ export function Prose({
             {match && hoveredCitation === match.evid && (
               <CitationTooltip
                 sourceIcon={getSourceIcon(match.source)}
-                sourceName={match.label}
+                sourceName={getSourceName(match.source)}
                 dataPoint={match.label}
                 timestamp={match.time_ago}
                 isOpen={hoveredCitation === match.evid}
