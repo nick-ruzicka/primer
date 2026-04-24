@@ -16,6 +16,7 @@ import {
   setBriefFixture,
   updateLiveBriefFixture,
 } from "./store";
+import type { CitationMeta as NewCitationMeta } from "./types";
 import type {
   IntelligenceItem,
   IntelligenceSection,
@@ -354,18 +355,40 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   es.addEventListener("source_cited", (e) => {
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      pushSourceCited(data);
-      if (data.citation_number != null && data.source && data.evid) {
-        appendCitations([
-          {
-            n: Number(data.citation_number),
-            source: data.source,
-            evid: String(data.evid),
-            label: String(data.label ?? ""),
-            time_ago: String(data.time_ago ?? ""),
-          },
-        ]);
+      // New shape (provenance-aware). Backend dual-emits during migration.
+      const base = {
+        n: data.citation_number,
+        evid: data.evid,
+        source_system: data.source_system ?? data.source, // fallback to short id
+        source_module: data.source_module ?? undefined,
+        retrieved_at: data.retrieved_at ?? new Date().toISOString(),
+        data_as_of: data.data_as_of ?? undefined,
+        time_ago: data.time_ago ?? "",
+        // legacy back-compat fields (drop in final cleanup)
+        source: data.source,
+        label: data.label ?? data.fact ?? "",
+      };
+      let citation: NewCitationMeta;
+      if (data.provenance === "surfaced") {
+        citation = {
+          ...base,
+          provenance: "surfaced",
+          snippet: data.snippet ?? data.fact ?? "",
+          url: data.url ?? undefined,
+        };
+      } else {
+        // "raw" | "scored" — default to "raw" if provenance missing (legacy briefs)
+        citation = {
+          ...base,
+          provenance: (data.provenance as "raw" | "scored") ?? "raw",
+          field: data.field ?? "",
+          value_display: data.value_display ?? data.fact ?? "",
+        };
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pushSourceCited(citation as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      appendCitations([citation] as any);
     } catch (err) {
       console.error("[primer] source_cited parse error", err);
     }
