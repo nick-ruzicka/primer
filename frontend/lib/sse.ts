@@ -23,8 +23,7 @@ import type {
   ValidationWarning,
 } from "./types";
 
-const API_BASE =
-  typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_BASE : undefined;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 /**
  * Mock mode off when NEXT_PUBLIC_API_BASE is truthy. Setting it to an absolute
