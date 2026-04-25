@@ -6,6 +6,30 @@ import type { IntelligenceItem, IntelligenceSection } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { IntelCard } from "./intel-card";
 
+/**
+ * "Active" signals are blocking revenue right now or open and trending.
+ * Closed deals (won or lost) and other historical/completed states are
+ * reference context — they keep the critical accent stripe but lose the
+ * oversized hero treatment, which is reserved for "act on this today."
+ */
+function isActiveSignal(item: IntelligenceItem): boolean {
+  const haystack = `${item.value ?? ""} · ${item.sub ?? ""} · ${item.label ?? ""}`.toLowerCase();
+  // Closed Won / Closed Lost / "Closed" stage opportunities are historical.
+  if (/\bclosed\s+(won|lost)\b/.test(haystack)) return false;
+  if (/\bclosed_(won|lost)\b/.test(haystack)) return false;
+  if (/\b(closed|won|lost)\b/.test(haystack)) {
+    // Be conservative: only demote when the word reads like a deal stage,
+    // not generic prose ("we lost the meeting").
+    if (
+      /\bopportunity|deal|pilot|expansion|renewal\b/.test(haystack) &&
+      /\b(closed|won|lost)\b/.test(haystack)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 interface Props {
   sections: IntelligenceSection[];
   /**
@@ -367,19 +391,28 @@ function SectionBody({
   }
 
   if (section.id === "commercial") {
-    const hero = items.filter((i) => i.flag === "critical");
-    const others = items.filter((i) => i.flag !== "critical");
+    // Hero variant is reserved for ONE active-now critical signal per section
+    // (blocking revenue or open-and-trending). Closed/historical critical
+    // items still render with the critical left-border accent via cardClass,
+    // but they don't get the oversized tinted treatment — historical context
+    // is reference, not urgency. Tie-breaker among active criticals: first in
+    // the natural order from the backend (which is recency-sorted upstream).
+    const heroIdx = items.findIndex(
+      (i) => i.flag === "critical" && isActiveSignal(i),
+    );
+    const heroItem = heroIdx >= 0 ? items[heroIdx] : null;
+    const rest = items.filter((_, i) => i !== heroIdx);
     return (
       <>
-        {hero.map((h) => (
+        {heroItem && (
           <IntelCard
-            key={h.evid}
-            item={h}
+            key={heroItem.evid}
+            item={heroItem}
             variant="hero"
-            {...cardProps(h.evid)}
+            {...cardProps(heroItem.evid)}
           />
-        ))}
-        {others.map((o) => (
+        )}
+        {rest.map((o) => (
           <IntelCard
             key={o.evid}
             item={o}
