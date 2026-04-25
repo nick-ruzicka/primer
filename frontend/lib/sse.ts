@@ -410,28 +410,17 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
         totalTokens: meta.total_tokens ?? null,
         durationMs: meta.duration_ms ?? null,
       });
-      // If the live brief produced nothing (e.g. upstream agent error), fall
-      // back to the mock so the demo still shows what a finished brief looks
-      // like. A validation_warning already notifies the operator.
+      // If the live brief produced nothing (e.g. upstream agent error),
+      // surface that explicitly. Showing a mock brief in its place would
+      // hand a sales rep fake content right before a customer call.
       const state = getState();
       const hasAnyRevealed = Object.values(state.brief.revealed).some(Boolean);
       if (!hasAnyRevealed) {
-        const mock = getMockForAccount(
-          accountId,
-          findAccountInStore(accountId)?.full_name ??
-            findAccountInStore(accountId)?.name ??
-            "",
-        );
-        setBriefFixture(mock.brief);
-        for (const section of mock.brief.sections) {
-          revealBriefSection(section.id);
-        }
-        appendCitations(mock.brief.citations);
         pushWarning({
-          severity: "watch",
+          severity: "critical",
           type: "missing_ground",
           message:
-            "Brief generation failed upstream — showing mock brief so the demo remains coherent.",
+            "Brief generation failed upstream. No content available — refresh to retry.",
         });
       }
     } catch (err) {
