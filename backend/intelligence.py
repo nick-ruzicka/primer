@@ -605,15 +605,13 @@ def shape_sections(bundle: IntelligenceBundle) -> dict[str, list[dict[str, Any]]
 
 # Terminal 3's IntelligenceState keys `product_usage` as `product`. Map.
 _SECTION_ID: dict[str, str] = {
-    "relationship": "product" if False else "relationship",  # placeholder to keep mypy happy
+    "relationship": "relationship",
     "commercial": "commercial",
     "product_usage": "product",
     "conversations": "conversations",
     "portfolio": "portfolio",
     "external": "external",
 }
-# fix the placeholder above
-_SECTION_ID["relationship"] = "relationship"
 
 _SECTION_META: dict[str, dict[str, str]] = {
     "relationship": {"title": "Relationship", "desc": "Status, score, contacts"},
