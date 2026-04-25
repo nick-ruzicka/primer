@@ -85,6 +85,12 @@ class Fact:
     data_as_of: str | None = None
     url: str | None = None               # surfaced only (in V1)
     meta: dict[str, Any] = _dc_field(default_factory=dict)
+    # Deterministic pointer to the matching intelligence-panel card. Set by
+    # build_context_blob via the (source, field) → intel_evid index built
+    # from shape_sections_for_frontend. None when no intel card matches —
+    # the citation chip still renders, the workspace verification mode just
+    # has nothing to highlight.
+    intel_evid: str | None = None
 
     @property
     def timestamp(self) -> str | None:
@@ -97,9 +103,17 @@ class FactBook:
     """Monotonic fact_id allocator. Each add() produces a single cited fact
     tagged with provenance metadata (spec §4.1)."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        intel_evid_index: dict[tuple[str, str], str] | None = None,
+    ) -> None:
         self._facts: list[Fact] = []
         self._counter = 0
+        # When set, add() auto-populates fact.intel_evid by looking up
+        # (source, field) in this index. Lets every existing fb.add() call
+        # site stay unchanged while still emitting deterministic
+        # citation→intel pointers in the SSE source_cited payload.
+        self._intel_evid_index = intel_evid_index or {}
 
     def add(
         self,
@@ -117,8 +131,13 @@ class FactBook:
         data_as_of: str | None = None,
         url: str | None = None,
         meta: dict[str, Any] | None = None,
+        intel_evid: str | None = None,
     ) -> Fact:
         self._counter += 1
+        # If caller didn't pass an explicit intel_evid, look it up by
+        # (source, field) in the index seeded from the intel sections.
+        if intel_evid is None and field is not None:
+            intel_evid = self._intel_evid_index.get((source, field))
         fact = Fact(
             fact_id=self._counter,
             provenance=provenance,
@@ -134,6 +153,7 @@ class FactBook:
             url=url,
             text=text.strip(),
             meta=meta or {},
+            intel_evid=intel_evid,
         )
         self._facts.append(fact)
         return fact
@@ -175,9 +195,22 @@ def _fmt_pct(v: float | int | None) -> str:
     return f"{v:+.1f}%"
 
 
-def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str, FactBook]:
-    """Assemble the context blob + FactBook for the briefing agent."""
-    fb = FactBook()
+def build_context_blob(
+    account_id: str,
+    bundle: IntelligenceBundle,
+    intel_evid_index: dict[tuple[str, str], str] | None = None,
+) -> tuple[str, FactBook]:
+    """Assemble the context blob + FactBook for the briefing agent.
+
+    `intel_evid_index` is the (source, field) → intel_evid lookup built by
+    intelligence.build_intel_evid_index. When provided, every fact whose
+    (source, field) is in the index gets fact.intel_evid populated
+    automatically by FactBook.add(), so the source_cited SSE event can
+    carry a deterministic pointer to the matching intel card. Optional for
+    back-compat; absent → all facts emit intel_evid=None (frontend's
+    verification mode just doesn't highlight).
+    """
+    fb = FactBook(intel_evid_index=intel_evid_index)
 
     # ---- Salesforce: Account (all RAW) ----
     acc = bundle.salesforce.get("get_account")
@@ -922,6 +955,11 @@ def _build_source_cited_payload(fact: Fact) -> dict[str, Any]:
         "time_ago": fact.time_ago,
         "url": fact.url,
         "evid": fact.text,  # stable id for citation chip ↔ reference lookup
+        # Deterministic pointer to the matching intelligence panel card
+        # (when one exists). Frontend Workspace verification mode uses this
+        # to scroll/highlight the card on citation click. Null for facts
+        # without a matching intel item (composite/aggregate items).
+        "intel_evid": fact.intel_evid,
     }
 
 
