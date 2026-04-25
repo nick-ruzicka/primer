@@ -89,37 +89,17 @@ export default function BriefingPage() {
     0,
   );
 
-  // Workspace verification mode: when a citation is clicked in the brief, the
-  // store holds the citation's evid (which for live SSE is a long fact-text
-  // string like 'Catalyst relationship_status: Watchlist...'). Intel item
-  // evids are slugs ('relationship_status_0'). Resolve citation evid → intel
-  // item evid by matching source + value_display, falling back to the raw
-  // value if no resolution succeeds (static fixtures align directly).
+  // Workspace verification mode: the citation chip stores the citation's
+  // text-evid (a long fact string in live mode, a hand-picked slug in
+  // static fixtures). Resolve to the intel-panel card's evid via the
+  // backend-emitted intel_evid pointer. Falls back to the citation evid
+  // itself when intel_evid is null/missing — works for the static fixture
+  // where citation evids and intel item evids are hand-aligned.
   const resolvedFocusedEvid = useMemo(() => {
     if (!focusedEvid) return null;
-    const allItems = intelligenceSections.flatMap((s) => s.items);
-    if (allItems.some((i) => i.evid === focusedEvid)) return focusedEvid;
-
     const citation = citations.find((c) => c.evid === focusedEvid);
-    if (!citation) return focusedEvid;
-
-    const sourceLower = citation.source_system.toLowerCase();
-    if (citation.provenance === "raw" || citation.provenance === "scored") {
-      const value = citation.value_display;
-      const byValue = allItems.find(
-        (i) =>
-          i.source === sourceLower &&
-          (i.value === value ||
-            (i.value && value && i.value.startsWith(value.split(" ")[0]))),
-      );
-      if (byValue) return byValue.evid;
-      const byField = allItems.find(
-        (i) => i.source === sourceLower && i.evid.includes(citation.field),
-      );
-      if (byField) return byField.evid;
-    }
-    return focusedEvid;
-  }, [focusedEvid, intelligenceSections, citations]);
+    return citation?.intel_evid ?? focusedEvid;
+  }, [focusedEvid, citations]);
 
   // For prospects (arr_cents === 0), pull the open-pipeline dollar amount from
   // the Commercial section's pipeline line — typically an item whose sub reads
@@ -189,7 +169,8 @@ export default function BriefingPage() {
               }
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
-              generatedAgo={brief.complete ? "just now" : "streaming…"}
+              generatedAt={generationMeta.completedAt}
+              streaming={!brief.complete}
               warnings={warnings}
               onRegenerate={() =>
                 activeId && loadAccount(activeId, { refresh: true })

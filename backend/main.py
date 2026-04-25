@@ -27,7 +27,12 @@ from .accounts import account_exists, list_accounts, resolve_account_id
 from .agent import build_context_blob, stream_brief, validate_brief
 from .cache import CacheClient, get_cache, set_cache
 from .config import SETTINGS
-from .intelligence import fetch_intelligence, shape_sections, shape_sections_for_frontend
+from .intelligence import (
+    build_intel_evid_index,
+    fetch_intelligence,
+    shape_sections,
+    shape_sections_for_frontend,
+)
 from .logging_setup import configure_logging
 from .mcp_client import MCPPool, set_pool
 
@@ -333,9 +338,17 @@ async def _briefing_event_stream(
         # Tiny spacing so the frontend can animate panels in
         await asyncio.sleep(0.02)
 
+    # Pre-compute the (source, field) → intel_evid lookup once and hand it
+    # to build_context_blob. Each fact whose (source, field) is in the
+    # index gets fact.intel_evid populated, so source_cited events can
+    # carry a deterministic pointer to the matching intel card.
+    intel_evid_index = build_intel_evid_index(sections)
+
     # 3. Build the context blob + FactBook.
     try:
-        context_blob, fact_book = build_context_blob(account_id, bundle)
+        context_blob, fact_book = build_context_blob(
+            account_id, bundle, intel_evid_index=intel_evid_index
+        )
     except Exception:  # noqa: BLE001
         log.exception("briefing.context_blob_failed", extra={"account_id": account_id})
         yield record_and_yield(

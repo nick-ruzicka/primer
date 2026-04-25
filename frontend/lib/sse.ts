@@ -362,6 +362,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
       const base = {
         n: data.citation_number,
         evid: data.evid,
+        intel_evid: data.intel_evid ?? null,
         source_system: data.source_system,
         source_module: data.source_module ?? undefined,
         retrieved_at: data.retrieved_at ?? new Date().toISOString(),

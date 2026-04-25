@@ -89,6 +89,14 @@ type CitationCommon = {
   n: number;
   /** Stable id for citation-chip ↔ reference-entry lookup. */
   evid: string;
+  /**
+   * Deterministic pointer to the matching intelligence-panel card,
+   * populated by the backend via the (source, field) → intel_evid
+   * lookup. Workspace verification mode reads this to scroll/highlight
+   * the matching card on citation click. Null when no intel card
+   * matches (composite/aggregate facts).
+   */
+  intel_evid?: string | null;
   /** Full display name: "NetSuite", "Catalyst", "Salesforce", "Gong", "Snowflake", "Exa". */
   source_system: string;
   /** Subsystem label: "Accounts Receivable", "Forecast", "LinkedIn post by Priya Shah". */
