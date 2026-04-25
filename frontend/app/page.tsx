@@ -169,37 +169,37 @@ export default function BriefingPage() {
                 "flex flex-1 min-h-0",
                 mode === "split" &&
                   "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
-                mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
+                mode === "workspace" && "flex-col",
                 mode === "reading" && "flex-col",
               )}
-              aria-label="Brief + intelligence"
+              aria-label={
+                mode === "workspace"
+                  ? "Account intelligence"
+                  : "Brief + intelligence"
+              }
             >
-              {(() => {
-                const revealedSections =
-                  brief.fixture?.sections.filter((s) => brief.revealed[s.id]) ??
-                  [];
-                if (!brief.fixture || revealedSections.length === 0) {
-                  return <BriefSkeleton layout={mode} />;
-                }
-                return (
-                  <Brief
-                    brief={{
-                      ...brief.fixture,
-                      sections: revealedSections,
-                      citations,
-                    }}
-                    layout={
-                      mode === "reading"
-                        ? "centered"
-                        : mode === "workspace"
-                          ? "workspace"
-                          : "split"
-                    }
-                    hoveredEvid={hoveredEvid}
-                    onCitationHover={setHoveredEvid}
-                  />
-                );
-              })()}
+              {mode !== "workspace" &&
+                (() => {
+                  const revealedSections =
+                    brief.fixture?.sections.filter(
+                      (s) => brief.revealed[s.id],
+                    ) ?? [];
+                  if (!brief.fixture || revealedSections.length === 0) {
+                    return <BriefSkeleton layout={mode} />;
+                  }
+                  return (
+                    <Brief
+                      brief={{
+                        ...brief.fixture,
+                        sections: revealedSections,
+                        citations,
+                      }}
+                      layout={mode === "reading" ? "centered" : "split"}
+                      hoveredEvid={hoveredEvid}
+                      onCitationHover={setHoveredEvid}
+                    />
+                  );
+                })()}
 
               {mode !== "reading" && (
                 <IntelligencePanel
