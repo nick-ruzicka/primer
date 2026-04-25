@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
-
-log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -43,7 +40,6 @@ def _parse_origins(raw: str | None) -> list[str]:
 
 def load_settings() -> Settings:
     origins_str = os.getenv("ALLOWED_ORIGINS")
-    log.warning(f"DEBUG: ALLOWED_ORIGINS env var = {origins_str!r}")
     return Settings(
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
         anthropic_auth_token=os.getenv("ANTHROPIC_AUTH_TOKEN", ""),
