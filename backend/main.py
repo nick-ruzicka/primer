@@ -306,7 +306,6 @@ async def _briefing_event_stream(
             if await request.is_disconnected():
                 return
             yield _sse(evt["event"], evt["data"])
-            await asyncio.sleep(0.04)
         return
 
     # 2. Fan out. Emit intelligence events as soon as the bundle is ready.
