@@ -9,7 +9,6 @@ import { LeftRail } from "@/components/left-rail";
 import { Topbar } from "@/components/topbar";
 import { TweaksPanel } from "@/components/tweaks-panel";
 import { TweaksTrigger } from "@/components/tweaks-trigger";
-import { ValidationBanner } from "@/components/validation-banner";
 import { Writeup } from "@/components/writeup/writeup";
 import { useBootstrap, useKeyboardShortcuts } from "@/lib/bootstrap";
 import {
@@ -157,12 +156,11 @@ export default function BriefingPage() {
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
               generatedAgo={brief.complete ? "just now" : "streaming…"}
+              warnings={warnings}
               onRegenerate={() =>
                 activeId && loadAccount(activeId, { refresh: true })
               }
             />
-
-            {warnings.length > 0 && <ValidationBanner warnings={warnings} />}
 
             <main
               className={cn(
