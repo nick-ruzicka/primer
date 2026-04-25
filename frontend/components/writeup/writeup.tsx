@@ -97,8 +97,7 @@ export function Writeup() {
         </div>
       )}
 
-      <div className="mx-auto max-w-[1280px]">
-        <div className="xl:grid xl:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="xl:grid xl:grid-cols-[220px_minmax(0,1fr)]">
           {/* Left col: sticky ToC */}
           <aside className="hidden xl:block">
             <div className="sticky top-0 pl-4 pr-6 pt-16">
@@ -106,8 +105,8 @@ export function Writeup() {
             </div>
           </aside>
 
-          {/* Center col: content */}
-          <article className="mx-auto max-w-[840px] px-8 py-16 sm:px-10 sm:py-20">
+          {/* Right col: content — no max-width, fills available space */}
+          <article className="w-full px-10 py-16 sm:px-14 xl:px-20 sm:py-20">
             <Hero />
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
@@ -636,7 +635,6 @@ data_as_of: 2026-04-23`}
             <Closing />
           </article>
         </div>
-      </div>
     </div>
   );
 }
@@ -648,7 +646,7 @@ function Hero() {
     <header id="top" className="border-b border-line pb-14">
       <h1
         className="font-serif font-medium leading-[1.05] tracking-[-0.02em] text-ink"
-        style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}
+        style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)" }}
       >
         The brief that thinks with you.
       </h1>
@@ -746,16 +744,16 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} data-section className="mt-20 scroll-mt-20">
-      <header className="mb-8 flex items-start gap-3">
-        <div className="mt-2 h-8 w-[3px] flex-none rounded-full bg-accent" />
+    <section id={id} data-section className="mt-32 scroll-mt-20">
+      <header className="mb-10 flex items-start gap-4">
+        <div className="mt-3 h-10 w-[3px] flex-none rounded-full bg-accent" />
         <div>
           {number && (
-            <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.1em] text-ink-3">
+            <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
               {number}
             </span>
           )}
-          <h2 className="font-serif text-[38px] font-medium leading-[1.18] tracking-[-0.02em] text-ink">
+          <h2 className="font-serif text-[52px] font-medium leading-[1.1] tracking-[-0.025em] text-ink">
             {claim}
           </h2>
         </div>
@@ -792,7 +790,7 @@ function PhaseHeader({ label, title }: { label: string; title: string }) {
 
 function PullQuote({ children }: { children: ReactNode }) {
   return (
-    <blockquote className="pull-quote my-12 max-w-[600px] border-l-[3px] border-accent pl-6 font-serif text-[28px] font-normal italic leading-[1.3] text-ink-2">
+    <blockquote className="pull-quote my-14 max-w-[75ch] border-l-[3px] border-accent pl-8 font-serif text-[32px] font-normal italic leading-[1.25] text-ink-2">
       {children}
     </blockquote>
   );
