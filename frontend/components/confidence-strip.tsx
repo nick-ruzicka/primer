@@ -6,7 +6,6 @@ import {
   Clock3,
   Info,
   RefreshCw,
-  X,
 } from "lucide-react";
 import { useState } from "react";
 import type { SourceId, ValidationWarning } from "@/lib/types";
@@ -28,15 +27,13 @@ interface Props {
   onRegenerate?: () => void;
 }
 
-const warningKey = (w: ValidationWarning) =>
-  `${w.severity}|${w.type}|${w.message}`;
-
 /**
  * Meta strip between account header and main briefing body:
  * confidence ring · source dots · generated timestamp · validation pill ·
- * regenerate CTA. The pill expands a panel below the strip listing each
- * warning; critical warnings auto-expand on first paint, watch-only
- * warnings stay collapsed until the user clicks.
+ * regenerate CTA. The pill stays collapsed by default; the rep clicks to
+ * expand a list of compact warning rows. Each row click expands inline to
+ * reveal the cited fact and quoted excerpt. Warnings persist until the
+ * brief is regenerated — they are validator catches, not notifications.
  */
 export function ConfidenceStrip({
   confidence,
@@ -46,18 +43,12 @@ export function ConfidenceStrip({
   warnings = [],
   onRegenerate,
 }: Props) {
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
-  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const visible = warnings.filter((w) => !dismissed.has(warningKey(w)));
-  const criticalCount = visible.filter(
+  const criticalCount = warnings.filter(
     (w) => w.severity === "critical",
   ).length;
-  const watchCount = visible.filter((w) => w.severity === "watch").length;
-  const hasCritical = criticalCount > 0;
-  // Default-collapsed for watch-only; auto-expand once critical is present.
-  // Explicit user toggle (open or close) overrides the default thereafter.
-  const open = userOpen !== null ? userOpen : hasCritical;
+  const watchCount = warnings.filter((w) => w.severity === "watch").length;
 
   return (
     <div className="border-b border-line bg-surface" aria-live="polite">
@@ -109,13 +100,13 @@ export function ConfidenceStrip({
           </span>
         </span>
 
-        {visible.length > 0 && (
+        {warnings.length > 0 && (
           <WarningsPill
-            count={visible.length}
+            count={warnings.length}
             criticalCount={criticalCount}
             watchCount={watchCount}
             open={open}
-            onToggle={() => setUserOpen(!open)}
+            onToggle={() => setOpen((v) => !v)}
           />
         )}
 
@@ -131,17 +122,15 @@ export function ConfidenceStrip({
         </button>
       </div>
 
-      {open && visible.length > 0 && (
-        <WarningsPanel
-          warnings={visible}
-          onDismiss={(key) =>
-            setDismissed((prev) => {
-              const next = new Set(prev);
-              next.add(key);
-              return next;
-            })
-          }
-        />
+      {open && warnings.length > 0 && (
+        <ul
+          className="divide-y divide-line/60 border-t border-line bg-surface-sunk/30"
+          role="list"
+        >
+          {warnings.map((w, i) => (
+            <WarningRow key={`${w.severity}-${w.type}-${i}`} warning={w} />
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -206,85 +195,85 @@ function WarningsPill({
   );
 }
 
-function WarningsPanel({
-  warnings,
-  onDismiss,
-}: {
-  warnings: ValidationWarning[];
-  onDismiss: (key: string) => void;
-}) {
+function WarningRow({ warning }: { warning: ValidationWarning }) {
+  const [expanded, setExpanded] = useState(false);
+  const critical = warning.severity === "critical";
+  const hasDetail = Boolean(warning.brief_excerpt);
   return (
-    <ul
-      className="divide-y divide-line/60 border-t border-line bg-surface-sunk/30 transition-all duration-200"
-      role="list"
+    <li
+      className={cn(
+        "border-l-4",
+        critical ? "border-bad" : "border-warn-strong",
+      )}
     >
-      {warnings.map((w) => {
-        const critical = w.severity === "critical";
-        const key = warningKey(w);
-        return (
-          <li
-            key={key}
+      <button
+        type="button"
+        onClick={() => hasDetail && setExpanded((v) => !v)}
+        aria-expanded={hasDetail ? expanded : undefined}
+        disabled={!hasDetail}
+        className={cn(
+          "flex w-full items-center gap-3 px-7 py-2 text-left text-[12.5px] transition-colors",
+          hasDetail && "hover:bg-surface-sunk/50",
+          !hasDetail && "cursor-default",
+        )}
+      >
+        <span
+          className={cn(
+            "flex-shrink-0 rounded-sm px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em]",
+            critical ? "bg-bad text-bg" : "bg-warn-strong/90 text-bg",
+          )}
+        >
+          {warning.severity}
+        </span>
+        {warning.sources && warning.sources.length > 0 && (
+          <span className="flex flex-shrink-0 gap-1">
+            {warning.sources.map((src) => (
+              <span key={src} className={cn("pill", `src-${src}`)}>
+                <span className="dot" aria-hidden />
+                {src}
+              </span>
+            ))}
+          </span>
+        )}
+        <span className="min-w-0 flex-1 truncate text-ink-2">
+          {warning.message}
+        </span>
+        {hasDetail && (
+          <ChevronDown
             className={cn(
-              "flex items-start gap-3 px-7 py-2.5 text-[12.5px]",
-              critical
-                ? "border-l-4 border-bad bg-bad-soft/20"
-                : "border-l-4 border-warn-strong bg-warn-soft/20",
+              "h-3.5 w-3.5 flex-shrink-0 text-ink-4 transition-transform duration-200",
+              expanded && "rotate-180",
             )}
-          >
-            {critical ? (
-              <AlertTriangle
-                className="mt-0.5 h-4 w-4 flex-shrink-0 text-bad"
-                strokeWidth={2}
-              />
-            ) : (
-              <Info
-                className="mt-0.5 h-4 w-4 flex-shrink-0 text-warn-strong"
-                strokeWidth={2}
-              />
+            strokeWidth={2}
+          />
+        )}
+      </button>
+      {expanded && hasDetail && (
+        <div className="flex items-start gap-3 px-7 pb-3 pt-0 text-[12px] text-ink-3">
+          {critical ? (
+            <AlertTriangle
+              className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-bad"
+              strokeWidth={2}
+            />
+          ) : (
+            <Info
+              className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-warn-strong"
+              strokeWidth={2}
+            />
+          )}
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-4">
+              {warning.type.replace(/_/g, " ")}
+            </p>
+            {warning.brief_excerpt && (
+              <p className="italic text-ink-3">
+                &ldquo;{warning.brief_excerpt}&rdquo;
+              </p>
             )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "rounded-sm px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em]",
-                    critical ? "bg-bad text-bg" : "bg-warn-strong/90 text-bg",
-                  )}
-                >
-                  {w.severity}
-                </span>
-                <span className="text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-4">
-                  {w.type.replace(/_/g, " ")}
-                </span>
-                {w.sources && w.sources.length > 0 && (
-                  <span className="ml-auto flex gap-1">
-                    {w.sources.map((src) => (
-                      <span key={src} className={cn("pill", `src-${src}`)}>
-                        <span className="dot" aria-hidden />
-                        {src}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 leading-relaxed text-ink-2">{w.message}</p>
-              {w.brief_excerpt && (
-                <p className="mt-1 text-[11.5px] italic text-ink-3">
-                  &ldquo;{w.brief_excerpt}&rdquo;
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => onDismiss(key)}
-              aria-label="Mark warning reviewed"
-              className="rounded-md p-1 text-ink-4 transition-colors hover:bg-surface-sunk hover:text-ink"
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+          </div>
+        </div>
+      )}
+    </li>
   );
 }
 
