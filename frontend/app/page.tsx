@@ -168,14 +168,11 @@ export default function BriefingPage() {
                 "flex flex-1 min-h-0",
                 mode === "split" &&
                   "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
-                mode === "workspace" && "flex-col",
+                mode === "workspace" &&
+                  "grid grid-cols-[minmax(0,460px)_minmax(0,1fr)]",
                 mode === "reading" && "flex-col",
               )}
-              aria-label={
-                mode === "workspace"
-                  ? "Account intelligence"
-                  : "Brief + intelligence"
-              }
+              aria-label="Brief + intelligence"
             >
               {mode === "workspace" && brief.fixture && (
                 <WorkspaceReadStrip
