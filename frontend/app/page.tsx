@@ -174,7 +174,7 @@ export default function BriefingPage() {
               )}
               aria-label="Brief + intelligence"
             >
-              {mode === "workspace" && brief.fixture && (
+              {mode === "workspace" && (
                 <WorkspaceReadStrip
                   brief={brief.fixture}
                   revealed={brief.revealed}
