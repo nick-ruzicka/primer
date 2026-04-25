@@ -678,3 +678,29 @@ body {
 .question-marker.talktrack {
   color: var(--color-ink-3);
 }
+
+/* ---------- Writeup (Mode 4) scroll + typography ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+[data-section] {
+  scroll-margin-top: 80px;
+}
+
+.pull-quote {
+  opacity: 0;
+  transition: opacity 400ms ease-in;
+}
+.pull-quote.visible {
+  opacity: 1;
+}
+
+article b,
+article strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+article ul li {
+  line-height: 1.5;
+}
