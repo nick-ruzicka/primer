@@ -23,6 +23,13 @@ import type {
   IntelSectionId,
   ValidationWarning,
 } from "./types";
+import {
+  validateBriefChunk,
+  validateCitation,
+  validateDoneEvent,
+  validateIntelligenceEvent,
+  validateWarning,
+} from "./validators";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -355,10 +362,24 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): 
     if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      const section = adaptIntelligenceEvent(data);
-      if (section) revealIntelligence(section);
+      const section = validateIntelligenceEvent(data);
+      if (!section) {
+        pushWarning({
+          severity: "critical",
+          type: "missing_ground",
+          message: "Intelligence data malformed — skipping section",
+        });
+        return;
+      }
+      const adapted = adaptIntelligenceEvent(section);
+      if (adapted) revealIntelligence(adapted);
     } catch (err) {
       console.error("[primer] intelligence parse error", err);
+      pushWarning({
+        severity: "critical",
+        type: "missing_ground",
+        message: `Intelligence parse error: ${err instanceof Error ? err.message : String(err)}`,
+      });
     }
   });
 
@@ -366,7 +387,12 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): 
     if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      if (typeof data.delta === "string") handleBriefChunk(data.delta);
+      const delta = validateBriefChunk(data);
+      if (!delta) {
+        console.warn("[primer] brief_chunk validation failed", data);
+        return;
+      }
+      handleBriefChunk(delta);
     } catch (err) {
       console.error("[primer] brief_chunk parse error", err);
     }
@@ -376,9 +402,13 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): 
     if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      // Validate required fields are present
-      if (!data.citation_number || !data.evid || !data.source_system || !data.provenance) {
-        console.warn("[primer] source_cited missing required fields", data);
+      const validatedData = validateCitation(data);
+      if (!validatedData) {
+        pushWarning({
+          severity: "critical",
+          type: "missing_ground",
+          message: "Citation data malformed — skipping",
+        });
         return;
       }
       // Authoritative shape — backend emits the discriminated-union payload.
@@ -416,9 +446,15 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): 
   });
 
   es.addEventListener("validation_warning", (e) => {
+    if (currentStreamId !== activeStreamId) return;
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      pushWarning(data);
+      const warning = validateWarning(data);
+      if (!warning) {
+        console.warn("[primer] validation_warning validation failed", data);
+        return;
+      }
+      pushWarning(warning);
     } catch (err) {
       console.error("[primer] validation_warning parse error", err);
     }
@@ -434,8 +470,15 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): 
   };
 
   es.addEventListener("done", (e) => {
+    if (currentStreamId !== activeStreamId) return;
     try {
-      const meta = JSON.parse((e as MessageEvent).data);
+      const data = JSON.parse((e as MessageEvent).data);
+      const meta = validateDoneEvent(data);
+      if (!meta) {
+        console.warn("[primer] done event validation failed", data);
+        cleanup();
+        return;
+      }
       markBriefDone({
         completedAt: Date.now(),
         totalTokens: meta.total_tokens ?? null,
