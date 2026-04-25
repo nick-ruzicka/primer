@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { IntelligenceItem, IntelligenceSection } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { IntelCard } from "./intel-card";
@@ -20,6 +20,13 @@ interface Props {
   onClose?: () => void;
   title?: string;
   description?: string;
+  /**
+   * Workspace verification mode: a citation clicked in the brief sets the
+   * focused evid here. The panel scrolls the matching card into view and
+   * applies a persistent ring until the user clears focus.
+   */
+  focusedEvid?: string | null;
+  onClearFocus?: () => void;
 }
 
 export function IntelligencePanel({
@@ -30,15 +37,32 @@ export function IntelligencePanel({
   onClose,
   title = "Account Intelligence",
   description,
+  focusedEvid,
+  onClearFocus,
 }: Props) {
   const [filter, setFilter] = useState<"all" | "flagged" | "critical">("all");
   const [search, setSearch] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const allItems = useMemo(() => sections.flatMap((s) => s.items), [sections]);
   const flaggedCount = allItems.filter(
     (i) => i.flag === "critical" || i.flag === "warn",
   ).length;
   const totalCount = allItems.length;
+
+  const focusedItem = useMemo(
+    () =>
+      focusedEvid ? allItems.find((i) => i.evid === focusedEvid) ?? null : null,
+    [allItems, focusedEvid],
+  );
+
+  useEffect(() => {
+    if (!focusedEvid || !scrollRef.current) return;
+    const el = scrollRef.current.querySelector<HTMLElement>(
+      `[data-evid="${CSS.escape(focusedEvid)}"]`,
+    );
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusedEvid]);
 
   const itemMatches = (it: IntelligenceItem) => {
     if (filter === "flagged" && !it.flag) return false;
@@ -130,7 +154,32 @@ export function IntelligencePanel({
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4">
+      {focusedItem && variant !== "compact" && (
+        <div className="flex items-center gap-2 border-b border-line bg-accent-soft/40 px-5 py-2 text-[11.5px]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-4">
+            Focused
+          </span>
+          <span className="font-medium text-ink-2 truncate">
+            {focusedItem.label}
+          </span>
+          {focusedItem.value && (
+            <span className="text-ink-3 truncate">· {focusedItem.value}</span>
+          )}
+          <button
+            type="button"
+            onClick={onClearFocus}
+            aria-label="Clear focus"
+            className="ml-auto rounded-md p-1 text-ink-3 hover:bg-surface-sunk hover:text-ink"
+          >
+            <X className="h-3.5 w-3.5" strokeWidth={2} />
+          </button>
+        </div>
+      )}
+
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4"
+      >
         {variant === "compact" && (
           <header className="mb-4 flex items-baseline gap-2">
             <h2 className="font-serif text-[15px] font-medium text-ink">
@@ -178,6 +227,7 @@ export function IntelligencePanel({
                   items={visible}
                   hoveredEvid={hoveredEvid}
                   onCardHover={onCardHover}
+                  focusedEvid={focusedEvid ?? null}
                 />
               </section>
             );
@@ -252,11 +302,19 @@ interface BodyProps {
   items: IntelligenceItem[];
   hoveredEvid?: string | null;
   onCardHover?: (evid: string | null) => void;
+  focusedEvid?: string | null;
 }
 
-function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
+function SectionBody({
+  section,
+  items,
+  hoveredEvid,
+  onCardHover,
+  focusedEvid,
+}: BodyProps) {
   const cardProps = (evid: string) => ({
     hovered: hoveredEvid === evid,
+    focused: focusedEvid === evid,
     onMouseEnter: () => onCardHover?.(evid),
     onMouseLeave: () => onCardHover?.(null),
   });
