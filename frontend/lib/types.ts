@@ -58,6 +58,14 @@ export interface Account {
   call_when?: string;
   countdown?: string;
   attendees?: Attendee[];
+  /**
+   * ISO timestamp for the next scheduled call. Demo-only — set in
+   * `frontend/lib/fixtures/account-schedule.ts` as `now + offset` so the
+   * timing chips and "Next Call" strip stay fresh on every load. `null` /
+   * absent means no call is currently scheduled (chip hidden, account
+   * sinks to bottom of its group). Calendar integration is V1.5.
+   */
+  next_call_at?: string | null;
 }
 
 export interface Attendee {

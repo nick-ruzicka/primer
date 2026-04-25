@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { fetchAccounts } from "./api";
+import { enrichAccountsWithSchedule } from "./fixtures/account-schedule";
 import { loadAccount } from "./sse";
 import { pushWarning, setAccounts, setMode, toggleSidebar } from "./store";
 import type { ViewMode } from "./types";
@@ -28,7 +29,8 @@ export function useBootstrap(): void {
         });
         return;
       }
-      setAccounts(live.groups, live.standalone);
+      const enriched = enrichAccountsWithSchedule(live);
+      setAccounts(enriched.groups, enriched.standalone);
 
       let target: string | null = null;
       if (typeof window !== "undefined") {
