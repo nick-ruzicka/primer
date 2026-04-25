@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections import defaultdict
 from typing import Any
 
 import redis.asyncio as redis_asyncio
@@ -24,6 +25,8 @@ class CacheClient:
         self._rate_limit = rate_limit_per_hour
         self._client: redis_asyncio.Redis | None = None
         self.available: bool = False
+        # In-memory fallback for rate limiting when Redis is unavailable
+        self._fallback_limits: defaultdict[str, list[float]] = defaultdict(list)
 
     async def connect(self) -> None:
         try:
@@ -81,9 +84,26 @@ class CacheClient:
             log.warning("cache.invalidate_failed", extra={"error": str(exc)})
 
     async def check_rate_limit(self, ip: str) -> tuple[bool, int]:
-        """Return (allowed, remaining). No-op permits if Redis is down."""
+        """Return (allowed, remaining). Uses in-memory fallback if Redis is unavailable."""
         if not self.available or self._client is None:
-            return True, self._rate_limit
+            # In-memory fallback: track requests per IP for the past hour
+            now = time.time()
+            # Clean up old requests older than 1 hour
+            self._fallback_limits[ip] = [
+                t for t in self._fallback_limits[ip] if now - t < 3600
+            ]
+            count = len(self._fallback_limits[ip])
+            if count >= self._rate_limit:
+                remaining = 0
+                allowed = False
+                log.warning(
+                    "rate_limit.fallback_denied",
+                    extra={"ip": ip, "count": count, "limit": self._rate_limit},
+                )
+                return allowed, remaining
+            self._fallback_limits[ip].append(now)
+            remaining = self._rate_limit - count - 1
+            return True, remaining
         try:
             key = f"ratelimit:{ip}"
             count = await self._client.incr(key)
@@ -94,7 +114,8 @@ class CacheClient:
             return allowed, remaining
         except Exception as exc:  # noqa: BLE001
             log.warning("cache.rate_limit_failed", extra={"error": str(exc)})
-            return True, self._rate_limit
+            # Fall back to in-memory tracking on error
+            return await self.check_rate_limit(ip)
 
 
 _cache: CacheClient | None = None

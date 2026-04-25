@@ -9,6 +9,16 @@ interface ReferenceModalProps {
   onClose: () => void;
 }
 
+function isValidHttpUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export function ReferenceModal({
   citation,
   isOpen,
@@ -95,7 +105,7 @@ export function ReferenceModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-6">
-          {url && (
+          {isValidHttpUrl(url) && (
             <a
               href={url}
               target="_blank"
