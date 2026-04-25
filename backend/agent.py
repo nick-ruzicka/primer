@@ -136,8 +136,13 @@ class FactBook:
         self._counter += 1
         # If caller didn't pass an explicit intel_evid, look it up by
         # (source, field) in the index seeded from the intel sections.
+        # The fact's source is the short id ("salesforce") but the index
+        # is keyed on the normalized id ("sf") to match what the frontend
+        # consumes — normalize before lookup.
         if intel_evid is None and field is not None:
-            intel_evid = self._intel_evid_index.get((source, field))
+            intel_evid = self._intel_evid_index.get(
+                (_normalize_source(source), field)
+            )
         fact = Fact(
             fact_id=self._counter,
             provenance=provenance,
