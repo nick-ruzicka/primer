@@ -34,8 +34,8 @@ export function WorkspaceReadStrip({
     return null;
   }
   return (
-    <div className="border-b border-line bg-bg px-7 py-6">
-      <div className="prose-body mx-auto max-w-[820px]">
+    <div className="min-w-0 overflow-y-auto border-r border-line bg-bg px-7 py-6">
+      <div className="prose-body">
         {readSection.paragraphs.map((p, idx) => (
           <p key={idx} className="brief-paragraph text-ink-2">
             <Prose
