@@ -107,7 +107,7 @@ export function Writeup() {
           </aside>
 
           {/* Center col: content */}
-          <article className="mx-auto max-w-[720px] px-8 py-16 sm:px-10 sm:py-20">
+          <article className="mx-auto max-w-[840px] px-8 py-16 sm:px-10 sm:py-20">
             <Hero />
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
