@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
+import { WorkspaceReadStrip } from "@/components/brief/workspace-read-strip";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
@@ -176,6 +177,16 @@ export default function BriefingPage() {
                   : "Brief + intelligence"
               }
             >
+              {mode === "workspace" && brief.fixture && (
+                <WorkspaceReadStrip
+                  brief={brief.fixture}
+                  revealed={brief.revealed}
+                  citations={citations}
+                  hoveredEvid={hoveredEvid}
+                  onCitationHover={setHoveredEvid}
+                />
+              )}
+
               {mode !== "workspace" &&
                 (() => {
                   const revealedSections =
