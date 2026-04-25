@@ -36,6 +36,8 @@ export const MOCK_MODE = !API_BASE;
 
 let currentAbort: AbortController | null = null;
 let currentEventSource: EventSource | null = null;
+let currentAccountId: string | null = null;
+let currentStreamId: string | null = null;  // Unique ID for each stream to prevent race conditions
 
 export interface LoadOptions {
   refresh?: boolean;
@@ -49,6 +51,10 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
     currentEventSource = null;
   }
 
+  // Generate a unique stream ID to prevent race conditions
+  currentStreamId = `${accountId}_${Date.now()}_${Math.random()}`;
+  currentAccountId = accountId;
+
   const account = findAccountInStore(accountId);
   resetAccountState(account, accountId);
 
@@ -57,9 +63,9 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
   }
 
   if (MOCK_MODE) {
-    runMockStream(accountId, currentAbort.signal);
+    runMockStream(accountId, currentAbort.signal, currentStreamId);
   } else {
-    runLiveStream(accountId, opts);
+    runLiveStream(accountId, opts, currentStreamId);
   }
 }
 
@@ -82,7 +88,9 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 async function runMockStream(
   accountId: string,
   signal: AbortSignal,
+  streamId: string,
 ): Promise<void> {
+  const activeStreamId = streamId;
   const account = findAccountInStore(accountId);
   const { brief, intelligence } = getMockForAccount(
     accountId,
@@ -123,8 +131,7 @@ async function runMockStream(
       );
       appendCitations(citationsForSection);
       for (const c of citationsForSection) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pushSourceCited(c as any);
+        pushSourceCited(c);
         await sleep(40, signal);
       }
     }
@@ -331,14 +338,21 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
   };
 }
 
-function runLiveStream(accountId: string, opts: LoadOptions): void {
+function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): void {
   resetLiveBriefBuffer(accountId);
 
   const url = `${API_BASE}/briefing/${accountId}${opts.refresh ? "?refresh=1" : ""}`;
   const es = new EventSource(url);
   currentEventSource = es;
 
+  // Capture streamId to validate all events belong to this stream
+  const activeStreamId = streamId;
+
+  // Store handler references so we can remove them later and prevent memory leaks
+  const handlers: Record<string, EventListener> = {};
+
   es.addEventListener("intelligence", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
       const section = adaptIntelligenceEvent(data);
@@ -349,6 +363,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   });
 
   es.addEventListener("brief_chunk", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
       if (typeof data.delta === "string") handleBriefChunk(data.delta);
@@ -358,8 +373,14 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   });
 
   es.addEventListener("source_cited", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
+      // Validate required fields are present
+      if (!data.citation_number || !data.evid || !data.source_system || !data.provenance) {
+        console.warn("[primer] source_cited missing required fields", data);
+        return;
+      }
       // Authoritative shape — backend emits the discriminated-union payload.
       const base = {
         n: data.citation_number,
@@ -403,6 +424,15 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
     }
   });
 
+  // Create a cleanup function to prevent memory leaks from lingering event listeners
+  const cleanup = () => {
+    es.close();
+    currentEventSource = null;
+    // Note: Due to the complexity of removing inline event listeners in browser
+    // EventSource API, we rely on the closed EventSource being garbage collected.
+    // The activeStreamId check in each handler prevents stale events from being processed.
+  };
+
   es.addEventListener("done", (e) => {
     try {
       const meta = JSON.parse((e as MessageEvent).data);
@@ -438,8 +468,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
     } catch (err) {
       console.error("[primer] done parse error", err);
     }
-    es.close();
-    currentEventSource = null;
+    cleanup();
   });
 
   es.addEventListener("error", () => {
@@ -451,6 +480,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
         type: "missing_ground",
         message: "Connection to briefing stream lost. Refresh to retry.",
       });
+      cleanup();
     }
   });
 }

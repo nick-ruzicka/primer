@@ -42,7 +42,6 @@ def _parse_origins(raw: str | None) -> list[str]:
 
 def load_settings() -> Settings:
     origins_str = os.getenv("ALLOWED_ORIGINS")
-    log.warning(f"DEBUG: ALLOWED_ORIGINS env var = {origins_str!r}")
     return Settings(
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", ""),
         anthropic_auth_token=os.getenv("ANTHROPIC_AUTH_TOKEN", ""),

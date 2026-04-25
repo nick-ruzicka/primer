@@ -17,29 +17,39 @@ export function useBootstrap(): void {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const live = await fetchAccounts();
-      if (cancelled) return;
-      if (!live) {
+      try {
+        const live = await fetchAccounts();
+        if (cancelled) return;
+        if (!live) {
+          pushWarning({
+            severity: "critical",
+            type: "missing_ground",
+            message:
+              "Could not reach the accounts API. Check that the backend is running and NEXT_PUBLIC_API_BASE is correct.",
+          });
+          return;
+        }
+        setAccounts(live.groups, live.standalone);
+
+        let target: string | null = null;
+        if (typeof window !== "undefined") {
+          const stored = window.localStorage.getItem("primer:lastAccount");
+          if (stored) target = stored;
+        }
+        if (!target) {
+          target =
+            live.groups[0]?.brands[0]?.id ?? live.standalone[0]?.id ?? null;
+        }
+        if (target) loadAccount(target);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[primer] bootstrap failed", err);
         pushWarning({
           severity: "critical",
           type: "missing_ground",
-          message:
-            "Could not reach the accounts API. Check that the backend is running and NEXT_PUBLIC_API_BASE is correct.",
+          message: `Initialization failed: ${err instanceof Error ? err.message : String(err)}`,
         });
-        return;
       }
-      setAccounts(live.groups, live.standalone);
-
-      let target: string | null = null;
-      if (typeof window !== "undefined") {
-        const stored = window.localStorage.getItem("primer:lastAccount");
-        if (stored) target = stored;
-      }
-      if (!target) {
-        target =
-          live.groups[0]?.brands[0]?.id ?? live.standalone[0]?.id ?? null;
-      }
-      if (target) loadAccount(target);
     })();
     return () => {
       cancelled = true;
