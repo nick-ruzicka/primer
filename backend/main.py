@@ -117,13 +117,28 @@ async def health() -> dict[str, Any]:
     else:
         anthropic_auth = "missing"
 
+    # Check per-server MCP status
+    mcp_servers_status: dict[str, Any] = {}
+    if pool and hasattr(pool, '_slots'):
+        for name in (pool.servers if pool else []):
+            slot = pool._slots.get(name)
+            mcp_servers_status[name] = {
+                "status": "ok" if slot and slot.session else "disconnected",
+                "tools": slot.tools if slot else [],
+            }
+
+    # Calculate overall health
+    healthy_servers = sum(1 for s in mcp_servers_status.values() if s["status"] == "ok")
+    total_servers = len(mcp_servers_status)
+
     return {
-        "status": "ok",
+        "status": "ok" if healthy_servers >= max(1, total_servers - 2) else "degraded",
         "anthropic_auth": anthropic_auth,
         "briefing_model": SETTINGS.briefing_model,
         "validation_model": SETTINGS.validation_model,
         "anchor_date": SETTINGS.anchor_date,
-        "mcp_servers": pool.servers if pool else [],
+        "mcp_servers": mcp_servers_status,
+        "mcp_healthy": f"{healthy_servers}/{total_servers}",
         "cache_available": bool(cache and cache.available),
     }
 
@@ -236,6 +251,7 @@ async def _briefing_event_stream(
     refresh: bool,
     request: Request,
     cached_transcript: list[dict[str, Any]] | None = None,
+    trace_id: str = "",
 ) -> AsyncIterator[dict[str, str]]:
     from .mcp_client import get_pool
 
@@ -243,6 +259,9 @@ async def _briefing_event_stream(
     cache = get_cache()
     started_at = time.perf_counter()
     transcript: list[dict[str, Any]] = []  # for caching
+
+    # Log with trace ID for observability
+    log_context = {"account_id": account_id, "trace_id": trace_id, "refresh": refresh}
 
     def record_and_yield(event: str, data: dict[str, Any]) -> dict[str, str]:
         transcript.append({"event": event, "data": data})
@@ -253,7 +272,7 @@ async def _briefing_event_stream(
     if cached_transcript is not None:
         log.info(
             "briefing.cache_hit",
-            extra={"account_id": account_id, "events": len(cached_transcript)},
+            extra={**log_context, "events": len(cached_transcript)},
         )
         for evt in cached_transcript:
             if await request.is_disconnected():
@@ -266,7 +285,7 @@ async def _briefing_event_stream(
     try:
         bundle = await fetch_intelligence(pool, account_id)
     except Exception as exc:  # noqa: BLE001
-        log.exception("briefing.fetch_intelligence_failed", extra={"account_id": account_id})
+        log.exception("briefing.fetch_intelligence_failed", extra=log_context)
         yield record_and_yield(
             "validation_warning",
             {
@@ -295,7 +314,7 @@ async def _briefing_event_stream(
     try:
         context_blob, fact_book = build_context_blob(account_id, bundle)
     except Exception as exc:  # noqa: BLE001
-        log.exception("briefing.context_blob_failed", extra={"account_id": account_id})
+        log.exception("briefing.context_blob_failed", extra=log_context)
         yield record_and_yield(
             "validation_warning",
             {
@@ -331,7 +350,7 @@ async def _briefing_event_stream(
                 brief_markdown = evt.data.get("brief_markdown", "")
                 total_tokens = evt.data.get("total_tokens", 0)
     except Exception as exc:  # noqa: BLE001
-        log.exception("briefing.stream_failed", extra={"account_id": account_id})
+        log.exception("briefing.stream_failed", extra=log_context)
         yield record_and_yield(
             "validation_warning",
             {
@@ -356,7 +375,7 @@ async def _briefing_event_stream(
         try:
             warnings = await validate_brief(account_id, brief_markdown, context_blob)
         except Exception as exc:  # noqa: BLE001
-            log.exception("briefing.validation_failed", extra={"account_id": account_id})
+            log.exception("briefing.validation_failed", extra=log_context)
             warnings = [
                 {
                     "severity": "watch",
@@ -381,12 +400,12 @@ async def _briefing_event_stream(
     try:
         await cache.set_brief(account_id, transcript)
     except Exception:  # noqa: BLE001
-        log.exception("briefing.cache_write_failed", extra={"account_id": account_id})
+        log.exception("briefing.cache_write_failed", extra=log_context)
 
     log.info(
         "briefing.done",
         extra={
-            "account_id": account_id,
+            **log_context,
             "duration_ms": duration_ms,
             "total_tokens": total_tokens,
             "events": len(transcript),
@@ -395,11 +414,16 @@ async def _briefing_event_stream(
 
 
 @app.get("/briefing/{account_id}")
-async def briefing(account_id: str, request: Request, refresh: int = 0):
+async def briefing(account_id: str, request: Request, refresh: int = 0, trace_id: str | None = None):
     canonical = resolve_account_id(account_id)
     if not account_exists(canonical):
         raise HTTPException(status_code=404, detail=f"Unknown account: {account_id}")
     account_id = canonical
+
+    # Use provided trace_id or generate one for observability
+    if not trace_id:
+        import uuid
+        trace_id = f"auto_{uuid.uuid4().hex[:12]}"
 
     cache = get_cache()
     ip = _client_ip(request)
@@ -442,7 +466,7 @@ async def briefing(account_id: str, request: Request, refresh: int = 0):
 
     return EventSourceResponse(
         _briefing_event_stream(
-            account_id, bool(refresh), request, cached_transcript=cached_transcript
+            account_id, bool(refresh), request, cached_transcript=cached_transcript, trace_id=trace_id
         ),
         ping=15,
     )

@@ -45,6 +45,7 @@ let currentAbort: AbortController | null = null;
 let currentEventSource: EventSource | null = null;
 let currentAccountId: string | null = null;
 let currentStreamId: string | null = null;  // Unique ID for each stream to prevent race conditions
+let currentTraceId: string | null = null;  // Trace ID for debugging and observability
 
 export interface LoadOptions {
   refresh?: boolean;
@@ -58,8 +59,9 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
     currentEventSource = null;
   }
 
-  // Generate a unique stream ID to prevent race conditions
+  // Generate unique IDs for this stream
   currentStreamId = `${accountId}_${Date.now()}_${Math.random()}`;
+  currentTraceId = `trace_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   currentAccountId = accountId;
 
   const account = findAccountInStore(accountId);
@@ -67,12 +69,14 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
 
   if (typeof window !== "undefined") {
     window.localStorage.setItem("primer:lastAccount", accountId);
+    // Store trace ID for debugging (users can share in bug reports)
+    window.localStorage.setItem("primer:lastTraceId", currentTraceId);
   }
 
   if (MOCK_MODE) {
     runMockStream(accountId, currentAbort.signal, currentStreamId);
   } else {
-    runLiveStream(accountId, opts, currentStreamId);
+    runLiveStream(accountId, opts, currentStreamId, currentTraceId);
   }
 }
 
@@ -345,10 +349,14 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
   };
 }
 
-function runLiveStream(accountId: string, opts: LoadOptions, streamId: string): void {
+function runLiveStream(accountId: string, opts: LoadOptions, streamId: string, traceId: string): void {
   resetLiveBriefBuffer(accountId);
 
-  const url = `${API_BASE}/briefing/${accountId}${opts.refresh ? "?refresh=1" : ""}`;
+  const params = new URLSearchParams();
+  if (opts.refresh) params.set("refresh", "1");
+  params.set("trace_id", traceId);
+  const queryStr = params.toString();
+  const url = `${API_BASE}/briefing/${accountId}${queryStr ? `?${queryStr}` : ""}`;
   const es = new EventSource(url);
   currentEventSource = es;
 
