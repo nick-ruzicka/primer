@@ -145,13 +145,15 @@ export function BriefSection({
             <ol className="talk-list">
               {section.questions.map((q, idx) => (
                 <li key={idx}>
-                  <Prose
-                    nodes={q}
-                    citations={citations}
-                    hoveredEvid={hoveredEvid}
-                    onCitationHover={onCitationHover}
-                    onCitationClick={onCitationClick}
-                  />
+                  <div>
+                    <Prose
+                      nodes={q}
+                      citations={citations}
+                      hoveredEvid={hoveredEvid}
+                      onCitationHover={onCitationHover}
+                      onCitationClick={onCitationClick}
+                    />
+                  </div>
                 </li>
               ))}
             </ol>
