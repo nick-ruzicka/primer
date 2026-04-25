@@ -108,6 +108,10 @@ class FactBook:
         intel_evid_index: dict[tuple[str, str], str] | None = None,
     ) -> None:
         self._facts: list[Fact] = []
+        # Insertion-order list above is authoritative for to_raw_context()
+        # rendering and the monotonic-id contract; this dict is just a
+        # lookup index keyed by fact_id.
+        self._by_id: dict[int, Fact] = {}
         self._counter = 0
         # When set, add() auto-populates fact.intel_evid by looking up
         # (source, field) in this index. Lets every existing fb.add() call
@@ -161,13 +165,11 @@ class FactBook:
             intel_evid=intel_evid,
         )
         self._facts.append(fact)
+        self._by_id[fact.fact_id] = fact
         return fact
 
     def lookup(self, fact_id: int) -> Fact | None:
-        for f in self._facts:
-            if f.fact_id == fact_id:
-                return f
-        return None
+        return self._by_id.get(fact_id)
 
     def all(self) -> list[Fact]:
         return list(self._facts)
