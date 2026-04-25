@@ -12,6 +12,29 @@ import { IntelCard } from "./intel-card";
  * reference context — they keep the critical accent stripe but lose the
  * oversized hero treatment, which is reserved for "act on this today."
  */
+/**
+ * Hero tie-breaker among multiple active critical signals. A *binary
+ * blocker* (AP block, AP hold, security review pending, contract
+ * paused) is the *cause* — "no more invoicing until X" — and outranks
+ * status-style criticals like a past-due balance, which is the
+ * *symptom* of the block. Generalizes: any future hard-stop flag
+ * matched by /block|hold|paused|suspend/ wins the hero slot. Returning
+ * a number keeps the order deterministic; ties fall back to the
+ * natural backend order.
+ */
+function blockerWeight(item: IntelligenceItem): number {
+  const label = (item.label ?? "").toLowerCase();
+  const value = (item.value ?? "").toLowerCase();
+  if (/\bblock(ed)?\b|\bhold\b|\bpaused\b|\bsuspend(ed)?\b/.test(label)) {
+    return 100;
+  }
+  // Binary YES/TRUE values often signal a flag-state critical (vs a $-amount).
+  if (/^\s*(yes|true)\s*$/i.test(item.value ?? "")) return 50;
+  // Anything else (past-due balance, declining metric) — symptom-class.
+  if (value) return 0;
+  return 0;
+}
+
 function isActiveSignal(item: IntelligenceItem): boolean {
   const haystack = `${item.value ?? ""} · ${item.sub ?? ""} · ${item.label ?? ""}`.toLowerCase();
   // Closed Won / Closed Lost / "Closed" stage opportunities are historical.
@@ -395,11 +418,20 @@ function SectionBody({
     // (blocking revenue or open-and-trending). Closed/historical critical
     // items still render with the critical left-border accent via cardClass,
     // but they don't get the oversized tinted treatment — historical context
-    // is reference, not urgency. Tie-breaker among active criticals: first in
-    // the natural order from the backend (which is recency-sorted upstream).
-    const heroIdx = items.findIndex(
-      (i) => i.flag === "critical" && isActiveSignal(i),
-    );
+    // is reference, not urgency.
+    //
+    // Tie-breaker among active criticals: blocker-class signals (AP block,
+    // hold, paused) outrank symptom-class signals (past-due balance) so the
+    // panel hero agrees with what the brief itself centers as the cause.
+    // Within the same weight class, the first in natural backend order wins.
+    const candidates = items
+      .map((item, idx) => ({ item, idx }))
+      .filter((c) => c.item.flag === "critical" && isActiveSignal(c.item));
+    candidates.sort((a, b) => {
+      const wDiff = blockerWeight(b.item) - blockerWeight(a.item);
+      return wDiff !== 0 ? wDiff : a.idx - b.idx;
+    });
+    const heroIdx = candidates.length > 0 ? candidates[0].idx : -1;
     const heroItem = heroIdx >= 0 ? items[heroIdx] : null;
     const rest = items.filter((_, i) => i !== heroIdx);
     return (
