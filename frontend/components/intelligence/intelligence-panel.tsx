@@ -149,12 +149,7 @@ export function IntelligencePanel({
 
         {sections.length === 0 && <IntelligenceSkeleton />}
 
-        <div
-          className={cn(
-            variant === "workspace" &&
-              "grid grid-cols-1 items-start gap-x-6 lg:grid-cols-2",
-          )}
-        >
+        <div>
           {sections.map((section, sectionIdx) => {
             const visible = section.items.filter(itemMatches);
             if (visible.length === 0) return null;
@@ -267,14 +262,22 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
   });
 
   if (section.id === "relationship") {
+    // Static NS-Beauty fixture uses hand-picked evids ("priya", "sponsor",
+    // "rel-health") to drive person/health card variants. Live SSE generates
+    // evids like "rel_priya_0", so those filters miss everything for any
+    // other account. Fall back to "standard" so live items still render.
     const people = items.filter(
       (i) => i.evid === "priya" || i.evid === "sponsor",
     );
     const health = items.filter((i) => i.evid === "rel-health");
+    const matched = new Set(
+      [...people, ...health].map((i) => i.evid),
+    );
+    const others = items.filter((i) => !matched.has(i.evid));
     return (
       <>
         {people.length > 0 && (
-          <div className="mb-3 grid grid-cols-1 gap-3 @xl:grid-cols-2 sm:grid-cols-2">
+          <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
             {people.map((p) => (
               <IntelCard
                 key={p.evid}
@@ -291,6 +294,14 @@ function SectionBody({ section, items, hoveredEvid, onCardHover }: BodyProps) {
             item={h}
             variant="health"
             {...cardProps(h.evid)}
+          />
+        ))}
+        {others.map((o) => (
+          <IntelCard
+            key={o.evid}
+            item={o}
+            variant="standard"
+            {...cardProps(o.evid)}
           />
         ))}
       </>
