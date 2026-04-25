@@ -989,6 +989,11 @@ async def stream_brief(
 
     accumulated = ""
     emitted_citations: set[int] = set()
+    # Position past which we've already scanned for citation markers. Advanced
+    # only past matches whose trailing digits are definitely complete (i.e.
+    # followed by at least one non-digit char), so an in-progress digit run
+    # like ``·1`` → ``·15`` across chunks still gets re-found correctly.
+    scan_pos = 0
     total_input_tokens = 0
     total_output_tokens = 0
 
@@ -1034,30 +1039,31 @@ async def stream_brief(
             accumulated += delta
             yield BriefStreamEvent("brief_chunk", {"delta": delta})
 
-            # Look for citation markers in the running text. We only emit
-            # citations whose trailing digits are definitely complete, i.e.
-            # the number is followed by at least one non-digit character.
-            for match in _CITATION_RE.finditer(accumulated):
+            # Look for citation markers in the running text starting from
+            # scan_pos. We only emit citations whose trailing digits are
+            # definitely complete; the first incomplete match ends the loop
+            # and leaves scan_pos behind it for retry next chunk.
+            for match in _CITATION_RE.finditer(accumulated, scan_pos):
                 end = match.end()
                 if end >= len(accumulated):
-                    # digits might still be extending in the next chunk
-                    continue
+                    # digits might still be extending in the next chunk —
+                    # don't advance scan_pos past this position
+                    break
                 num = int(match.group(1))
-                if num in emitted_citations:
-                    continue
-                fact = fact_book.lookup(num)
-                if fact is None:
-                    log.warning(
-                        "agent.unknown_citation",
-                        extra={"account_id": account_id, "citation": num},
-                    )
+                if num not in emitted_citations:
                     emitted_citations.add(num)
-                    continue
-                emitted_citations.add(num)
-                yield BriefStreamEvent(
-                    "source_cited",
-                    _build_source_cited_payload(fact),
-                )
+                    fact = fact_book.lookup(num)
+                    if fact is None:
+                        log.warning(
+                            "agent.unknown_citation",
+                            extra={"account_id": account_id, "citation": num},
+                        )
+                    else:
+                        yield BriefStreamEvent(
+                            "source_cited",
+                            _build_source_cited_payload(fact),
+                        )
+                scan_pos = end
 
         final_message = await stream.get_final_message()
         total_input_tokens = final_message.usage.input_tokens
