@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
-import { WorkspaceReadStrip } from "@/components/brief/workspace-read-strip";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
@@ -169,43 +168,32 @@ export default function BriefingPage() {
                 mode === "split" &&
                   "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
                 mode === "workspace" &&
-                  "grid grid-cols-[minmax(0,460px)_minmax(0,1fr)]",
+                  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
                 mode === "reading" && "flex-col",
               )}
               aria-label="Brief + intelligence"
             >
-              {mode === "workspace" && (
-                <WorkspaceReadStrip
-                  brief={brief.fixture}
-                  revealed={brief.revealed}
-                  citations={citations}
-                  hoveredEvid={hoveredEvid}
-                  onCitationHover={setHoveredEvid}
-                />
-              )}
-
-              {mode !== "workspace" &&
-                (() => {
-                  const revealedSections =
-                    brief.fixture?.sections.filter(
-                      (s) => brief.revealed[s.id],
-                    ) ?? [];
-                  if (!brief.fixture || revealedSections.length === 0) {
-                    return <BriefSkeleton layout={mode} />;
-                  }
-                  return (
-                    <Brief
-                      brief={{
-                        ...brief.fixture,
-                        sections: revealedSections,
-                        citations,
-                      }}
-                      layout={mode === "reading" ? "centered" : "split"}
-                      hoveredEvid={hoveredEvid}
-                      onCitationHover={setHoveredEvid}
-                    />
-                  );
-                })()}
+              {(() => {
+                const revealedSections =
+                  brief.fixture?.sections.filter(
+                    (s) => brief.revealed[s.id],
+                  ) ?? [];
+                if (!brief.fixture || revealedSections.length === 0) {
+                  return <BriefSkeleton layout={mode} />;
+                }
+                return (
+                  <Brief
+                    brief={{
+                      ...brief.fixture,
+                      sections: revealedSections,
+                      citations,
+                    }}
+                    layout={mode === "reading" ? "centered" : "split"}
+                    hoveredEvid={hoveredEvid}
+                    onCitationHover={setHoveredEvid}
+                  />
+                );
+              })()}
 
               {mode !== "reading" && (
                 <IntelligencePanel
