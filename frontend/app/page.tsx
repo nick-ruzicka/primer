@@ -52,7 +52,6 @@ export default function BriefingPage() {
   const warnings = useStore((s) => s.warnings);
   const accountGroups = useStore((s) => s.accountGroups);
   const standaloneAccounts = useStore((s) => s.standalone);
-  const generationMeta = useStore((s) => s.generationMeta);
   const accountsLoading =
     accountGroups.length === 0 && standaloneAccounts.length === 0;
 
@@ -152,7 +151,9 @@ export default function BriefingPage() {
               prospectPipeline={prospectPipeline}
             />
             <ConfidenceStrip
-              confidence={generationMeta.totalTokens ?? 0}
+              confidence={
+                brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence
+              }
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
               generatedAgo={brief.complete ? "just now" : "streaming…"}
