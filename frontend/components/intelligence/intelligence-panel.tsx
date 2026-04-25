@@ -65,6 +65,7 @@ export function IntelligencePanel({
       className={cn(
         "flex min-w-0 flex-col overflow-hidden bg-surface",
         variant === "overlay" && "h-full",
+        variant !== "overlay" && "min-h-0 flex-1",
       )}
       aria-label={title}
     >
@@ -148,38 +149,45 @@ export function IntelligencePanel({
 
         {sections.length === 0 && <IntelligenceSkeleton />}
 
-        {sections.map((section, sectionIdx) => {
-          const visible = section.items.filter(itemMatches);
-          if (visible.length === 0) return null;
-          return (
-            <section key={section.id} className="mb-6 last:mb-0">
-              <header className="mb-3 flex items-baseline gap-2 border-b border-dashed border-line pb-1.5">
-                <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
-                  0{sectionIdx + 1}
-                </span>
-                <h3 className="font-serif text-[15px] font-medium text-ink">
-                  {section.title}
-                </h3>
-                {variant !== "compact" && (
-                  <span className="ml-auto text-[10.5px] text-ink-4">
-                    {visible.length} of {section.items.length}
+        <div
+          className={cn(
+            variant === "workspace" &&
+              "grid grid-cols-1 items-start gap-x-6 lg:grid-cols-2",
+          )}
+        >
+          {sections.map((section, sectionIdx) => {
+            const visible = section.items.filter(itemMatches);
+            if (visible.length === 0) return null;
+            return (
+              <section key={section.id} className="mb-6 last:mb-0">
+                <header className="mb-3 flex items-baseline gap-2 border-b border-dashed border-line pb-1.5">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
+                    0{sectionIdx + 1}
                   </span>
-                )}
-                {variant === "compact" && (
-                  <span className="ml-auto font-mono text-[10px] text-ink-4">
-                    {section.items.length}
-                  </span>
-                )}
-              </header>
-              <SectionBody
-                section={section}
-                items={visible}
-                hoveredEvid={hoveredEvid}
-                onCardHover={onCardHover}
-              />
-            </section>
-          );
-        })}
+                  <h3 className="font-serif text-[15px] font-medium text-ink">
+                    {section.title}
+                  </h3>
+                  {variant !== "compact" && (
+                    <span className="ml-auto text-[10.5px] text-ink-4">
+                      {visible.length} of {section.items.length}
+                    </span>
+                  )}
+                  {variant === "compact" && (
+                    <span className="ml-auto font-mono text-[10px] text-ink-4">
+                      {section.items.length}
+                    </span>
+                  )}
+                </header>
+                <SectionBody
+                  section={section}
+                  items={visible}
+                  hoveredEvid={hoveredEvid}
+                  onCardHover={onCardHover}
+                />
+              </section>
+            );
+          })}
+        </div>
       </div>
     </aside>
   );
