@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_BRIEF_META } from "./fixtures/brief-meta";
 import { getMockForAccount } from "./fixtures/briefs-registry";
 import type { BriefFixture } from "./fixtures/northstar-beauty-brief";
 import { parseStreamingBrief } from "./live-brief-parser";
@@ -196,10 +197,7 @@ function resetLiveBriefBuffer(accountId: string) {
   liveRevealedIds = new Set();
   liveBriefFixture = {
     account_id: accountId,
-    // Ring reads from generationMeta.totalTokens in page.tsx; fixture value is
-    // ignored in live mode. Kept as a typed zero so the mock path still
-    // satisfies BriefFixture.
-    confidence: 0,
+    confidence: DEFAULT_BRIEF_META.confidence,
     sections: [],
     citations: [],
   };
