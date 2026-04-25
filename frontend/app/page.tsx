@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
@@ -19,6 +19,7 @@ import {
 import { loadAccount } from "@/lib/sse";
 import {
   setDensity,
+  setFocusedEvid,
   setHoveredEvid,
   setIntelligencePanelOpen,
   setMode,
@@ -45,6 +46,7 @@ export default function BriefingPage() {
   const activeId = useStore((s) => s.activeAccountId);
   const activeAccount = useStore((s) => s.activeAccount);
   const hoveredEvid = useStore((s) => s.hoveredEvid);
+  const focusedEvid = useStore((s) => s.focusedEvid);
   const brief = useStore((s) => s.brief);
   const intelligence = useStore((s) => s.intelligence);
   const citations = useStore((s) => s.citations);
@@ -86,6 +88,38 @@ export default function BriefingPage() {
     (sum, s) => sum + s.items.length,
     0,
   );
+
+  // Workspace verification mode: when a citation is clicked in the brief, the
+  // store holds the citation's evid (which for live SSE is a long fact-text
+  // string like 'Catalyst relationship_status: Watchlist...'). Intel item
+  // evids are slugs ('relationship_status_0'). Resolve citation evid → intel
+  // item evid by matching source + value_display, falling back to the raw
+  // value if no resolution succeeds (static fixtures align directly).
+  const resolvedFocusedEvid = useMemo(() => {
+    if (!focusedEvid) return null;
+    const allItems = intelligenceSections.flatMap((s) => s.items);
+    if (allItems.some((i) => i.evid === focusedEvid)) return focusedEvid;
+
+    const citation = citations.find((c) => c.evid === focusedEvid);
+    if (!citation) return focusedEvid;
+
+    const sourceLower = citation.source_system.toLowerCase();
+    if (citation.provenance === "raw" || citation.provenance === "scored") {
+      const value = citation.value_display;
+      const byValue = allItems.find(
+        (i) =>
+          i.source === sourceLower &&
+          (i.value === value ||
+            (i.value && value && i.value.startsWith(value.split(" ")[0]))),
+      );
+      if (byValue) return byValue.evid;
+      const byField = allItems.find(
+        (i) => i.source === sourceLower && i.evid.includes(citation.field),
+      );
+      if (byField) return byField.evid;
+    }
+    return focusedEvid;
+  }, [focusedEvid, intelligenceSections, citations]);
 
   // For prospects (arr_cents === 0), pull the open-pipeline dollar amount from
   // the Commercial section's pipeline line — typically an item whose sub reads
@@ -191,6 +225,10 @@ export default function BriefingPage() {
                     layout={mode === "reading" ? "centered" : "split"}
                     hoveredEvid={hoveredEvid}
                     onCitationHover={setHoveredEvid}
+                    onCitationClick={
+                      mode === "workspace" ? setFocusedEvid : undefined
+                    }
+                    disableReferencesScroll={mode === "workspace"}
                   />
                 );
               })()}
@@ -201,6 +239,10 @@ export default function BriefingPage() {
                   variant={mode === "workspace" ? "workspace" : "compact"}
                   hoveredEvid={hoveredEvid}
                   onCardHover={setHoveredEvid}
+                  focusedEvid={mode === "workspace" ? resolvedFocusedEvid : null}
+                  onClearFocus={
+                    mode === "workspace" ? () => setFocusedEvid(null) : undefined
+                  }
                 />
               )}
             </main>

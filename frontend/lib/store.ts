@@ -59,6 +59,7 @@ export interface StoreState {
   tweaksOpen: boolean;
   intelligencePanelOpen: boolean;
   hoveredEvid: string | null;
+  focusedEvid: string | null;
   sidebarCollapsed: boolean;
   // Once the user toggles the sidebar themselves, auto-collapse on mode change
   // stops overriding their preference until reload.
@@ -104,6 +105,7 @@ const INITIAL_STATE: StoreState = {
   tweaksOpen: false,
   intelligencePanelOpen: false,
   hoveredEvid: null,
+  focusedEvid: null,
   sidebarCollapsed: false,
   sidebarManuallyToggled: false,
 };
@@ -167,6 +169,7 @@ export function resetAccountState(
     citations: [],
     sourceCitedEvents: [],
     warnings: [],
+    focusedEvid: null,
     generationMeta: {
       startedAt: Date.now(),
       completedAt: null,
@@ -333,6 +336,10 @@ export function setTweaksOpen(open: boolean) {
 
 export function setIntelligencePanelOpen(open: boolean) {
   setState((s) => ({ ...s, intelligencePanelOpen: open }));
+}
+
+export function setFocusedEvid(evid: string | null) {
+  setState((s) => ({ ...s, focusedEvid: evid }));
 }
 
 export function setHoveredEvid(evid: string | null) {
