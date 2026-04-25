@@ -22,7 +22,7 @@ import type {
  */
 export interface BriefStreamState {
   fixture: BriefFixture | null;
-  revealed: Record<"01" | "02" | "03" | "04", boolean>;
+  revealed: Record<"01" | "02" | "03" | "04" | "05", boolean>;
   complete: boolean;
 }
 
@@ -77,7 +77,7 @@ const EMPTY_INTELLIGENCE: IntelligenceState = {
 
 const EMPTY_BRIEF: BriefStreamState = {
   fixture: null,
-  revealed: { "01": false, "02": false, "03": false, "04": false },
+  revealed: { "01": false, "02": false, "03": false, "04": false, "05": false },
   complete: false,
 };
 
@@ -192,7 +192,7 @@ export function setBriefFixture(fixture: BriefFixture) {
     brief: {
       ...EMPTY_BRIEF,
       fixture,
-      revealed: { "01": false, "02": false, "03": false, "04": false },
+      revealed: { "01": false, "02": false, "03": false, "04": false, "05": false },
     },
     citations: [],
   }));
@@ -210,7 +210,9 @@ export function updateLiveBriefFixture(fixture: BriefFixture) {
   }));
 }
 
-export function revealBriefSection(sectionId: "01" | "02" | "03" | "04") {
+export function revealBriefSection(
+  sectionId: "01" | "02" | "03" | "04" | "05",
+) {
   setState((s) => ({
     ...s,
     brief: { ...s.brief, revealed: { ...s.brief.revealed, [sectionId]: true } },
