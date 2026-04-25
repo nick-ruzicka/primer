@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
+import { ShortcutsOverlay } from "@/components/shortcuts-overlay";
+import { SourcePulseStrip } from "@/components/source-pulse-strip";
 import { Topbar } from "@/components/topbar";
 import { TweaksPanel } from "@/components/tweaks-panel";
 import { TweaksTrigger } from "@/components/tweaks-trigger";
@@ -53,8 +55,11 @@ export default function BriefingPage() {
   const warnings = useStore((s) => s.warnings);
   const accountGroups = useStore((s) => s.accountGroups);
   const standaloneAccounts = useStore((s) => s.standalone);
+  const generationMeta = useStore((s) => s.generationMeta);
   const accountsLoading =
     accountGroups.length === 0 && standaloneAccounts.length === 0;
+
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Propagate theme to <html>.dark class
   useEffect(() => {
@@ -62,6 +67,30 @@ export default function BriefingPage() {
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
+
+  // `?` opens the keyboard-shortcuts overlay (Linear/Notion convention).
+  // Skips when focus is in a text input so reps can still type "?" in the
+  // search box. Modifier keys also skip — `?` is a bare-key trigger.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const displayAccount = activeAccount ??
     accountGroups[0]?.brands[0] ??
@@ -177,6 +206,11 @@ export default function BriefingPage() {
               }
             />
 
+            <SourcePulseStrip
+              intelligence={intelligence}
+              briefComplete={brief.complete}
+            />
+
             <main
               className={cn(
                 "flex flex-1 min-h-0",
@@ -247,6 +281,11 @@ export default function BriefingPage() {
           </div>
         )}
       </div>
+
+      <ShortcutsOverlay
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
 
       <TweaksTrigger onClick={() => setTweaksOpen(true)} open={tweaksOpen} />
       <TweaksPanel

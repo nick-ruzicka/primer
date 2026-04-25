@@ -178,7 +178,7 @@ export function IntelligencePanel({
 
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4"
+        className="scrollbar-none min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4"
       >
         {variant === "compact" && (
           <header className="mb-4 flex items-baseline gap-2">

@@ -1,6 +1,10 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import {
+  ChevronDown,
+  MessageCircle,
+  MessageCircleQuestion,
+} from "lucide-react";
 import { useState } from "react";
 import type { BriefSection as BriefSectionData } from "@/lib/fixtures/northstar-beauty-brief";
 import type { CitationMeta } from "@/lib/types";
@@ -142,10 +146,17 @@ export function BriefSection({
             </ol>
           )}
           {section.questions && (
-            <ol className="talk-list">
+            <ol
+              className={cn(
+                "talk-list",
+                section.key === "discovery" && "discovery-list",
+                section.key === "talk_track" && "talktrack-list",
+              )}
+            >
               {section.questions.map((q, idx) => (
                 <li key={idx}>
                   <div>
+                    <QuestionMarker kind={section.key} />
                     <Prose
                       nodes={q}
                       citations={citations}
@@ -162,4 +173,30 @@ export function BriefSection({
       )}
     </section>
   );
+}
+
+/**
+ * Tiny icon prefix that distinguishes the two question-list sections.
+ * Discovery questions probe; talk-track items frame. Different artifacts.
+ */
+function QuestionMarker({ kind }: { kind: BriefSectionData["key"] }) {
+  if (kind === "discovery") {
+    return (
+      <MessageCircleQuestion
+        className="question-marker discovery"
+        strokeWidth={1.8}
+        aria-hidden
+      />
+    );
+  }
+  if (kind === "talk_track") {
+    return (
+      <MessageCircle
+        className="question-marker talktrack"
+        strokeWidth={1.8}
+        aria-hidden
+      />
+    );
+  }
+  return null;
 }

@@ -7,7 +7,7 @@ import {
   Info,
   RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { SourceId, ValidationWarning } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -22,7 +22,10 @@ interface Props {
   confidence: number;
   sources: SourceDot[];
   staleCount: number;
-  generatedAgo: string;
+  /** Epoch ms when the brief finished generating. Null while streaming. */
+  generatedAt: number | null;
+  /** True while the brief is still streaming in. Suppresses the freshness chip. */
+  streaming?: boolean;
   warnings?: ValidationWarning[];
   onRegenerate?: () => void;
 }
@@ -39,11 +42,13 @@ export function ConfidenceStrip({
   confidence,
   sources,
   staleCount,
-  generatedAgo,
+  generatedAt,
+  streaming = false,
   warnings = [],
   onRegenerate,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const { label: ageLabel, tier: ageTier } = useFreshness(generatedAt, streaming);
 
   const criticalCount = warnings.filter(
     (w) => w.severity === "critical",
@@ -93,10 +98,35 @@ export function ConfidenceStrip({
           )}
         </span>
 
-        <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface-2 px-3 py-1">
-          <Clock3 className="h-3 w-3 text-ink-4" strokeWidth={2.2} />
-          <span className="text-ink-3">
-            Generated <b className="font-medium text-ink-2">{generatedAgo}</b>
+        <span
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full border px-3 py-1 transition-colors",
+            ageTier === "fresh" &&
+              "border-line bg-surface-2 text-ink-3",
+            ageTier === "warming" &&
+              "border-warn-strong/35 bg-warn-soft/40 text-ink-2",
+            ageTier === "stale" &&
+              "border-bad/40 bg-bad-soft/60 text-ink",
+            ageTier === "streaming" && "border-line bg-surface-2 text-ink-3",
+          )}
+          title={
+            generatedAt
+              ? `Brief generated at ${new Date(generatedAt).toLocaleTimeString()}`
+              : "Brief is currently streaming in."
+          }
+        >
+          <Clock3
+            className={cn(
+              "h-3 w-3",
+              ageTier === "fresh" && "text-ink-4",
+              ageTier === "warming" && "text-warn-strong",
+              ageTier === "stale" && "text-bad",
+              ageTier === "streaming" && "text-ink-4 animate-pulse",
+            )}
+            strokeWidth={2.2}
+          />
+          <span>
+            Generated <b className="font-medium text-ink">{ageLabel}</b>
           </span>
         </span>
 
@@ -275,6 +305,43 @@ function WarningRow({ warning }: { warning: ValidationWarning }) {
       )}
     </li>
   );
+}
+
+type FreshnessTier = "streaming" | "fresh" | "warming" | "stale";
+
+/**
+ * Live freshness label + tier for the "Generated …" chip. Ticks every 30s
+ * while the component is mounted, so a brief that ages from 4m → 6m flips
+ * its tone without a manual refresh. Tier thresholds match the Redis cache
+ * TTL pattern (15m): fresh under 5m, warming 5–15m, stale past 15m.
+ */
+function useFreshness(
+  generatedAt: number | null,
+  streaming: boolean,
+): { label: string; tier: FreshnessTier } {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (streaming || !generatedAt) return;
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, [streaming, generatedAt]);
+
+  if (streaming || !generatedAt) {
+    return { label: "streaming…", tier: "streaming" };
+  }
+  const ageMs = Math.max(0, now - generatedAt);
+  const minutes = Math.floor(ageMs / 60_000);
+  const tier: FreshnessTier =
+    minutes < 5 ? "fresh" : minutes < 15 ? "warming" : "stale";
+  let label: string;
+  if (minutes < 1) label = "just now";
+  else if (minutes < 60) label = `${minutes}m ago`;
+  else {
+    const hours = Math.floor(minutes / 60);
+    label = `${hours}h ago`;
+  }
+  return { label, tier };
 }
 
 function ConfidenceRing({ value }: { value: number }) {

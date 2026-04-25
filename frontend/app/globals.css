@@ -645,3 +645,36 @@ body {
   padding-left: 14px;
   border-left: 2px solid var(--color-warn-strong);
 }
+
+/* Hide scrollbars while preserving scroll. Used on the left rail and the
+   intelligence panel where the visible scrollbar competes with the dense
+   content for attention. Cross-browser: WebKit hides via shadow DOM, Firefox
+   via scrollbar-width, legacy IE/Edge via -ms-overflow-style. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Question-list markers (spec §discovery-vs-talktrack):
+   Discovery uses a question-mark circle in accent (sales hypothesis-testing
+   tone); talk track uses a plain message bubble in muted ink (conversational
+   opener tone). Same list grid, different artifact at a glance. */
+.question-marker {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  margin-right: 7px;
+  opacity: 0.85;
+}
+.question-marker.discovery {
+  color: var(--color-accent);
+}
+.question-marker.talktrack {
+  color: var(--color-ink-3);
+}
