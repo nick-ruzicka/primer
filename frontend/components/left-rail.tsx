@@ -68,7 +68,7 @@ export function LeftRail({
         </kbd>
       </label>
 
-      <div className="mt-4 flex-1 overflow-y-auto px-3 pb-3">
+      <div className="scrollbar-none mt-4 flex-1 overflow-y-auto px-3 pb-3">
         {loading && groups.length === 0 && standalone.length === 0 && (
           <RailSkeleton />
         )}
