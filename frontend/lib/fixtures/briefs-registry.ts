@@ -49,7 +49,7 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
             {
               kind: "text",
               value:
-                "Once the backend is wired, Claude generates a full four-section briefing grounded in the six source systems.",
+                "Once the backend is wired, Claude generates a full five-section briefing grounded in the six source systems.",
             },
           ],
         ],
@@ -94,9 +94,24 @@ function makeGenericMock(accountId: string, accountName: string): AccountMock {
       },
       {
         id: "04",
+        key: "discovery",
+        title: "Discovery questions",
+        preview: "Validation questions render here.",
+        questions: [
+          [
+            {
+              kind: "text",
+              value:
+                "Generic placeholder — real discovery questions come from the live agent.",
+            },
+          ],
+        ],
+      },
+      {
+        id: "05",
         key: "talk_track",
         title: "Suggested talk track",
-        preview: "Starter questions render here.",
+        preview: "Starter openers render here.",
         questions: [
           [
             {
