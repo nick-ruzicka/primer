@@ -26,6 +26,7 @@ import {
   setTheme,
   setTweaksOpen,
   setVerify,
+  toggleSidebar,
   useStore,
 } from "@/lib/store";
 import type { IntelligenceSection } from "@/lib/types";
@@ -41,6 +42,7 @@ export default function BriefingPage() {
   const verify = useStore((s) => s.verifyIntensity);
   const tweaksOpen = useStore((s) => s.tweaksOpen);
   const intelligenceOpen = useStore((s) => s.intelligencePanelOpen);
+  const sidebarCollapsed = useStore((s) => s.sidebarCollapsed);
   const activeId = useStore((s) => s.activeAccountId);
   const activeAccount = useStore((s) => s.activeAccount);
   const hoveredEvid = useStore((s) => s.hoveredEvid);
@@ -99,15 +101,30 @@ export default function BriefingPage() {
       : null;
 
   return (
-    <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
-      <LeftRail
-        groups={accountGroups}
-        standalone={standaloneAccounts}
-        activeId={activeId}
-        onSelect={(id) => loadAccount(id)}
-        currentUser={CURRENT_USER}
-        loading={accountsLoading}
-      />
+    <div
+      className={cn(
+        "grid h-screen overflow-hidden bg-bg text-ink transition-[grid-template-columns] duration-200",
+        sidebarCollapsed
+          ? "grid-cols-[0px_minmax(0,1fr)]"
+          : "grid-cols-[260px_minmax(0,1fr)]",
+      )}
+    >
+      <div
+        className={cn(
+          "min-h-0 overflow-hidden transition-opacity duration-200",
+          sidebarCollapsed && "pointer-events-none opacity-0",
+        )}
+        aria-hidden={sidebarCollapsed}
+      >
+        <LeftRail
+          groups={accountGroups}
+          standalone={standaloneAccounts}
+          activeId={activeId}
+          onSelect={(id) => loadAccount(id)}
+          currentUser={CURRENT_USER}
+          loading={accountsLoading}
+        />
+      </div>
       <div className="flex min-w-0 flex-col overflow-hidden">
         <Topbar
           breadcrumbAccount={displayAccount.full_name ?? displayAccount.name}
@@ -121,6 +138,8 @@ export default function BriefingPage() {
             setIntelligencePanelOpen(!intelligenceOpen)
           }
           onRefresh={() => activeId && loadAccount(activeId, { refresh: true })}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
         />
 
         {mode === "writeup" ? (
