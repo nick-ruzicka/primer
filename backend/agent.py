@@ -739,7 +739,7 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
             if not snippet:
                 continue
             title = hit.get("title", "")
-            published = hit.get("published_at") or hit.get("date")
+            published = hit.get("signal_date") or hit.get("published_at") or hit.get("date")
             url = hit.get("url")
             fb.add(
                 provenance="surfaced",
@@ -764,7 +764,7 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 continue
             author = hit.get("author", "")
             title = hit.get("title", "")
-            published = hit.get("published_at") or hit.get("date")
+            published = hit.get("signal_date") or hit.get("published_at") or hit.get("date")
             url = hit.get("url")
             module = f"{title} · {author}" if (title and author) else (title or author or "Web result")
             fb.add(
