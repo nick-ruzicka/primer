@@ -59,6 +59,10 @@ export interface StoreState {
   tweaksOpen: boolean;
   intelligencePanelOpen: boolean;
   hoveredEvid: string | null;
+  sidebarCollapsed: boolean;
+  // Once the user toggles the sidebar themselves, auto-collapse on mode change
+  // stops overriding their preference until reload.
+  sidebarManuallyToggled: boolean;
 }
 
 const EMPTY_INTELLIGENCE: IntelligenceState = {
@@ -100,6 +104,8 @@ const INITIAL_STATE: StoreState = {
   tweaksOpen: false,
   intelligencePanelOpen: false,
   hoveredEvid: null,
+  sidebarCollapsed: false,
+  sidebarManuallyToggled: false,
 };
 
 let state: StoreState = INITIAL_STATE;
@@ -291,7 +297,22 @@ export function markBriefDone(meta: Partial<GenerationMeta>) {
 }
 
 export function setMode(mode: ViewMode) {
-  setState((s) => ({ ...s, mode }));
+  setState((s) => {
+    // Auto-collapse the sidebar in writeup mode and re-expand on the way out,
+    // but defer to the user once they've toggled it manually this session.
+    const sidebarCollapsed = s.sidebarManuallyToggled
+      ? s.sidebarCollapsed
+      : mode === "writeup";
+    return { ...s, mode, sidebarCollapsed };
+  });
+}
+
+export function toggleSidebar() {
+  setState((s) => ({
+    ...s,
+    sidebarCollapsed: !s.sidebarCollapsed,
+    sidebarManuallyToggled: true,
+  }));
 }
 
 export function setTheme(theme: "light" | "dark") {
