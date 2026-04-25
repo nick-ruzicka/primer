@@ -104,14 +104,23 @@ export default function BriefingPage() {
       note: "",
     };
 
-  // Rebuild intelligence section list in declaration order, skipping unrevealed.
+  // Section ordering optimized for AE pre-call prep, not consultant-style
+  // "who → what → how" rapport building. Money first (Commercial = the
+  // reason the call exists), then last-call ground truth (Conversations),
+  // then Relationship for who you're talking to, Product for usage signals,
+  // External for noise-prone web signals, Portfolio last because sibling
+  // brands are tertiary for any single-account call.
+  //
+  // Future: state-aware ordering belongs in the variant-skill system
+  // (renewal-call variant promotes Commercial; discovery-call variant
+  // promotes Conversations). Static order here is the right call for V1.
   const intelligenceSections: IntelligenceSection[] = [
-    intelligence.relationship,
     intelligence.commercial,
-    intelligence.product,
     intelligence.conversations,
-    intelligence.portfolio,
+    intelligence.relationship,
+    intelligence.product,
     intelligence.external,
+    intelligence.portfolio,
   ].filter((s): s is IntelligenceSection => !!s);
   const intelligenceCount = intelligenceSections.reduce(
     (sum, s) => sum + s.items.length,
