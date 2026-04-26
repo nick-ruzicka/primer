@@ -133,14 +133,22 @@ def compute_citation_match(claim_text: str, cited_facts: list[Any]) -> float:
         return 0.10
 
 
-async def _llm_score(prompt: str, client: Any, model: str) -> tuple[float, str]:
+async def _llm_score(
+    prompt: str,
+    client: Any,
+    model: str,
+    system_payload: Any = None,
+) -> tuple[float, str]:
     """Single narrow LLM scoring call. Returns (score, reason). Defaults to 0.5 on failure."""
     try:
-        resp = await client.messages.create(
-            model=model,
-            max_tokens=80,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        create_kwargs: dict[str, Any] = {
+            "model": model,
+            "max_tokens": 80,
+            "messages": [{"role": "user", "content": prompt}],
+        }
+        if system_payload is not None:
+            create_kwargs["system"] = system_payload
+        resp = await client.messages.create(**create_kwargs)
         text = resp.content[0].text.strip()
         first_token, _, rest = text.partition(" ")
         score = float(first_token)
@@ -155,6 +163,7 @@ async def compute_source_appropriateness(
     cited_facts: list[Any],
     client: Any,
     model: str,
+    system_payload: Any = None,
 ) -> tuple[float, str]:
     """
     Narrow LLM judgment: is this source appropriate for this claim?
@@ -180,7 +189,7 @@ async def compute_source_appropriateness(
             "- 1.0: Source is unrelated to claim entirely\n\n"
             "Respond with just a number 0.0-1.0 and a 1-sentence reason."
         )
-        s, r = await _llm_score(prompt, client, model)
+        s, r = await _llm_score(prompt, client, model, system_payload)
         scores.append(s)
         reasons.append(r)
 
@@ -193,6 +202,7 @@ async def compute_semantic_drift(
     cited_facts: list[Any],
     client: Any,
     model: str,
+    system_payload: Any = None,
 ) -> tuple[float, str]:
     """
     Narrow LLM judgment: does the claim amplify or drift from the cited facts?
@@ -216,7 +226,7 @@ async def compute_semantic_drift(
         "- 1.0: Claim says something the facts don't support at all\n\n"
         "Respond with just a number 0.0-1.0 and a 1-sentence reason."
     )
-    return await _llm_score(prompt, client, model)
+    return await _llm_score(prompt, client, model, system_payload)
 
 
 async def compute_inference_legitimacy(
@@ -224,6 +234,7 @@ async def compute_inference_legitimacy(
     has_citations: bool,
     client: Any,
     model: str,
+    system_payload: Any = None,
 ) -> tuple[float, str]:
     """
     Narrow LLM judgment: for uncited claims, is this legitimately hedged?
@@ -243,7 +254,7 @@ async def compute_inference_legitimacy(
         "- 1.0: Claim is a definitive uncited assertion\n\n"
         "Respond with just a number 0.0-1.0 and a 1-sentence reason."
     )
-    return await _llm_score(prompt, client, model)
+    return await _llm_score(prompt, client, model, system_payload)
 
 
 async def compute_warning_confidence(
@@ -251,6 +262,7 @@ async def compute_warning_confidence(
     fact_lookup: Callable[[int], Any] | None,
     client: Any,
     model: str,
+    system_payload: Any = None,
 ) -> dict[str, Any]:
     """
     Augments a warning dict with warning_confidence, scores, reasoning fields.
@@ -283,7 +295,7 @@ async def compute_warning_confidence(
     # Sub-scores 2–4: narrow LLM judgments
     try:
         source_appropriateness, sa_reason = await compute_source_appropriateness(
-            claim_text_clean, cited_facts, client, model
+            claim_text_clean, cited_facts, client, model, system_payload
         )
     except Exception:
         log.exception("scorer.source_appropriateness_failed")
@@ -291,7 +303,7 @@ async def compute_warning_confidence(
 
     try:
         semantic_drift, sd_reason = await compute_semantic_drift(
-            claim_text_clean, cited_facts, client, model
+            claim_text_clean, cited_facts, client, model, system_payload
         )
     except Exception:
         log.exception("scorer.semantic_drift_failed")
@@ -299,7 +311,7 @@ async def compute_warning_confidence(
 
     try:
         inference_legitimacy, il_reason = await compute_inference_legitimacy(
-            claim_text_clean, has_citations, client, model
+            claim_text_clean, has_citations, client, model, system_payload
         )
     except Exception:
         log.exception("scorer.inference_legitimacy_failed")
