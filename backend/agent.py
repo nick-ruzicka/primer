@@ -1063,8 +1063,9 @@ async def validate_brief(
     account_id: str,
     brief_markdown: str,
     context_blob: str,
+    fact_book: "FactBook | None" = None,
 ) -> list[dict[str, Any]]:
-    """Second-pass validation. Returns a list of warning dicts."""
+    """Second-pass validation. Returns a list of warning dicts with scoring."""
     client = get_client()
     base_system = _VALIDATION_PROMPT.replace("{today}", SETTINGS.anchor_date)
     system_payload = _system_prompt(base_system)
@@ -1119,7 +1120,7 @@ async def validate_brief(
         )
         return []
 
-    # defensive scrub
+    # Defensive scrub — preserve original fields
     clean: list[dict[str, Any]] = []
     for w in parsed:
         if not isinstance(w, dict):
@@ -1134,11 +1135,30 @@ async def validate_brief(
             }
         )
 
+    # Apply decomposed scoring to each warning
+    from .scorer import compute_warning_confidence
+
+    fact_lookup = fact_book.lookup if fact_book is not None else None
+    scored: list[dict[str, Any]] = []
+    for w in clean:
+        try:
+            scored.append(
+                await compute_warning_confidence(
+                    w, fact_lookup, client, SETTINGS.validation_model
+                )
+            )
+        except Exception:  # noqa: BLE001
+            log.exception(
+                "agent.validate.score_failed",
+                extra={"account_id": account_id, "excerpt": w.get("brief_excerpt", "")[:80]},
+            )
+            scored.append(w)  # keep unscored warning rather than dropping it
+
     log.info(
         "agent.validate.done",
-        extra={"account_id": account_id, "warnings": len(clean)},
+        extra={"account_id": account_id, "warnings": len(scored)},
     )
-    return clean
+    return scored
 
 
 def _extract_json_array(text: str) -> list | None:
