@@ -134,13 +134,23 @@ export function Writeup() {
                 places the rep doesn't think to check. By the time anyone
                 notices, the deal is already moving against them.
               </p>
-              <p>
-                This is an <em>information overload</em> problem, not a
-                dashboards problem. A rep tracking 40 accounts can't watch
-                every system every day. The rep who forecasts a renewal at
-                70% likelihood and then loses the deal isn't lazy — they
-                didn't see the new CFO arrived three weeks ago.
-              </p>
+              <div className="my-10 rounded-lg border-l-[3px] border-accent bg-accent-soft/15 px-7 py-6">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.15em] text-ink-3">
+                  The diagnosis
+                </p>
+                <p className="mb-5 font-serif text-[30px] font-medium leading-[1.15] tracking-[-0.01em] text-ink">
+                  Information overload, not a dashboards problem.
+                </p>
+                <p className="text-[16px] leading-[1.65] text-ink-2">
+                  A rep tracking 40 accounts can't watch every system every
+                  day. The rep who forecasts a renewal at 70% likelihood
+                  and then loses the deal isn't lazy — they didn't see the
+                  new CFO arrived three weeks ago.
+                </p>
+                <p className="mt-3 font-serif text-[16px] italic leading-[1.65] text-ink-3">
+                  Management wasn't aware either.
+                </p>
+              </div>
               <p>
                 Synthesis is the visible part: six tabs, an hour of prep, a
                 story the rep assembles in their head under time pressure.
