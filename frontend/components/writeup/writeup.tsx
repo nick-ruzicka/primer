@@ -213,6 +213,13 @@ export function Writeup() {
                 what the system believes and change it in plain markdown.
               </p>
               <p>
+                Skills aren't static — the brief picks which variant
+                anchors the call based on context. A renewal call loads
+                the renewal-call variant on top of the master and brief
+                skills; an expansion conversation loads a different one.
+                Same architecture, different anchor.
+              </p>
+              <p>
                 The skills are the moat — they encode what good looks like
                 for this business, in a format anyone can read and improve.
               </p>
