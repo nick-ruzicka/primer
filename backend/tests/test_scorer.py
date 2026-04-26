@@ -156,6 +156,16 @@ async def test_inference_legitimacy_skipped_for_cited():
     assert reason == ""
 
 
+async def test_semantic_drift_with_facts():
+    fact = _MockFact("-13", "health_delta: -13")
+    client = _mock_client("0.6 Claim amplifies the tone of the delta.")
+    score, reason = await compute_semantic_drift(
+        "adoption is cratering·1", [fact], client, "claude-haiku-4-5-20251001"
+    )
+    assert score == pytest.approx(0.6)
+    assert "amplifies" in reason
+
+
 # --- compute_warning_confidence combiner tests ---
 
 from backend.scorer import compute_warning_confidence
