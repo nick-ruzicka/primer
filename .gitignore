@@ -71,3 +71,5 @@ logs/
 *.swp
 *.swo
 .gstack/
+.claude/
+.superpowers/

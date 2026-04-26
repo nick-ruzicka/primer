@@ -20,6 +20,12 @@ interface Props {
   hoveredEvid?: string | null;
   onCitationHover?: (evid: string | null) => void;
   onCitationClick?: (evid: string) => void;
+  /**
+   * When true, citation clicks skip the in-brief scroll to the References
+   * section. Set in Workspace mode where citations drive the right-side
+   * intelligence panel instead of an in-column references list.
+   */
+  disableReferencesScroll?: boolean;
 }
 
 export function Brief({
@@ -28,6 +34,7 @@ export function Brief({
   hoveredEvid,
   onCitationHover,
   onCitationClick,
+  disableReferencesScroll = false,
 }: Props) {
   const [highlightedCitationId, setHighlightedCitationId] = useState<string | null>(null);
   const [selectedReferenceForModal, setSelectedReferenceForModal] = useState<CitationMeta | null>(null);
@@ -37,7 +44,8 @@ export function Brief({
     setHighlightedCitationId(citationId);
     onCitationClick?.(citationId);
 
-    // Scroll to References section
+    if (disableReferencesScroll) return;
+
     setTimeout(() => {
       const refElement = document.getElementById("references-section");
       if (refElement) {

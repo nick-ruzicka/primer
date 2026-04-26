@@ -22,7 +22,7 @@ import type {
  */
 export interface BriefStreamState {
   fixture: BriefFixture | null;
-  revealed: Record<"01" | "02" | "03" | "04", boolean>;
+  revealed: Record<"01" | "02" | "03" | "04" | "05", boolean>;
   complete: boolean;
 }
 
@@ -59,6 +59,11 @@ export interface StoreState {
   tweaksOpen: boolean;
   intelligencePanelOpen: boolean;
   hoveredEvid: string | null;
+  focusedEvid: string | null;
+  sidebarCollapsed: boolean;
+  // Once the user toggles the sidebar themselves, auto-collapse on mode change
+  // stops overriding their preference until reload.
+  sidebarManuallyToggled: boolean;
 }
 
 const EMPTY_INTELLIGENCE: IntelligenceState = {
@@ -72,7 +77,7 @@ const EMPTY_INTELLIGENCE: IntelligenceState = {
 
 const EMPTY_BRIEF: BriefStreamState = {
   fixture: null,
-  revealed: { "01": false, "02": false, "03": false, "04": false },
+  revealed: { "01": false, "02": false, "03": false, "04": false, "05": false },
   complete: false,
 };
 
@@ -100,6 +105,9 @@ const INITIAL_STATE: StoreState = {
   tweaksOpen: false,
   intelligencePanelOpen: false,
   hoveredEvid: null,
+  focusedEvid: null,
+  sidebarCollapsed: false,
+  sidebarManuallyToggled: false,
 };
 
 let state: StoreState = INITIAL_STATE;
@@ -161,6 +169,7 @@ export function resetAccountState(
     citations: [],
     sourceCitedEvents: [],
     warnings: [],
+    focusedEvid: null,
     generationMeta: {
       startedAt: Date.now(),
       completedAt: null,
@@ -183,7 +192,7 @@ export function setBriefFixture(fixture: BriefFixture) {
     brief: {
       ...EMPTY_BRIEF,
       fixture,
-      revealed: { "01": false, "02": false, "03": false, "04": false },
+      revealed: { "01": false, "02": false, "03": false, "04": false, "05": false },
     },
     citations: [],
   }));
@@ -201,7 +210,9 @@ export function updateLiveBriefFixture(fixture: BriefFixture) {
   }));
 }
 
-export function revealBriefSection(sectionId: "01" | "02" | "03" | "04") {
+export function revealBriefSection(
+  sectionId: "01" | "02" | "03" | "04" | "05",
+) {
   setState((s) => ({
     ...s,
     brief: { ...s.brief, revealed: { ...s.brief.revealed, [sectionId]: true } },
@@ -291,7 +302,22 @@ export function markBriefDone(meta: Partial<GenerationMeta>) {
 }
 
 export function setMode(mode: ViewMode) {
-  setState((s) => ({ ...s, mode }));
+  setState((s) => {
+    // Auto-collapse the sidebar in writeup mode and re-expand on the way out,
+    // but defer to the user once they've toggled it manually this session.
+    const sidebarCollapsed = s.sidebarManuallyToggled
+      ? s.sidebarCollapsed
+      : mode === "writeup";
+    return { ...s, mode, sidebarCollapsed };
+  });
+}
+
+export function toggleSidebar() {
+  setState((s) => ({
+    ...s,
+    sidebarCollapsed: !s.sidebarCollapsed,
+    sidebarManuallyToggled: true,
+  }));
 }
 
 export function setTheme(theme: "light" | "dark") {
@@ -312,6 +338,10 @@ export function setTweaksOpen(open: boolean) {
 
 export function setIntelligencePanelOpen(open: boolean) {
   setState((s) => ({ ...s, intelligencePanelOpen: open }));
+}
+
+export function setFocusedEvid(evid: string | null) {
+  setState((s) => ({ ...s, focusedEvid: evid }));
 }
 
 export function setHoveredEvid(evid: string | null) {

@@ -58,6 +58,14 @@ export interface Account {
   call_when?: string;
   countdown?: string;
   attendees?: Attendee[];
+  /**
+   * ISO timestamp for the next scheduled call. Demo-only — set in
+   * `frontend/lib/fixtures/account-schedule.ts` as `now + offset` so the
+   * timing chips and "Next Call" strip stay fresh on every load. `null` /
+   * absent means no call is currently scheduled (chip hidden, account
+   * sinks to bottom of its group). Calendar integration is V1.5.
+   */
+  next_call_at?: string | null;
 }
 
 export interface Attendee {
@@ -89,6 +97,14 @@ type CitationCommon = {
   n: number;
   /** Stable id for citation-chip ↔ reference-entry lookup. */
   evid: string;
+  /**
+   * Deterministic pointer to the matching intelligence-panel card,
+   * populated by the backend via the (source, field) → intel_evid
+   * lookup. Workspace verification mode reads this to scroll/highlight
+   * the matching card on citation click. Null when no intel card
+   * matches (composite/aggregate facts).
+   */
+  intel_evid?: string | null;
   /** Full display name: "NetSuite", "Catalyst", "Salesforce", "Gong", "Snowflake", "Exa". */
   source_system: string;
   /** Subsystem label: "Accounts Receivable", "Forecast", "LinkedIn post by Priya Shah". */

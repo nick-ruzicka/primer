@@ -2,6 +2,8 @@
 
 import {
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Columns2,
   FileText,
   LayoutPanelLeft,
@@ -21,6 +23,8 @@ interface Props {
   onToggleIntelligence?: () => void;
   onRefresh?: () => void;
   onJoinCall?: () => void;
+  sidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 const MODES: {
@@ -44,9 +48,27 @@ export function Topbar({
   onToggleIntelligence,
   onRefresh,
   onJoinCall,
+  sidebarCollapsed = false,
+  onToggleSidebar,
 }: Props) {
   return (
-    <header className="flex h-14 items-center gap-3 border-b border-line bg-bg px-5">
+    <header className="flex h-14 items-center gap-3 border-b border-line bg-bg pl-2 pr-5">
+      {onToggleSidebar && (
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          aria-label={sidebarCollapsed ? "Show sidebar" : "Hide sidebar"}
+          aria-pressed={!sidebarCollapsed}
+          title={`${sidebarCollapsed ? "Show" : "Hide"} sidebar  (⌘\\)`}
+          className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-ink-3 transition-colors hover:bg-surface-2 hover:text-ink"
+        >
+          {sidebarCollapsed ? (
+            <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+          ) : (
+            <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2.2} />
+          )}
+        </button>
+      )}
       <nav
         className="flex items-center gap-2 text-[12px] text-ink-3"
         aria-label="Breadcrumb"

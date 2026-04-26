@@ -16,6 +16,7 @@ interface Props {
    */
   variant?: "standard" | "hero" | "person" | "web" | "health";
   hovered?: boolean;
+  focused?: boolean;
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -25,64 +26,30 @@ export function IntelCard({
   item,
   variant = "standard",
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
 }: Props) {
-  if (variant === "person")
-    return (
-      <PersonCard
-        item={item}
-        hovered={hovered}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-      />
-    );
-  if (variant === "web")
-    return (
-      <WebCard
-        item={item}
-        hovered={hovered}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-      />
-    );
-  if (variant === "hero")
-    return (
-      <HeroCard
-        item={item}
-        hovered={hovered}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-      />
-    );
-  if (variant === "health")
-    return (
-      <HealthCard
-        item={item}
-        hovered={hovered}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
-        onClick={onClick}
-      />
-    );
-  return (
-    <StandardCard
-      item={item}
-      hovered={hovered}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      onClick={onClick}
-    />
-  );
+  const sub = {
+    item,
+    hovered,
+    focused,
+    onMouseEnter,
+    onMouseLeave,
+    onClick,
+  };
+  if (variant === "person") return <PersonCard {...sub} />;
+  if (variant === "web") return <WebCard {...sub} />;
+  if (variant === "hero") return <HeroCard {...sub} />;
+  if (variant === "health") return <HealthCard {...sub} />;
+  return <StandardCard {...sub} />;
 }
 
 interface SubProps {
   item: IntelligenceItem;
   hovered?: boolean;
+  focused?: boolean;
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -91,6 +58,7 @@ interface SubProps {
 function cardClass(
   item: IntelligenceItem,
   hovered?: boolean,
+  focused?: boolean,
   extra?: string,
 ): string {
   return cn(
@@ -98,6 +66,7 @@ function cardClass(
     item.flag === "critical" && "critical",
     item.flag === "warn" && "watch",
     hovered && "hot",
+    focused && "focused",
     extra,
   );
 }
@@ -105,6 +74,7 @@ function cardClass(
 function StandardCard({
   item,
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -115,7 +85,7 @@ function StandardCard({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={cardClass(item, hovered)}
+      className={cardClass(item, hovered, focused)}
     >
       {item.flagPill && (
         <span className={cn("card-flag", item.flag === "warn" ? "warn" : "")}>
@@ -158,6 +128,7 @@ function StandardCard({
 function PersonCard({
   item,
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -178,7 +149,7 @@ function PersonCard({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={cn(cardClass(item, hovered), "flex items-start gap-3")}
+      className={cn(cardClass(item, hovered, focused), "flex items-start gap-3")}
     >
       <div className={cn("card-avatar", isExec && "exec")}>{initials}</div>
       <div className="min-w-0 flex-1">
@@ -216,6 +187,7 @@ function PersonCard({
 function HealthCard({
   item,
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -226,7 +198,7 @@ function HealthCard({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={cardClass(item, hovered)}
+      className={cardClass(item, hovered, focused)}
     >
       {item.flagPill && (
         <span className={cn("card-flag", item.flag === "warn" ? "warn" : "")}>
@@ -269,6 +241,7 @@ function HealthCard({
 function HeroCard({
   item,
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -286,6 +259,7 @@ function HeroCard({
         "intel-card hero",
         flagIsCritical && "critical",
         hovered && "hot",
+        focused && "focused",
       )}
     >
       {item.flagPill && (
@@ -334,6 +308,7 @@ function HeroCard({
 function WebCard({
   item,
   hovered,
+  focused,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -343,6 +318,7 @@ function WebCard({
       <StandardCard
         item={item}
         hovered={hovered}
+        focused={focused}
         onClick={onClick}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
@@ -354,7 +330,7 @@ function WebCard({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      className={cardClass(item, hovered)}
+      className={cardClass(item, hovered, focused)}
     >
       <div className="flex items-center gap-2">
         <span className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-surface-sunk text-[10px] font-semibold text-ink-3">

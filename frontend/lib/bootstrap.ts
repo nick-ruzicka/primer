@@ -2,8 +2,9 @@
 
 import { useEffect } from "react";
 import { fetchAccounts } from "./api";
+import { enrichAccountsWithSchedule } from "./fixtures/account-schedule";
 import { loadAccount } from "./sse";
-import { pushWarning, setAccounts, setMode } from "./store";
+import { pushWarning, setAccounts, setMode, toggleSidebar } from "./store";
 import type { ViewMode } from "./types";
 
 /**
@@ -29,7 +30,8 @@ export function useBootstrap(): void {
           });
           return;
         }
-        setAccounts(live.groups, live.standalone);
+        const enriched = enrichAccountsWithSchedule(live);
+        setAccounts(enriched.groups, enriched.standalone);
 
         let target: string | null = null;
         if (typeof window !== "undefined") {
@@ -71,6 +73,12 @@ export function useKeyboardShortcuts(): void {
           target.tagName === "TEXTAREA" ||
           target.isContentEditable)
       ) {
+        return;
+      }
+      // Cmd/Ctrl + \ toggles the account sidebar (VS Code convention).
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key === "\\") {
+        e.preventDefault();
+        toggleSidebar();
         return;
       }
       if (e.metaKey || e.ctrlKey || e.altKey) return;

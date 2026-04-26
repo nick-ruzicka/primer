@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_BRIEF_META } from "./fixtures/brief-meta";
 import { getMockForAccount } from "./fixtures/briefs-registry";
 import type { BriefFixture } from "./fixtures/northstar-beauty-brief";
 import { parseStreamingBrief } from "./live-brief-parser";
@@ -214,10 +215,7 @@ function resetLiveBriefBuffer(accountId: string) {
   liveRevealedIds = new Set();
   liveBriefFixture = {
     account_id: accountId,
-    // Ring reads from generationMeta.totalTokens in page.tsx; fixture value is
-    // ignored in live mode. Kept as a typed zero so the mock path still
-    // satisfies BriefFixture.
-    confidence: 0,
+    confidence: DEFAULT_BRIEF_META.confidence,
     sections: [],
     citations: [],
   };
@@ -423,6 +421,7 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string, t
       const base = {
         n: data.citation_number,
         evid: data.evid,
+        intel_evid: data.intel_evid ?? null,
         source_system: data.source_system,
         source_module: data.source_module ?? undefined,
         retrieved_at: data.retrieved_at ?? new Date().toISOString(),
@@ -492,28 +491,17 @@ function runLiveStream(accountId: string, opts: LoadOptions, streamId: string, t
         totalTokens: meta.total_tokens ?? null,
         durationMs: meta.duration_ms ?? null,
       });
-      // If the live brief produced nothing (e.g. upstream agent error), fall
-      // back to the mock so the demo still shows what a finished brief looks
-      // like. A validation_warning already notifies the operator.
+      // If the live brief produced nothing (e.g. upstream agent error),
+      // surface that explicitly. Showing a mock brief in its place would
+      // hand a sales rep fake content right before a customer call.
       const state = getState();
       const hasAnyRevealed = Object.values(state.brief.revealed).some(Boolean);
       if (!hasAnyRevealed) {
-        const mock = getMockForAccount(
-          accountId,
-          findAccountInStore(accountId)?.full_name ??
-            findAccountInStore(accountId)?.name ??
-            "",
-        );
-        setBriefFixture(mock.brief);
-        for (const section of mock.brief.sections) {
-          revealBriefSection(section.id);
-        }
-        appendCitations(mock.brief.citations);
         pushWarning({
-          severity: "watch",
+          severity: "critical",
           type: "missing_ground",
           message:
-            "Brief generation failed upstream — showing mock brief so the demo remains coherent.",
+            "Brief generation failed upstream. No content available — refresh to retry.",
         });
       }
     } catch (err) {
