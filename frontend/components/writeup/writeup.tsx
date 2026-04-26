@@ -605,14 +605,54 @@ data_as_of: 2026-04-23`}
                 months of work).
               </p>
               <p>
-                <b>Validator severity is the wrong abstraction.</b> Right now
-                the validator emits binary critical/watch flags. Same brief,
-                four runs, different counts — Haiku temperature noise on a
-                judgment call. The fix isn't more determinism; it's a
-                continuous confidence score (0–1) per warning, with the UI
-                layer deciding how to render it. That's how production
-                content-moderation systems actually work — you don't
-                classify, you score.
+                <b>Severity classification is the wrong layer.</b> Today the
+                validator emits binary critical/watch flags. Same brief, four
+                runs, different counts — temperature noise on a judgment call.
+                Asking the LLM for 0–1 instead of binary is the same problem
+                with decimals.
+              </p>
+              <p>
+                The real fix is decomposing each warning into mechanical
+                checks plus narrow LLM judgments:
+              </p>
+              <BulletList>
+                <li>
+                  <b>Citation match</b> <em>(mechanical)</em>. Numbers in the
+                  claim against numbers in the cited fact. "Brief says 17%,
+                  fact_id 41 says -13" → 31% gap, flag. No LLM needed.
+                </li>
+                <li>
+                  <b>Source appropriateness</b> <em>(narrow LLM)</em>. Right
+                  system for the claim? Health score cited from Catalyst →
+                  fine. Health score cited from a NetSuite invoice → no.
+                </li>
+                <li>
+                  <b>Semantic drift</b> <em>(narrow LLM)</em>. Does the claim
+                  restate the fact, or amplify it? "Health dropped 13 points"
+                  → faithful. "Adoption is in freefall" for the same -13 →
+                  drift.
+                </li>
+                <li>
+                  <b>Inference legitimacy</b> <em>(narrow LLM)</em>. For
+                  uncited claims, is the brief hedging? "Reads like a budget
+                  reallocation" → fine. "It's a budget reallocation" with no
+                  citation → flag.
+                </li>
+              </BulletList>
+              <p>
+                Smaller question, smaller answer space, lower variance. Most
+                of the score becomes deterministic; the LLM only handles what
+                genuinely needs judgment.
+              </p>
+              <p>
+                Reps have been burned by AI tools that flip on them: dashboard
+                said 70% renewal likelihood, deal died, team didn't see the
+                decision-maker had left. A probability score with no reasoning
+                underneath doesn't earn trust back. The decomposition shows
+                the rep exactly which check fired: "brief said 17%, cited fact
+                says -13, here's the 31% gap." Same pattern I shipped at
+                Linera — ICP fit, contact data quality, signal source quality
+                scored independently and combined.
               </p>
               <p>
                 <b>Six MCP servers means six failure points.</b> A connector
