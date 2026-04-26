@@ -36,7 +36,7 @@ export function validateIntelligenceEvent(data: unknown): IntelligenceSection | 
   }
 
   // All checks passed
-  return obj as IntelligenceSection;
+  return obj as unknown as IntelligenceSection;
 }
 
 /**
@@ -100,7 +100,7 @@ export function validateCitation(data: unknown): CitationMeta | null {
     return null;
   }
 
-  return obj as CitationMeta;
+  return obj as unknown as CitationMeta;
 }
 
 /**
@@ -124,7 +124,7 @@ export function validateWarning(data: unknown): ValidationWarning | null {
     return null;
   }
 
-  return obj as ValidationWarning;
+  return obj as unknown as ValidationWarning;
 }
 
 /**
