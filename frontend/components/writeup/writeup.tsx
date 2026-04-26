@@ -167,8 +167,8 @@ export function Writeup() {
             <Section id="what-built" number="02" claim="What I built">
               <p>
                 <b>The brief.</b> Single-page app, one brief per account.
-                Four modes (Reading, Workspace, Split, Writeup) render the
-                same brief at different densities. Five sections per brief:
+                Three modes (Reading, Workspace, Split) render the same
+                brief at different densities. Five sections per brief:
                 the read (what the call is about), why this read (the
                 evidence), what to do, discovery questions, suggested talk
                 track.
