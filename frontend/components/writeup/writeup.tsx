@@ -28,6 +28,7 @@ export function Writeup() {
   // Track active ToC item on scroll
   useEffect(() => {
     if (!scrollEl) return;
+    let timeout: ReturnType<typeof setTimeout>;
     const update = () => {
       const sections = Array.from(scrollEl.querySelectorAll<HTMLElement>("[data-section]"));
       let active = "top";
@@ -37,9 +38,16 @@ export function Writeup() {
       }
       setActiveSection(active);
     };
-    scrollEl.addEventListener("scroll", update, { passive: true });
+    const onScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(update, 50);
+    };
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
     update();
-    return () => scrollEl.removeEventListener("scroll", update);
+    return () => {
+      scrollEl.removeEventListener("scroll", onScroll);
+      clearTimeout(timeout);
+    };
   }, [scrollEl]);
 
   // Fade-in for pull quotes on scroll into view
@@ -717,53 +725,25 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <SlidePoint
-                headline="Severity classification is the wrong layer."
+                headline="Severity classification is the wrong layer at scale."
                 cite={4}
                 note={
-                  <>
-                    <p>
-                      Same brief, four runs, different warning counts — Haiku
-                      temperature noise on a judgment call. Asking the LLM for
-                      0–1 instead of binary is the same problem with decimals.
-                    </p>
-                    <p>
-                      The fix is decomposing each warning into mechanical checks
-                      plus narrow LLM judgments:
-                    </p>
-                    <ul className="mt-1 space-y-1 text-[12.5px]">
-                      <li>
-                        <b>Citation match</b> <em>(mechanical)</em> — numbers
-                        in the claim vs. numbers in the cited fact. Brief says
-                        17%, fact_id 41 says −13: 31% gap, flag. No LLM needed.
-                      </li>
-                      <li>
-                        <b>Source appropriateness</b> <em>(narrow LLM)</em> —
-                        health score cited from Catalyst → fine; from a NetSuite
-                        invoice → no.
-                      </li>
-                      <li>
-                        <b>Semantic drift</b> <em>(narrow LLM)</em> — "health
-                        dropped 13 points" is faithful; "adoption is in
-                        freefall" for the same −13 is drift.
-                      </li>
-                      <li>
-                        <b>Inference legitimacy</b> <em>(narrow LLM)</em> —
-                        uncited claim hedged with "reads like" → fine;
-                        unhedged definitive assertion → flag.
-                      </li>
-                    </ul>
-                    <p className="mt-1">
-                      Same pattern I shipped at Linera: ICP fit, contact data
-                      quality, and signal source quality scored independently
-                      and combined. Smaller question, smaller answer space,
-                      lower variance.
-                    </p>
-                  </>
+                  <p>
+                    Section 04 shows V1's solution: decompose into four weighted
+                    factors so most of the score becomes deterministic. At
+                     scale, the LLM sub-scores need rubric tuning per
+                    call type, and the score thresholds need to be configurable
+                    per customer. Reps in regulated industries care about source
+                    appropriateness more than tone drift; reps in consumer brands
+                    flip those weights. V2 turns the weights into config, not
+                    constants.
+                  </p>
                 }
               >
-                Run the same brief twice: one flags three warnings critical, the
-                other flags two. citation_match needs no LLM at all. Three narrow
-                sub-scores replace one fuzzy judgment — and the counts stabilize.
+                The decomposed scoring from decision 4 works for V1. At scale,
+                different customer segments weight the factors differently. No
+                one-size-fits-all confidence score across 's customer
+                base.
               </SlidePoint>
 
               <SlidePoint
