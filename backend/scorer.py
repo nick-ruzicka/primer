@@ -28,6 +28,8 @@ WEIGHTS = {
 
 # Severity thresholds
 _CRITICAL_THRESHOLD = 0.70
+# V1: NOTE tier (< _WATCH_THRESHOLD) not yet rendered — derives to "watch".
+# Keep for V2 promotion path.
 _WATCH_THRESHOLD = 0.40
 
 
@@ -69,6 +71,12 @@ def _fact_numbers(fact: Any) -> list[float]:
         getattr(fact, "text", None),
     ]))
     return _extract_numbers(combined)
+
+
+def _safe_fact_value(fact: Any, max_chars: int = 200) -> str:
+    """Sanitize a fact value for inclusion in an LLM prompt."""
+    val = getattr(fact, "value_display", None) or getattr(fact, "text", "?") or "?"
+    return str(val).replace("\n", " ").replace("\r", " ")[:max_chars]
 
 
 def compute_citation_match(claim_text: str, cited_facts: list[Any]) -> float:
@@ -163,7 +171,7 @@ async def compute_source_appropriateness(
             f'CLAIM: "{claim_text}"\n'
             f"CITED FACT: source={getattr(fact, 'source_system', '?')}, "
             f"field={getattr(fact, 'field', '?')}, "
-            f"value={getattr(fact, 'value_display', getattr(fact, 'text', '?'))}\n\n"
+            f"value={_safe_fact_value(fact)}\n\n"
             "On a scale of 0.0 to 1.0, score how INAPPROPRIATE this source is for "
             "this claim. Higher = more inappropriate.\n"
             "- 0.0: Source is the canonical, expected source for this kind of claim\n"
@@ -194,7 +202,7 @@ async def compute_semantic_drift(
         return 0.5, "no cited facts"
 
     fact_displays = "\n".join(
-        f"- {getattr(f, 'value_display', getattr(f, 'text', '?'))}"
+        f"- {_safe_fact_value(f)}"
         for f in cited_facts
     )
     prompt = (
@@ -262,6 +270,9 @@ async def compute_warning_confidence(
 
     has_citations = bool(cited_fact_ids)
 
+    # Strip citation markers before sending to LLM sub-scores
+    claim_text_clean = _CITATION_RE.sub("", brief_excerpt).strip()
+
     # Sub-score 1: mechanical
     try:
         citation_match = compute_citation_match(brief_excerpt, cited_facts)
@@ -272,7 +283,7 @@ async def compute_warning_confidence(
     # Sub-scores 2–4: narrow LLM judgments
     try:
         source_appropriateness, sa_reason = await compute_source_appropriateness(
-            brief_excerpt, cited_facts, client, model
+            claim_text_clean, cited_facts, client, model
         )
     except Exception:
         log.exception("scorer.source_appropriateness_failed")
@@ -280,7 +291,7 @@ async def compute_warning_confidence(
 
     try:
         semantic_drift, sd_reason = await compute_semantic_drift(
-            brief_excerpt, cited_facts, client, model
+            claim_text_clean, cited_facts, client, model
         )
     except Exception:
         log.exception("scorer.semantic_drift_failed")
@@ -288,7 +299,7 @@ async def compute_warning_confidence(
 
     try:
         inference_legitimacy, il_reason = await compute_inference_legitimacy(
-            brief_excerpt, has_citations, client, model
+            claim_text_clean, has_citations, client, model
         )
     except Exception:
         log.exception("scorer.inference_legitimacy_failed")
@@ -324,6 +335,7 @@ async def compute_warning_confidence(
     return {
         **warning,
         "severity": derived_severity,
+        "original_severity": warning.get("severity", "watch"),
         "warning_confidence": warning_confidence,
         "scores": {
             "citation_match": citation_match,

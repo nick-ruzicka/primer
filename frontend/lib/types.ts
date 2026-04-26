@@ -174,6 +174,7 @@ export interface ValidationWarning {
   sources?: SourceId[];
   // Decomposed confidence scoring (V1: threaded through but not yet rendered)
   warning_confidence?: number;
+  original_severity?: string;
   scores?: {
     citation_match: number;
     source_appropriateness: number;
