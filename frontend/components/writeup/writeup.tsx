@@ -150,147 +150,54 @@ export function Writeup() {
             </Section>
 
             <Section id="what-built" number="02" claim="What I built">
-              <p>Two terms before anything else:</p>
+              <p>Two terms before anything else.</p>
               <BulletList>
                 <li>
-                  <b>Artifact:</b> whatever Primer produces for a rep. Today: the
-                  pre-call brief. Tomorrow: post-call summaries, drafted outreach,
-                  renewal risk alerts.
+                  <b>Artifact</b>: whatever Primer produces. Today: the
+                  pre-call brief. Tomorrow: post-call summaries, drafted
+                  outreach, renewal risk alerts.
                 </li>
                 <li>
-                  <b>Skill file:</b> a markdown policy document the LLM has to
-                  live inside. Rules, structure, voice, forbidden behaviors —
-                  not a prompt, a contract.
+                  <b>Skill file</b>: a markdown policy document the LLM has
+                  to live inside. Rules, structure, voice, forbidden
+                  behaviors — not a prompt, a contract.
                 </li>
               </BulletList>
 
-              <Subhead>The artifact: a pre-call brief in four modes</Subhead>
+              <Subhead>The artifact: a pre-call brief</Subhead>
               <p>
-                Single-page app, one brief per account. Four modes — Reading,
-                Workspace, Split, Writeup — render the same brief at
-                different information densities for different moments
-                (reviewing, working a call live, comparing brief to
-                evidence).
-              </p>
-              <p>The brief has five sections:</p>
-              <BulletList>
-                <li>
-                  <b>The read.</b> What's the call about, in two sentences.
-                </li>
-                <li>
-                  <b>Why this read.</b> The evidence behind it.
-                </li>
-                <li>
-                  <b>What to do on the call.</b> Three specific actions.
-                </li>
-                <li>
-                  <b>Discovery questions.</b> 3–5 questions tied to the read.
-                  Sales runs on questions.
-                </li>
-                <li>
-                  <b>Suggested talk track.</b> Language to actually use.
-                </li>
-              </BulletList>
-
-              <Subhead>The skill system — where the playbook lives</Subhead>
-              <p>
-                Skills are a three-tier hierarchy of markdown files. The LLM
-                reads them as instructions. The whole stack — including the
-                validator's own skill — is ~290 lines of rules.
-              </p>
-              <p>
-                <b>Master skill</b> (constitutional, applies to every artifact):
-              </p>
-              <RuleQuote>
-                <p>
-                  If you can't cite it, you can't claim it. If the data is
-                  missing, name the absence rather than inferring.
-                </p>
-              </RuleQuote>
-              <p>
-                <b>Artifact skill</b> (specializes per artifact type):
-              </p>
-              <RuleQuote>
-                <p>
-                  Take a position. Argue, don't summarize. The brief exists
-                  because a dashboard isn't opinionated enough.
-                </p>
-              </RuleQuote>
-              <p>
-                <b>Validation skill</b> (the validator has its own skill — it
-                judges by rules, not vibes):
-              </p>
-              <RuleQuote>
-                <p>
-                  Be strict but not pedantic. Prefer silence over false
-                  positives.
-                </p>
-              </RuleQuote>
-              <p>
-                The skill files are the moat. Adding a new artifact type is
-                writing a new skill file, not retraining a model. Variant
-                skills under each artifact (renewal-call brief, expansion
-                brief, trust-repair brief) inherit the master rules and
-                specialize voice and content for the call type.
-              </p>
-
-              <Subhead>The agents — who does the work</Subhead>
-              <p>
-                Three specialized agents, each pinned to its own skill file.
-                Different models, different prompts, different jobs.
+                Single-page app, one brief per account. Four modes (Reading,
+                Workspace, Split, Writeup) render the same brief at
+                different densities. The brief has five sections:
               </p>
               <BulletList>
-                <li>
-                  <b>The Writer</b> (Sonnet 4.6) — drafts the brief in one
-                  LLM call. Guided by the master skill plus the pre-call
-                  brief artifact skill. Reads the fact index; writes prose
-                  with inline <Mono>·N</Mono> citations.
-                </li>
-                <li>
-                  <b>The Validator</b> (Haiku) — flags potential violations
-                  in one LLM call. Guided by the validation skill. Emits
-                  structured JSON — type, severity, excerpt, sources — for
-                  each warning.
-                </li>
-                <li>
-                  <b>The Scorer</b> (Haiku, committee) — for every warning
-                  the Validator emits, runs <b>four narrow checks</b>: one
-                  mechanical (does the number in the claim actually appear
-                  in the cited fact?) plus three single-purpose Haiku
-                  judges — <em>source appropriateness</em>,{" "}
-                  <em>semantic drift</em>, <em>inference legitimacy</em>.
-                  Each judge gets a tight prompt and 80 tokens. Final
-                  confidence is a 60/15/15/10 weighted average.
-                </li>
+                <li>The read. What's the call about, in two sentences.</li>
+                <li>Why this read. The evidence behind it.</li>
+                <li>What to do on the call. Three specific actions.</li>
+                <li>Discovery questions. Five questions tied to the read.</li>
+                <li>Suggested talk track. Language to actually use.</li>
               </BulletList>
+
+              <Subhead>The skill system</Subhead>
               <p>
-                Per brief: 1 Sonnet call (Writer) + 1 Haiku call (Validator)
-                + 3 narrow Haiku calls per warning (Scorer's judges). The
-                committee shape keeps cost bounded — each judge is tiny and
-                independent — and gives the system a confidence score, not a
-                binary verdict.
+                Skills are a three-tier hierarchy of markdown files: a
+                constitutional master skill (<em>"if you can't cite it, you
+                can't claim it"</em>), an artifact skill per artifact type
+                (<em>"take a position, argue, don't summarize"</em>), and
+                variant skills underneath (renewal-call, expansion,
+                trust-repair). The LLM reads them as instructions. Adding a
+                new artifact is writing a new skill file, not retraining a
+                model. The skills are the moat.
               </p>
 
-              <Subhead>What else shipped behind the brief</Subhead>
-              <BulletList>
-                <li>
-                  <b>Six MCP source handlers</b> in a typed registry —
-                  Salesforce, Snowflake, Catalyst, NetSuite, Gong, Exa. Each
-                  extracts specific facts into the index with a stable{" "}
-                  <Mono>fact_id</Mono>.
-                </li>
-                <li>
-                  <b>Reliability layer</b> — circuit breakers, retry, trace
-                  IDs, structured logging on every MCP call. A connector
-                  failing silently is the worst case; this catches it.
-                </li>
-                <li>
-                  <b>Account Intelligence rail</b> — every fact in the index,
-                  grouped by topic (Commercial, Conversations, Relationship,
-                  Product usage, External signals, Portfolio). Click any{" "}
-                  <Mono>·N</Mono> chip in the brief to jump to its receipt.
-                </li>
-              </BulletList>
+              <Subhead>The agents</Subhead>
+              <p>
+                Three specialized agents, each pinned to its own skill: the
+                Writer (Sonnet 4.6) drafts the brief, the Validator (Haiku)
+                flags violations, the Scorer (committee of narrow Haiku
+                judges) turns each warning into a confidence score.
+                Architecture detail in section 04.
+              </p>
 
               <p>
                 Calendar-aware brief generation and Slack distribution are
@@ -315,33 +222,24 @@ export function Writeup() {
                 </li>
               </BulletList>
               <p>
-                <b>Option B: Vector database / semantic search.</b>
+                <b>Option B: Vector database / semantic search.</b> Embed
+                every fact and conversation into a database that lets you
+                search by meaning instead of keyword.
               </p>
               <p>
-                Embed every fact and conversation into a database that lets
-                you search by meaning instead of keyword. "Find notes about
-                pricing pushback" works even when no note literally says
-                those words.
+                <em>Pros:</em> handles the long tail. Once you have years of
+                Gong calls and multi-quarter Catalyst notes, semantic search
+                is the only way to find what matters.
               </p>
-              <BulletList>
-                <li>
-                  <em>Pros:</em> handles the long tail. Once you have years
-                  of Gong calls, multi-quarter Catalyst notes, and
-                  cross-account history, semantic search is the only way to
-                  find what matters.
-                </li>
-                <li>
-                  <em>Cons:</em> retrieval is fuzzy. The brief might miss a
-                  specific fact (champion name, exact ARR) because the
-                  embedding pulled adjacent content instead. For a pre-call
-                  brief where every claim has to be cited, that's the wrong
-                  tradeoff today.
-                </li>
-              </BulletList>
               <p>
-                Right answer for V3, not V1. Once Primer has months of Gong
-                transcripts and customer-specific signal, vector search
-                becomes the scaling answer. V1 doesn't have that volume yet.
+                <em>Cons:</em> retrieval is fuzzy. The brief might miss a
+                specific fact (champion name, exact ARR) because the
+                embedding pulled adjacent content. For a brief where every
+                claim has to be cited, that's the wrong tradeoff today.
+              </p>
+              <p>
+                Right answer for V3, not V1. V1 doesn't have the corpus
+                volume yet.
               </p>
               <p>
                 <b>
@@ -349,20 +247,14 @@ export function Writeup() {
                 </b>{" "}
                 ← chosen
               </p>
-              <BulletList>
-                <li>
-                  Pre-fetch every value through MCP servers. Bundle into a fact
-                  index with unique IDs. Citations point at specific{" "}
-                  <Mono>fact_id</Mono>s.
-                </li>
-                <li>
-                  <em>Pros:</em> every fact is structurally addressable. Citations
-                  can't hallucinate. No shadow database.
-                </li>
-              </BulletList>
               <p>
-                C trades flexibility for predictability. Exactly the trade you want
-                when the product's job is making confident, defensible claims.
+                Pre-fetch every value through MCP servers into a fact index
+                with unique IDs. Citations point at specific{" "}
+                <Mono>fact_id</Mono>s. Every fact is structurally
+                addressable, citations can't hallucinate, no shadow database
+                to maintain. C trades flexibility for predictability —
+                exactly the trade you want when the product's job is making
+                confident, defensible claims.
               </p>
             </Section>
 
@@ -370,89 +262,37 @@ export function Writeup() {
               <ArchitectureDiagram />
 
               <Subhead>1. Read-only, not write-back</Subhead>
-              <BulletList>
-                <li>Six MCP servers read. Primer never writes back.</li>
-                <li>Drafted actions for the rep to approve and send themselves.</li>
-                <li>
-                  When RevTech's unified data layer ships, MCP servers repoint.
-                </li>
-              </BulletList>
+              <p>
+                Six MCP servers read. Primer never writes back. Drafted
+                actions go to whichever system already owns the workflow.
+                When RevTech's unified data layer ships, MCP servers repoint.
+              </p>
 
               <Subhead>2. Pre-fetch, not agentic loop</Subhead>
-              <BulletList>
-                <li>
-                  An <em>agentic loop</em> is when the model decides what to do
-                  next on each step (call this tool, then that one, then
-                  synthesize). Pre-fetch is the opposite: pull everything first,
-                  reason once.
-                </li>
-                <li>
-                  Pre-fetch wins for one artifact with a known shape. Latency
-                  bounded, cost fixed per brief.
-                </li>
-                <li>
-                  Agentic loops are right when artifacts multiply and the model has
-                  to decide which tools to call.
-                </li>
-              </BulletList>
+              <p>
+                An agentic loop is when the model decides what to do next on
+                each step. Pre-fetch is the opposite: pull everything first,
+                reason once. Pre-fetch wins for one artifact with a known
+                shape — bounded latency, fixed cost. Agentic loops are right
+                when artifacts multiply and the model has to decide which
+                tools to call.
+              </p>
 
-              <Subhead>3. Skills are the playbook layer</Subhead>
+              <Subhead>3. Skills carry the playbook</Subhead>
               <p>
-                The decision was: where do business rules live? Three options.
-                In the model's weights (retrain or fine-tune per company —
-                expensive, slow, opaque). In the prompt (rebuilt per call —
-                fragile, no separation of concerns). Or in <b>versioned
-                policy files</b> the LLM has to live inside.
-              </p>
-              <p>
-                Primer takes the third. Skills are markdown files: a
-                constitutional master skill, an artifact-type skill per
-                output shape, and variant skills under each type for
-                situational specialization. Section 02 has sample rules from
-                each level.
-              </p>
-              <p>
-                Variants are where the playbook actually lives. The
-                renewal-call variant adds <em>"open with renewal posture
-                in the first sentence"</em> and{" "}
-                <em>"flag any unresolved billing items in 'what to do.'"</em>{" "}
-                The discovery-call variant says{" "}
-                <em>"open with what we know about the prospect's stated
-                pain"</em> and{" "}
-                <em>"the talk track section should focus on credibility,
-                not features."</em>
-              </p>
-              <p>
-                Same shape. Different content. The LLM is the rendering
-                engine; skills are how it learns the business. Adding a new
-                customer or call type is editing markdown, not retraining.
+                Covered in section 02. The decision to put business rules in
+                markdown skill files (instead of model weights or hard-coded
+                heuristics) is what makes the system replicable per
+                customer.
               </p>
 
               <Subhead>4. The validator agent</Subhead>
               <p>
-                The validator's job is being truthful. Three layered defenses:
-              </p>
-              <p>
-                <b>Structured output via fact_ids.</b> Every value gets a unique ID
-                before the LLM runs:
-              </p>
-              <CodeBlock>
-{`fact_id: 16
-source_system: catalyst
-field: relationship_score
-value: 61
-data_as_of: 2026-04-23`}
-              </CodeBlock>
-              <p>
-                The LLM writes claims that reference the fact:{" "}
-                <em>"Health dropped from 74 to 61 ·16."</em> The agent can only
-                cite things in the index.
+                Three layered defenses: structured <Mono>fact_id</Mono>s the
+                LLM cites, a second model that cross-checks every citation,
+                and refusal rules when nothing grounds.
               </p>
               <PullQuote>Hallucinated citations become structurally impossible.</PullQuote>
-              <p>
-                <b>Validator agent.</b> A second model (Claude Haiku) reads the
-                brief against source data. It's picky on purpose.
-              </p>
               <p>Real catch from testing:</p>
               <ExampleQuote>
                 <p>
@@ -475,27 +315,26 @@ data_as_of: 2026-04-23`}
                   Neither says "adoption dropped 17%." Pick which one you
                   mean.
                 </p>
+                <p>
+                  The brief invented a percentage. The validator caught the
+                  math.
+                </p>
               </ExampleQuote>
-              <p>The brief invented a percentage. The validator caught the math.</p>
-              <p>
-                Each warning gets a confidence score, not a binary
-                reject — the Scorer (section 02) runs four narrow checks
-                per warning and weights them. The "adoption dropped 17%"
-                catch above scored <Mono>0.71</Mono>: citation match
-                fired hard because the numbers don't reconcile to either
-                cited fact. Severity (critical / watch) buckets from the
-                score, so the rep sees a graded warning, not a binary alarm.
-              </p>
-              <p>
-                <b>Refusal rules.</b> When the brief can't ground a claim, it
-                refuses. "No data on this" beats "made-up specifics" on trust.
-              </p>
               <VisualMarker src="/images/writeup/validator-warnings.png">
                 Four real catches the validator surfaced on this brief. The
                 CRITICAL catch (top) flags an invented metric — see decision
                 4 above. Confidence scores (0.71, 0.63, 0.22) come from the
                 decomposed scorer.
               </VisualMarker>
+              <p>
+                <b>Decomposed confidence scoring.</b> Each warning gets a
+                score across four factors: citation match (60%, mechanical),
+                source appropriateness (15%), semantic drift (15%), and
+                inference legitimacy (10%). The "adoption dropped 17%" catch
+                scored <Mono>0.71</Mono>. Most of the score is mechanical;
+                the LLM only handles parts that need judgment. The rep sees
+                a graded warning, not a binary alarm.
+              </p>
               <figure className="my-8">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm">
@@ -513,14 +352,6 @@ data_as_of: 2026-04-23`}
                     />
                   </div>
                 </div>
-                <figcaption className="mx-auto mt-3 max-w-[640px] text-center text-[12px] italic text-ink-3">
-                  Left: <b>The read</b> — confident claims, <Mono>·N</Mono>
-                  citation chips on every assertion. Right: <b>Why this read</b>{" "}
-                  inference — fewer citations, interpretive language ("she's
-                  publicly talking about... that's architect language, not
-                  maintenance") because no single fact supports the full
-                  statement.
-                </figcaption>
               </figure>
             </Section>
 
@@ -758,22 +589,20 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <SlidePoint
-                headline="Model spend is lunch money."
+                headline="Model spend isn't where this gets expensive."
                 cite={3}
                 note={
                   <p>
                     A single AE's salary is 20-30x the annual model spend.
                     The model isn't the cost. What scales: source-system API
-                    costs (Gong and Catalyst charge per call), running the
-                    six MCP servers reliably across regions, and the
-                    engineering time to keep the validator getting smarter
-                    as the corpus grows.
+                    costs (Gong and Catalyst charge per call) and the
+                    engineering time to keep the validator getting smarter.
                   </p>
                 }
               >
-                ~$0.06 per brief end-to-end. At  scale — 120 AEs ×
-                4 briefs/day × 250 days = 120K briefs/year — that's about
-                $7K/year in Anthropic costs.
+                ~$0.06 per brief end-to-end. At  scale (120 AEs ×
+                4 briefs/day × 250 days = 120K briefs/year), that's
+                ~$7K/year in Anthropic costs.
               </SlidePoint>
 
               <SlidePoint
