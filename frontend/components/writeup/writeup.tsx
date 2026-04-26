@@ -783,12 +783,6 @@ data_as_of: 2026-04-23`}
                   reflect this domain's data quality, not a generic prior.
                 </li>
                 <li>
-                  Wire external monitoring on key accounts: LinkedIn employment
-                  status, Exa-live for press mentions, Gong transcripts scanned
-                  for departure language. Defines which signals fire for which
-                  motions and at what cadence.
-                </li>
-                <li>
                   Validate skills against a held-out set of calls before rollout.
                 </li>
               </BulletList>
@@ -797,6 +791,13 @@ data_as_of: 2026-04-23`}
               <BulletList>
                 <li>
                   Add last-5 notes/activities/Gong from each source to pre-fetch.
+                </li>
+                <li>
+                  Score external signals into the brief: LinkedIn (champion
+                  moves), Exa-live (competitive intelligence — press, funding
+                  rounds, competitor exec changes), Gong scans (departure
+                  language). Per-motion weighting — stability matters for
+                  renewal, momentum matters for expansion.
                 </li>
                 <li>Deploy V1.5 to the broader AE team beyond the initial 3-5.</li>
                 <li>
