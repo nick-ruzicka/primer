@@ -373,7 +373,7 @@ async def _briefing_event_stream(
     # 5. Validation pass.
     if brief_markdown:
         try:
-            warnings = await validate_brief(account_id, brief_markdown, context_blob)
+            warnings = await validate_brief(account_id, brief_markdown, context_blob, fact_book)
         except Exception as exc:  # noqa: BLE001
             log.exception("briefing.validation_failed", extra=log_context)
             warnings = [
