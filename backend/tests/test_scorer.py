@@ -94,6 +94,15 @@ def test_citation_match_qualitative_with_citations():
     assert score == pytest.approx(0.30)  # no numbers, defer to LLM
 
 
+def test_citation_match_incomparable_magnitude_defers_to_llm():
+    # 18% decline claim cites raw send count 3,100,000.
+    # max(18, 3100000) / max(min(18, 3100000), 1) ≈ 172222 >> 1000 → skip pair
+    # No comparable pairs → defer to LLM → 0.30
+    fact = _MockFact("3100000", "sends: 3100000")
+    score = compute_citation_match("18% decline in message volume·1", [fact])
+    assert score == pytest.approx(0.30)
+
+
 # --- LLM sub-score tests ---
 
 from unittest.mock import AsyncMock, MagicMock
@@ -185,7 +194,7 @@ async def test_compute_warning_confidence_deterministic_high():
     fact_40.field = "sends_trend_pct"
 
     # Mock client returns 0.8 for all LLM calls (problematic claim → high LLM scores).
-    # Math check: 0.40*0.95 + 0.20*0.8 + 0.25*0.8 + 0.15*0.0 = 0.38+0.16+0.20+0.0 = 0.74 ≥ 0.70
+    # Math check: 0.60*0.95 + 0.15*0.8 + 0.15*0.8 + 0.10*0.0 = 0.57+0.12+0.12+0.0 = 0.81 ≥ 0.70
     client = _mock_client("0.8 Source is inappropriate for this claim.")
 
     warning = {
@@ -233,7 +242,7 @@ async def test_compute_warning_confidence_low_confidence():
 
     # citation_match = 0.30 (hedged, no citations)
     # All LLM scores = 0.1
-    # confidence = 0.40*0.30 + 0.20*0.1 + 0.25*0.1 + 0.15*0.1 = 0.12 + 0.06 + 0.025 + 0.015 = 0.22
+    # confidence = 0.60*0.30 + 0.15*0.1 + 0.15*0.1 + 0.10*0.1 = 0.18 + 0.015 + 0.015 + 0.01 = 0.22
     assert result["warning_confidence"] < 0.40
     assert result["severity"] == "watch"
 

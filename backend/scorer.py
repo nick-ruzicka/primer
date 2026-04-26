@@ -20,10 +20,10 @@ _HEDGE_RE = re.compile(
 )
 
 WEIGHTS = {
-    "citation_match": 0.40,
-    "source_appropriateness": 0.20,
-    "semantic_drift": 0.25,
-    "inference_legitimacy": 0.15,
+    "citation_match": 0.60,
+    "source_appropriateness": 0.15,
+    "semantic_drift": 0.15,
+    "inference_legitimacy": 0.10,
 }
 
 # Severity thresholds
@@ -107,7 +107,10 @@ def compute_citation_match(claim_text: str, cited_facts: list[Any]) -> float:
     # For each (claim_number, cited_fact) pair, find the closest number WITHIN
     # that fact. Track the MAXIMUM mismatch across all pairs — if any cited
     # fact is badly mismatched, that's the score.
+    # Pairs where magnitudes differ by >1000x are skipped (e.g., 18% vs 3.1M
+    # raw sends — comparing them would produce false positives).
     any_fact_has_numbers = False
+    any_comparable_pair = False
     max_rel_diff = 0.0
     for fact in cited_facts:
         fact_nums = _fact_numbers(fact)
@@ -115,14 +118,22 @@ def compute_citation_match(claim_text: str, cited_facts: list[Any]) -> float:
             continue
         any_fact_has_numbers = True
         for cn in claim_numbers:
-            fact_best = min(
-                abs(cn - fn) / max(abs(fn), 1.0)
-                for fn in fact_nums
-            )
-            max_rel_diff = max(max_rel_diff, fact_best)
+            comparable_diffs = []
+            for fn in fact_nums:
+                magnitude_ratio = max(abs(cn), abs(fn)) / max(min(abs(cn), abs(fn)), 1.0)
+                if magnitude_ratio > 1000:
+                    continue
+                comparable_diffs.append(abs(cn - fn) / max(abs(fn), 1.0))
+            if comparable_diffs:
+                any_comparable_pair = True
+                max_rel_diff = max(max_rel_diff, min(comparable_diffs))
 
     if not any_fact_has_numbers:
         # Citations exist but no extractable numbers from any fact
+        return 0.30
+
+    if not any_comparable_pair:
+        # Facts have numbers but none are comparable in magnitude — defer to LLM
         return 0.30
 
     if max_rel_diff > 0.20:
