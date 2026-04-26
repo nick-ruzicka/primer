@@ -405,6 +405,22 @@ data_as_of: 2026-04-23`}
               </ExampleQuote>
               <p>The brief invented a percentage. The validator caught the math.</p>
               <p>
+                <b>Decomposed confidence scoring.</b> The validator doesn't
+                emit binary pass/fail. Each warning gets a score from{" "}
+                <Mono>0</Mono> to <Mono>1</Mono>, weighted across four
+                factors: <b>citation match</b> (60%) — do the numbers in
+                the claim appear in the cited fact; <b>source
+                appropriateness</b> (15%) — is the right system cited for
+                this kind of claim; <b>semantic drift</b> (15%) — has the
+                claim shifted meaning from what the fact actually says; and{" "}
+                <b>inference legitimacy</b> (10%) — when the claim is an
+                inference, is the leap defensible. The "adoption dropped
+                17%" catch above scored <Mono>0.71</Mono>: citation match
+                fired hard because the numbers don't reconcile to either
+                cited fact. Severity (critical / watch) buckets from the
+                score, so the rep sees a graded warning, not a binary alarm.
+              </p>
+              <p>
                 <b>Refusal rules.</b> When the brief can't ground a claim, it
                 refuses. "No data on this" beats "made-up specifics" on trust.
               </p>
@@ -576,8 +592,8 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <PullQuote>
-                Skills define the structure. History tells you which variant fits
-                which situation.
+                Historical data grounds the initial skills. The feedback loop
+                keeps them reactive as situations evolve.
               </PullQuote>
 
               <p>
@@ -1552,9 +1568,9 @@ function ArchitectureDiagram() {
               style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
             >
               <tspan style={{ fill: "var(--color-accent-2)" }}>·16</tspan>
-              <tspan> ✓ </tspan>
-              <tspan dx={6} style={{ fill: "var(--color-accent-2)" }}>·17</tspan>
-              <tspan> ✓</tspan>
+              <tspan>  0.97</tspan>
+              <tspan dx={10} style={{ fill: "var(--color-accent-2)" }}>·17</tspan>
+              <tspan>  0.83</tspan>
             </text>
             <text
               x={VAL_X + 14}
@@ -1562,14 +1578,15 @@ function ArchitectureDiagram() {
               style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
             >
               <tspan style={{ fill: "var(--color-accent-2)" }}>·22</tspan>
-              <tspan> reject — ungrounded</tspan>
+              <tspan>  0.22</tspan>
+              <tspan dx={10} style={{ fill: "var(--color-ink-3)" }}>critical</tspan>
             </text>
             <text
               x={VAL_X + 14}
               y={VAL_Y + VAL_H - 14}
               style={{ ...labelMono, fill: "var(--color-ink-3)" }}
             >
-              cross-checks every citation
+              scores 0–1 across 4 factors
             </text>
           </g>
 
