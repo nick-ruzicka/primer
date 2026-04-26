@@ -190,6 +190,16 @@ body {
 .cite.src-internal .cite-dot {
   background: var(--color-source-internal);
 }
+/* Editorial-note variant used in the writeup (Chicago-style anchored notes).
+   Gold dot + accent-tinted border so the reader sees the receipts without
+   the chip competing with prose. Distinct register from source-data chips. */
+.cite.src-note {
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-line));
+  color: var(--color-ink-2);
+}
+.cite.src-note .cite-dot {
+  background: var(--color-accent);
+}
 
 /* ---------- Confidence hedge pill ---------- */
 .brief-hedge {

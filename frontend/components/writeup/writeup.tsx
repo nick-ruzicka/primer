@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AlignJustify, ChevronDown, FileText, Mail, Package, Rocket } from "lucide-react";
 import { WriteupToc } from "./writeup-toc";
 
@@ -14,7 +15,7 @@ const TOC_SECTIONS = [
   { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer" },
   { id: "tradeoffs", number: "06", title: "Tradeoffs" },
   { id: "scaling", number: "07", title: "What scaling this would surface" },
-  { id: "plan", number: "08", title: "The 90-day plan if I joined Attentive" },
+  { id: "plan", number: "08", title: "The 90-day plan to ship Primer" },
   { id: "how-built", number: "09", title: "How I built this" },
   { id: "closing", number: "", title: "Closing" },
 ];
@@ -419,104 +420,148 @@ data_as_of: 2026-04-23`}
             </Section>
 
             <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
-              <p>V1 reads structured facts. It doesn't read the narrative.</p>
-              <p>
-                <b>Where the narrative lives:</b>
+              <p className="italic text-ink-3">
+                V1 reads structured facts. It doesn't read the narrative.
               </p>
-              <BulletList>
-                <li>
-                  <b>Salesforce:</b> rep-typed notes, activities, Chatter, email
-                  logs. Gong AI summaries <em>if</em> the sync ran.
-                </li>
-                <li>
-                  <b>Gong:</b> full call transcripts. Salesforce only has the
-                  summary by default.
-                </li>
-                <li>
-                  <b>Catalyst:</b> CSM-authored notes, expansion planning,
-                  escalation history. Not in Salesforce.
-                </li>
-              </BulletList>
-              <p>
-                The Gong-to-Salesforce sync depends on rep action or admin filters;
-                in practice many calls don't make it through. Reading directly from
-                Gong avoids the dependency on whether someone pressed a button.
-              </p>
-              <p>
-                <b>The cheap fix: last 5 of each.</b>
-              </p>
-              <p>V1.5 ships in week 2:</p>
-              <BulletList>
-                <li>5 most recent notes/activities from Salesforce</li>
-                <li>5 most recent Catalyst notes</li>
-                <li>5 most recent Gong call summaries</li>
-              </BulletList>
-              <p>
-                ~1,500 added tokens per brief. No new infrastructure. Probably the
-                permanent answer for most accounts. Reps need the last call, the
-                recent escalation, the thread from two weeks ago. Note #6 from 14
-                months ago is rarely the unlock.
-              </p>
-              <p>
-                <b>The competitor: Agentforce Account Management.</b>
-              </p>
-              <p>
-                Salesforce ships a product whose job is exactly Primer's. The
-                catch: what Salesforce can synthesize is bounded by what Salesforce
-                can see.
-              </p>
-              <p>
-                The textbook answer is the modern data stack: Fivetran ingests
-                every source into Snowflake, dbt models the data, Hightouch (or
-                Fivetran Activations) syncs the synthesized output back into
-                Salesforce. Best practice, $1,000–$10,000+/month at scale,
-                requires a data team, ships value only after the dbt models are in
-                production. Salesforce's Data Cloud + Informatica is the
-                inside-the-walled-garden version.
-              </p>
-              <p>
-                <b>Primer's positioning:</b> read from each system through MCP
-                servers. Synthesize at the edge. Ship value this quarter. When the
-                customer eventually does build the warehouse stack, MCP servers
-                point at it.
-              </p>
-              <p>
-                Salesforce is moving here. They acquired Informatica in 2025
-                because data unification is what bottlenecks Agentforce. They're
-                trying to solve it. It will take years.
-              </p>
-              <p>
-                <b>The own-it path (V2B): cross-system embeddings.</b>
-              </p>
-              <p>
-                For history blended <em>across</em> systems Salesforce can't see
-                (Catalyst CSM narrative, full Gong transcripts, Primer's own
-                feedback signals), build cross-system embeddings + vector DB +
-                per-artifact retrieval. Six weeks to ship. Right at Attentive's
-                scale.
-              </p>
-              <p>
-                <b>The feedback loop, regardless of path.</b>
-              </p>
-              <p>Once Primer is in production, it accumulates its own signal:</p>
-              <BulletList>
-                <li>Did the rep edit the brief before the call?</li>
-                <li>Did the rep mark the brief as helpful?</li>
-                <li>Did the deal advance after the call?</li>
-                <li>
-                  Did any brief content get pasted into Salesforce notes or
-                  follow-ups?
-                </li>
-              </BulletList>
+
+              <SlidePoint
+                headline="The narrative lives outside Salesforce's reach."
+                cite={1}
+                note={
+                  <>
+                    <p>
+                      <b>Salesforce:</b> rep-typed notes, activities, Chatter,
+                      email logs. Gong AI summaries <em>if</em> the sync ran.
+                    </p>
+                    <p>
+                      <b>Gong:</b> full call transcripts. Salesforce only has
+                      the summary by default.
+                    </p>
+                    <p>
+                      <b>Catalyst:</b> CSM-authored notes, expansion planning,
+                      escalation history. Not in Salesforce.
+                    </p>
+                    <p>
+                      The Gong-to-Salesforce sync depends on rep action or
+                      admin filters; in practice many calls don't make it
+                      through. Reading directly from Gong avoids the dependency.
+                    </p>
+                  </>
+                }
+              >
+                Rep notes, call transcripts, and CSM history sit in systems
+                Salesforce can only partially synthesize.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="The cheap fix ships in week 2."
+                cite={2}
+                note={
+                  <>
+                    <p>
+                      <b>What V1.5 pre-fetches per brief:</b>
+                    </p>
+                    <p>
+                      • 5 most recent Salesforce notes/activities
+                      <br />
+                      • 5 most recent Catalyst notes
+                      <br />
+                      • 5 most recent Gong call summaries
+                    </p>
+                    <p>
+                      Reps need the last call, the recent escalation, the
+                      thread from two weeks ago. Note #6 from 14 months ago is
+                      rarely the unlock.
+                    </p>
+                  </>
+                }
+              >
+                Pull the last 5 notes, activities, and calls from each source
+                on every brief. ~1,500 added tokens, zero new infrastructure.
+                Probably the permanent answer for most accounts.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Salesforce will ship its own version."
+                cite={3}
+                note={
+                  <>
+                    <p>
+                      <b>The textbook answer is the modern data stack:</b>{" "}
+                      Fivetran ingests every source into Snowflake, dbt models
+                      the data, Hightouch syncs the synthesized output back.
+                      $1k–$10k+/month at scale, requires a data team, ships
+                      value only after the dbt models are in production.
+                      Salesforce's Data Cloud + Informatica is the
+                      inside-the-walled-garden version.
+                    </p>
+                    <p>
+                      Salesforce acquired Informatica in 2025 because data
+                      unification is what bottlenecks Agentforce. They're
+                      trying to solve it. It will take years.
+                    </p>
+                  </>
+                }
+              >
+                Agentforce Account Management is being built for exactly this
+                job — bounded by what Salesforce can see, dependent on data
+                unification work that's years out. Primer ships at the edge
+                today; when the warehouse arrives, MCP servers repoint.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Own the layer Salesforce can't see."
+                cite={4}
+                note={
+                  <p>
+                    <b>What gets embedded:</b> Catalyst CSM narrative, full
+                    Gong transcripts, Primer's own feedback signals. The
+                    retrieval layer surfaces relevant chunks per artifact —
+                    history blended <em>across</em> systems Salesforce can't
+                    consolidate from the inside.
+                  </p>
+                }
+              >
+                V2B builds cross-system embeddings + per-artifact retrieval.
+                Six weeks at Attentive's scale.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Primer learns from how it's used."
+                cite={5}
+                note={
+                  <>
+                    <p>
+                      <b>The feedback signals Primer accumulates:</b>
+                    </p>
+                    <p>
+                      • Did the rep edit the brief before the call?
+                      <br />
+                      • Did the rep mark the brief as helpful?
+                      <br />
+                      • Did the deal advance after the call?
+                      <br />
+                      • Did any brief content get pasted into Salesforce notes
+                      or follow-ups?
+                    </p>
+                  </>
+                }
+              >
+                Edit rates, helpful flags, paste-back signals,
+                deal-advance correlation. The brief sees its own signal
+                accumulate per account.
+              </SlidePoint>
+
               <PullQuote>
                 Skills are the playbook. History is the memory of every play
                 that's been run.
               </PullQuote>
+
               <p>
                 <b>The four-tier roadmap:</b>
               </p>
               <RoadmapGrid />
-              <p>
+              <p className="mt-2 text-[15px] italic text-ink-3">
                 V1.5 ships before V2A and V2B. V2A and V2B aren't sequential.
               </p>
             </Section>
@@ -566,69 +611,126 @@ data_as_of: 2026-04-23`}
             </Section>
 
             <Section id="scaling" number="07" claim="What scaling this would surface">
-              <p>
-                Five things the architecture handles in V1 but would have to
-                level up at Attentive scale.
+              <p className="italic text-ink-3">
+                Five things V1 handles that would have to level up at Attentive scale.
               </p>
-              <p>
-                <b>Adoption is the long pole, not technology.</b> The hardest
-                part of any rep-facing tool isn't building it — it's getting
-                reps to use it. Primer assumes the rep opens it before every
-                call. In reality, reps default to old habits. The brief has
-                to be demonstrably better than 5 minutes of grepping
-                Salesforce, every time, or it gets abandoned by week 3. The
-                instrumentation (helpful/not-helpful rates, edit rates)
-                catches abandonment after it happens. Preventing it is the
-                real V2 work.
+
+              <SlidePoint
+                headline="Adoption is the long pole, not technology."
+                cite={1}
+                note={
+                  <>
+                    <p>
+                      <b>Detection vs. prevention.</b> Instrumentation
+                      (helpful/not-helpful, edit rates) catches abandonment{" "}
+                      <em>after</em> it happens.
+                    </p>
+                    <p>
+                      Preventing it — onboarding, manager calibration,
+                      distribution inside Slack and Calendar where reps already
+                      are — is the real V2 work.
+                    </p>
+                  </>
+                }
+              >
+                The brief has to beat 5 minutes of grepping Salesforce, every
+                time, or it's abandoned by week 3.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Trust is a one-strike system."
+                cite={2}
+                note={
+                  <p>
+                    <b>High-stakes facts that need human-in-the-loop</b>{" "}
+                    verification before display: champion identity, contract
+                    values, recent leadership changes. Everything else stays
+                    automated.
+                  </p>
+                }
+              >
+                The first time the brief says "your champion is Priya Shah" and
+                Priya left three weeks ago, the rep stops using the tool.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Model spend isn't where this gets expensive."
+                cite={3}
+                note={
+                  <>
+                    <p>
+                      <b>Source APIs:</b> Gong transcript pulls and Catalyst
+                      event endpoints have per-call pricing.
+                    </p>
+                    <p>
+                      <b>MCP:</b> six stateful services × multi-region HA.
+                    </p>
+                    <p>
+                      <b>Validator:</b> confidence-scored two-pass consistency
+                      is months of work.
+                    </p>
+                  </>
+                }
+              >
+                Sonnet 4.6 runs ~$0.06/brief end-to-end. 120 AEs × 4 briefs ×
+                250 days = ~$7K/yr. What scales: source-system API egress, MCP
+                HA, validator engineering.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Validator severity is the wrong abstraction."
+                cite={4}
+                note={
+                  <>
+                    <p>
+                      Same brief, four runs, different warning counts — Haiku
+                      temperature noise on a judgment call. Determinism isn't
+                      the fix; scoring is.
+                    </p>
+                    <p>
+                      Production trust-and-safety stacks (Jigsaw, Hive, OpenAI
+                      moderation) all output continuous scores and let the
+                      surface decide the threshold.
+                    </p>
+                  </>
+                }
+              >
+                Binary critical/watch produces different counts on identical
+                reruns. Fix is a continuous 0–1 confidence score per warning —
+                how production content-moderation actually works.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Six MCP servers means six failure points."
+                cite={5}
+                note={
+                  <p>
+                    Silent-stale-data is the worst case — brief still generates,
+                    just with rotten inputs. Partial generation: detect
+                    degradation, flag affected sections in the UI, pass the
+                    missing-source list to the validator so it doesn't flag
+                    those claims as ungrounded.
+                  </p>
+                }
+              >
+                Partial generation has to be first-class: when a source fails,
+                the brief flags the degraded section and tells the validator
+                not to mark those claims as ungrounded.
+              </SlidePoint>
+
+              <p className="mt-2 text-[15px] italic text-ink-3">
+                Exa is V1-stubbed. Live wrapper is a half-day swap.
               </p>
-              <p>
-                <b>Trust is a one-strike system.</b> A brief that confidently
-                states a wrong fact during a customer call burns the rep
-                forever. The validator helps, but isn't perfect. The first
-                time the brief says "your champion is Priya Shah" and Priya
-                left three weeks ago, the rep stops using the tool. V2 needs
-                human-in-the-loop verification for high-stakes facts
-                (champion identity, contract values, recent leadership
-                changes) — not just automated validation.
-              </p>
-              <p>
-                <b>Model spend isn't where this gets expensive.</b> Sonnet 4.6
-                generation runs ~$0.06 per brief end-to-end including the
-                validator pass. At Attentive scale — 120 AEs × 4 briefs/day ×
-                250 days = 120K briefs/year — that's ~$7K in model spend.
-                Lunch money. What does scale: source-system API costs (Gong
-                transcript pulls and Catalyst event endpoints both have
-                per-call pricing that adds up), MCP infrastructure (six
-                stateful services × multi-region HA), and engineering time on
-                the validator (binary critical/watch is fine for V1;
-                confidence-scored validator with two-pass consistency is
-                months of work).
-              </p>
-              <p>
-                <b>Validator severity is the wrong abstraction.</b> Right now
-                the validator emits binary critical/watch flags. Same brief,
-                four runs, different counts — Haiku temperature noise on a
-                judgment call. The fix isn't more determinism; it's a
-                continuous confidence score (0–1) per warning, with the UI
-                layer deciding how to render it. That's how production
-                content-moderation systems actually work — you don't
-                classify, you score.
-              </p>
-              <p>
-                <b>Six MCP servers means six failure points.</b> A connector
-                returning stale data silently is the worst case — brief still
-                generates, but with bad inputs. Production needs partial
-                generation as a first-class behavior: when one source fails,
-                the brief notes which sections are degraded ("Renewal status
-                unavailable — Salesforce sync failed"), and the validator
-                gets told which sources are missing so it doesn't flag claims
-                as ungrounded.
-              </p>
-              <p>Exa is V1-stubbed. Live Exa wrapper is a half-day swap.</p>
             </Section>
 
-            <Section id="plan" number="08" claim="The 90-day plan if I joined Attentive">
-              <PhaseHeader label="DAYS 0-14" title="Validate before scaling" />
+            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive">
+              <p className="italic text-ink-3">
+                Parallel tracks for the first two weeks — validate the product,
+                seed the skills library. The back half prioritizes whichever
+                gap V1.5 telemetry surfaces.
+              </p>
+
+              <PhaseHeader label="DAYS 0-14" title="Product Validation" />
               <BulletList>
                 <li>
                   Wire production OAuth to Attentive's Salesforce, Gong, Catalyst
@@ -648,38 +750,85 @@ data_as_of: 2026-04-23`}
                 </li>
               </BulletList>
 
-              <PhaseHeader label="DAYS 15-30" title="Author seed skills from the Gong corpus" />
+              <PhaseHeader label="DAYS 0-14" title="Context and Memory" />
               <BulletList>
                 <li>
-                  Pull 12 months of calls. Find the motions: renewal, expansion,
-                  trust-repair, discovery, demo.
+                  <b>Map real data, configure MCP per source.</b> Production
+                  access lets every Salesforce custom field, Catalyst tag
+                  taxonomy, NetSuite billing schema, and Snowflake usage table
+                  get a typed path through the MCP layer. Attentive-specific
+                  internal tools get new MCP wrappers where needed — this is
+                  where the architecture earns its flexibility.
                 </li>
                 <li>
-                  Author five seed skills covering the dominant call types. RevOps
-                  reviews and signs off.
+                  Pull 12 months of Gong calls. Find the motions: renewal,
+                  expansion, trust-repair, discovery, demo.
+                </li>
+                <li>
+                  Catalog Attentive-specific semantics: product taxonomy (Flows,
+                  Journeys, Pro tiers), what "expansion-ready" means here,
+                  escalation conventions. Skills cite this as ground truth.
+                </li>
+                <li>
+                  Author seed skills per motion, with variants underneath for
+                  situation-specific overrides (renewal-with-billing-friction,
+                  expansion-after-trust-repair, etc.). RevOps reviews and signs
+                  off.
+                </li>
+                <li>
+                  Calibrate objectivity scoring and refusal thresholds against
+                  real examples. Feed the validator known good/bad Attentive
+                  briefs so the "opinion-vs-grounded-fact" threshold and the
+                  "we don't have enough evidence to surface this" cutoff both
+                  reflect this domain's data quality, not a generic prior.
+                </li>
+                <li>
+                  Wire external monitoring on key accounts: LinkedIn employment
+                  status, Exa-live for press mentions, Gong transcripts scanned
+                  for departure language. Defines which signals fire for which
+                  motions and at what cadence.
+                </li>
+                <li>
+                  Validate skills against a held-out set of calls before rollout.
                 </li>
               </BulletList>
 
-              <PhaseHeader label="DAYS 30-60" title="Ship V1.5 + roll out skills" />
+              <PhaseHeader label="DAYS 15-60" title="Ship V1.5 + roll out skills" />
               <BulletList>
                 <li>
                   Add last-5 notes/activities/Gong from each source to pre-fetch.
                 </li>
-                <li>Roll out the five seed skills to the team.</li>
+                <li>Deploy V1.5 to the broader AE team beyond the initial 3-5.</li>
                 <li>
-                  Instrument feedback signals: which skill got invoked, edit rate
-                  per skill, helpful/not-helpful rate, drafted-action-sent rate.
+                  Roll out the seed skills and variants. Instrument feedback
+                  signals: which skill got invoked, edit rate per skill,
+                  helpful/not-helpful rate, drafted-action-sent rate.
                 </li>
-                <li>Cut what doesn't work.</li>
+                <li>
+                  Cut what doesn't work. Author additional variants where the
+                  data says they're needed.
+                </li>
               </BulletList>
 
-              <PhaseHeader label="DAYS 60-90" title="Wire the feedback loop" />
-              <BulletList>
-                <li>Primer reads its own call transcripts back through Gong.</li>
-                <li>Compares what the brief said to how the call actually went.</li>
-                <li>Proposes skill updates where the brief was wrong.</li>
-                <li>The library starts compounding.</li>
-              </BulletList>
+              <PhaseHeader
+                label="DAYS 60-90"
+                title="Highest-leverage next move (priority TBD by V1.5 data)"
+              />
+              <p>
+                The default is to <b>wire the feedback loop:</b> Primer reads
+                its own call transcripts back through Gong, compares against
+                how the call actually went, proposes skill updates where the
+                brief was wrong. RevOps approves before any ships; the library
+                starts compounding.
+              </p>
+              <p>
+                Whether that's the right call depends on V1.5 telemetry.
+                Alternatives if the data points elsewhere: Slack/Calendar
+                distribution (if adoption is the gap), more skill variants (if
+                breadth is the gap), V2A Salesforce-side AI MCP wrappers (if
+                Attentive has them), or a manager coaching surface (if
+                managers ask for visibility into rep edit patterns).
+              </p>
 
               <p>
                 <b>Twelve months out:</b> new AE onboarding shifts from "shadow
@@ -938,50 +1087,75 @@ function PullQuote({ children }: { children: ReactNode }) {
 // ---------- RoadmapGrid ----------
 
 function RoadmapGrid() {
-  const tiers = [
+  type Status = "shipped" | "next" | "future";
+  const tiers: Array<{
+    version: string;
+    timing: string;
+    body: string;
+    status: Status;
+  }> = [
     {
       version: "V1",
       timing: "TODAY",
       body: "Structured facts only. Shipped.",
-      shipped: true,
+      status: "shipped",
     },
     {
       version: "V1.5",
       timing: "WEEK 2",
       body: "Last 5 notes/activities/calls from each source. No new infra.",
-      shipped: false,
+      status: "next",
     },
     {
       version: "V2A",
       timing: "MONTH 2",
-      body: "Wrap any Salesforce-side AI compression as MCP tools, if the customer has them.",
-      shipped: false,
+      body: "Wrap any Salesforce-side AI compression as MCP tools, if Attentive has them.",
+      status: "future",
     },
     {
       version: "V2B",
       timing: "MONTH 3-4",
       body: "Cross-system embedding layer when scale demands it.",
-      shipped: false,
+      status: "future",
     },
   ];
+
+  const cardChrome: Record<Status, string> = {
+    shipped: "border-good/40 bg-good/[0.04]",
+    next: "border-accent/45 bg-accent-soft/15",
+    future: "border-line bg-surface-2",
+  };
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {tiers.map((t) => (
-        <div key={t.version} className="rounded-lg border border-line bg-surface-2 p-4 sm:p-5">
-          <div className="font-serif text-[17px] font-semibold text-ink">{t.version}</div>
-          <div className="mb-3 mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-4">
-            {t.timing}
-          </div>
-          <p className="text-[13px] leading-[1.5] text-ink-2">{t.body}</p>
-          {t.shipped && (
-            <div className="mt-3 flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-good" />
-              <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-good">
+        <div
+          key={t.version}
+          className={`relative rounded-lg border p-5 transition-colors ${cardChrome[t.status]}`}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <div className="font-serif text-[26px] font-semibold leading-[1] text-ink">
+                {t.version}
+              </div>
+              <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
+                {t.timing}
+              </div>
+            </div>
+            {t.status === "shipped" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-good/40 bg-good/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-good">
+                <span className="h-1.5 w-1.5 rounded-full bg-good" />
                 shipped
               </span>
-            </div>
-          )}
+            )}
+            {t.status === "next" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent-soft/40 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.08em] text-accent-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                next
+              </span>
+            )}
+          </div>
+          <p className="mt-4 text-[13px] leading-[1.55] text-ink-2">{t.body}</p>
         </div>
       ))}
     </div>
@@ -1106,5 +1280,133 @@ function Mono({ children }: { children: ReactNode }) {
     <code className="rounded-sm bg-surface-sunk/80 px-1 py-0.5 font-mono text-[12.5px] text-ink-2">
       {children}
     </code>
+  );
+}
+
+// ---------- Cite (Chicago-style anchored note) ----------
+
+function Cite({ n, children }: { n: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ left: 0, top: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const tipRef = useRef<HTMLDivElement>(null);
+
+  const updatePos = useCallback(() => {
+    const btn = btnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const tipWidth = 380;
+    const margin = 12;
+
+    let left = rect.left + rect.width / 2;
+    const half = tipWidth / 2;
+    if (left - half < margin) left = margin + half;
+    if (left + half > window.innerWidth - margin) {
+      left = window.innerWidth - margin - half;
+    }
+
+    // Default below the chip; flip above when it would overflow the viewport
+    // and the chip has more headroom above than below. Tooltip height is
+    // measured after first paint, so this resolves on the position update
+    // that runs once the tip is in the DOM.
+    const gap = 8;
+    let top = rect.bottom + gap;
+    const tipHeight = tipRef.current?.offsetHeight ?? 0;
+    if (
+      tipHeight > 0 &&
+      top + tipHeight > window.innerHeight - margin &&
+      rect.top - gap > tipHeight
+    ) {
+      top = rect.top - tipHeight - gap;
+    }
+
+    setPos({ left, top });
+  }, []);
+
+  // Position must be measured + applied before paint so the flip-above logic
+  // doesn't show the tooltip at the wrong spot for one frame on open.
+  useLayoutEffect(() => {
+    if (!open) return;
+    updatePos();
+  }, [open, updatePos]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node)) return;
+      if (tipRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("scroll", updatePos, true);
+    window.addEventListener("resize", updatePos);
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      window.removeEventListener("scroll", updatePos, true);
+      window.removeEventListener("resize", updatePos);
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [open, updatePos]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        className={`cite src-note${open ? " hot" : ""}`}
+        aria-expanded={open}
+        aria-label={`Note ${n}`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span className="cite-dot" />
+        <span>{n}</span>
+      </button>
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            ref={tipRef}
+            role="tooltip"
+            className="fixed z-50 w-[380px] max-w-[calc(100vw-24px)] -translate-x-1/2 rounded-md border border-line-strong bg-surface px-4 py-3 shadow-md"
+            style={{ left: pos.left, top: pos.top }}
+          >
+            <div className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
+              Note {n}
+            </div>
+            <div className="space-y-2 text-[13.5px] leading-[1.55] text-ink-2">
+              {children}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
+  );
+}
+
+// ---------- SlidePoint (slide-mode entry with anchored note) ----------
+
+function SlidePoint({
+  headline,
+  cite,
+  note,
+  children,
+}: {
+  headline: string;
+  cite: number;
+  note: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="mt-7">
+      <div className="mb-1 leading-snug">
+        <span className="font-medium text-ink">{headline}</span>
+        <Cite n={cite}>{note}</Cite>
+      </div>
+      <p className="text-[16px] leading-[1.6] text-ink-2">{children}</p>
+    </div>
   );
 }
