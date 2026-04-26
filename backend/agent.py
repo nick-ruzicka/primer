@@ -852,11 +852,29 @@ def get_client() -> AsyncAnthropic:
         return _client
 
     mode = _auth_mode()
-    if mode == "oauth":
-        # The SDK prefers api_key when both are set. Pass ``api_key=None`` and
-        # also scrub the env var so the client can't fall back to x-api-key.
-        import os as _os
+    # Why we mutate os.environ here (load-bearing, not paranoia):
+    #
+    # The Anthropic SDK unconditionally falls back to env at client init
+    # (anthropic/_client.py ~L96-98):
+    #     if auth_token is None:
+    #         auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN")
+    #     self.auth_token = auth_token
+    # Header construction then checks ``if auth_token is None`` rather than
+    # truthiness. python-dotenv exposes an unset/blank line as ``""``, which
+    # slips past the None check and produces a malformed
+    # ``Authorization: Bearer `` header that httpx rejects (the request
+    # never reaches Anthropic's auth check).
+    #
+    # Passing ``api_key=None`` / ``auth_token=None`` to the constructor
+    # is therefore not enough — the SDK overrides our explicit None with
+    # the empty string from env. Scrubbing the unused var here forces the
+    # SDK to use the credential we actually want.
+    #
+    # Remove this only if the SDK changes its fallback to coerce empty
+    # strings to None, or exposes a flag to disable env-fallback.
+    import os as _os
 
+    if mode == "oauth":
         _os.environ.pop("ANTHROPIC_API_KEY", None)
         _client = AsyncAnthropic(
             api_key=None,
@@ -866,12 +884,6 @@ def get_client() -> AsyncAnthropic:
         _using_oauth = True
         log.info("agent.client.init", extra={"mode": "oauth"})
     elif mode == "api_key":
-        # Symmetric to the oauth branch: scrub any stale auth_token from env
-        # so the SDK doesn't send ``Authorization: Bearer `` (empty) alongside
-        # the api_key. python-dotenv sets empty env vars to "", which the SDK
-        # reads as "auth_token is set" and produces a malformed header.
-        import os as _os
-
         _os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
         _client = AsyncAnthropic(
             api_key=SETTINGS.anthropic_api_key,
