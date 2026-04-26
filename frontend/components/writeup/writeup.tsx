@@ -279,26 +279,32 @@ export function Writeup() {
 
               <Subhead>A note on databases</Subhead>
               <p>
-                V1 doesn't need one. The fact index is rebuilt per request
-                from the MCP layer; the corpus per brief is small and
-                bounded. V1.5 adds Postgres — but not as a vector DB. The
-                use case is the post-call feedback loop: every brief gets
-                logged, every call outcome gets logged (from Gong
-                transcripts, rep ratings, Salesforce stage changes), and
-                we compare what the brief predicted to what actually
-                happened. If the brief said "this is a consolidation
-                conversation" and the call turned out to be pricing
-                pushback, the brief was wrong about the read. That
-                mismatch is the signal. Skills that produce accurate reads
-                stay; skills that don't get revised. Plain SQL on
-                structured rows — no embeddings, no vectors, just the
-                audit log that lets the system learn.
+                V1 doesn't need a database. The fact index rebuilds per
+                request — small corpus, bounded scope.
               </p>
               <p>
-                V3 is when vectors come back, for the long tail: years of
-                Gong transcripts, cross-account patterns, "find me deals
-                where pricing pushback came up at demo stage." Different
-                problem, different tool.
+                V1.5 adds Postgres for two things the in-memory index
+                can't do. First, <b>account memory</b>. Right now each
+                brief is a fresh read; the system has no record of what
+                it believed about an account last week. With persistence,
+                when the most recent Salesforce pull shows Priya is no
+                longer the primary contact, the system flags the change
+                instead of silently overwriting it. The awareness problem
+                from §01 is solved by remembering, not by re-reading
+                harder.
+              </p>
+              <p>
+                Second, <b>skill telemetry</b>. Every brief generated,
+                every rep edit, every helpful/not-helpful rating, logged
+                in plain rows. RevOps gets edit-rate-per-skill and
+                skip-rate-per-skill on day one. Skills with bad numbers
+                get revised; skills with good numbers become templates
+                other variants inherit from.
+              </p>
+              <p>
+                Plain SQL on structured rows. Vectors come back in V3,
+                when the corpus is large enough to need semantic search
+                across years of Gong calls and cross-account history.
               </p>
             </Section>
 
@@ -796,11 +802,20 @@ export function Writeup() {
                 title="Highest-leverage next move (priority TBD by V1.5 data)"
               />
               <p>
-                The default is to <b>wire the feedback loop:</b> Primer reads
-                its own call transcripts back through Gong, compares against
-                how the call actually went, proposes skill updates where the
-                brief was wrong. RevOps approves before any ships; each skill
-                gets richer as it learns what actually worked on calls.
+                The default Phase 4 work is the <b>post-call feedback
+                loop</b>. Primer reads its own call transcripts back
+                through Gong, compares the brief's predicted read against
+                what actually happened on the call, and proposes skill
+                updates where the prediction missed. This works cleanly
+                on calls with defined outcomes — renewals (renewed or
+                didn't), expansion gates (advanced or stalled),
+                trust-repair calls (escalation resolved or not). It works
+                less cleanly on discovery calls where the agenda is
+                intentionally open. So the loop runs selectively: motions
+                with clear outcomes feed it, discovery briefs get
+                evaluated through edit rate and helpfulness signals from
+                the skill telemetry layer instead. RevOps approves every
+                proposed skill change before it ships.
               </p>
               <p>
                 Whether that's the right call depends on V1.5 telemetry.
