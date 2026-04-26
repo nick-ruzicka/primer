@@ -185,8 +185,7 @@ export function Writeup() {
                 </li>
                 <li>
                   <b>Skill file</b>: a markdown contract the LLM has to
-                  follow on every call. Rules (<em>"if you can't cite it,
-                  you can't claim it"</em>), structure, voice, forbidden
+                  follow on every call. Rules, structure, voice, forbidden
                   behaviors. Not a prompt — a policy.
                 </li>
               </BulletList>
@@ -216,11 +215,6 @@ export function Writeup() {
               <p>
                 The skills are the moat — they encode what good looks like
                 for this business, in a format anyone can read and improve.
-              </p>
-
-              <p>
-                Calendar-aware brief generation and Slack distribution are
-                stretch goals — see the 90-day plan.
               </p>
             </Section>
 
@@ -370,12 +364,6 @@ export function Writeup() {
                   math.
                 </p>
               </ExampleQuote>
-              <VisualMarker src="/images/writeup/validator-warnings.png">
-                Four real catches the validator surfaced on this brief. The
-                CRITICAL catch (top) flags an invented metric — see decision
-                4 above. Confidence scores (0.71, 0.63, 0.22) come from the
-                decomposed scorer.
-              </VisualMarker>
               <p>
                 The 17% catch is a synthesis-grounding catch: the brief made
                 a claim the data didn't support. The harder catch is{" "}
@@ -398,24 +386,6 @@ export function Writeup() {
                 the LLM only handles parts that need judgment. The rep sees
                 a graded warning, not a binary alarm.
               </p>
-              <figure className="my-8">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm">
-                    <img
-                      src="/images/writeup/the-read-citations.png"
-                      alt="The read paragraph showing dense citation chips"
-                      className="block h-auto w-full"
-                    />
-                  </div>
-                  <div className="overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm">
-                    <img
-                      src="/images/writeup/why-this-read-inference.png"
-                      alt="Why this read inference paragraph showing fewer citations and interpretive language"
-                      className="block h-auto w-full"
-                    />
-                  </div>
-                </div>
-              </figure>
             </Section>
 
             <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
@@ -816,14 +786,6 @@ export function Writeup() {
                 evaluated through edit rate and helpfulness signals from
                 the skill telemetry layer instead. RevOps approves every
                 proposed skill change before it ships.
-              </p>
-              <p>
-                Whether that's the right call depends on V1.5 telemetry.
-                Alternatives if the data points elsewhere: Slack/Calendar
-                distribution (if adoption is the gap), more skill variants (if
-                breadth is the gap), V2A Salesforce-side AI MCP wrappers (if
-                Attentive has them), or a manager coaching surface (if
-                managers ask for visibility into rep edit patterns).
               </p>
 
               <p>
