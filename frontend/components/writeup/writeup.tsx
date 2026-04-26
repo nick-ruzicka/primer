@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlignJustify, ChevronDown, FileText, Mail, Package, Rocket } from "lucide-react";
+import { setMode } from "@/lib/store";
 import { WriteupToc } from "./writeup-toc";
 
 const TOC_SECTIONS = [
@@ -69,7 +70,7 @@ export function Writeup() {
   }, [scrollEl]);
 
   return (
-    <div className="w-full overflow-y-auto bg-bg" ref={setScrollEl}>
+    <div className="w-full snap-y snap-mandatory overflow-y-auto bg-bg" ref={setScrollEl}>
       {/* Floating ToC button — narrow viewports only */}
       <button
         className="xl:hidden fixed bottom-6 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 text-ink-3 shadow-md transition-colors hover:text-ink"
@@ -116,10 +117,11 @@ export function Writeup() {
           </aside>
 
           {/* Right col: content — no max-width, fills available space */}
-          <article className="w-full px-10 py-16 sm:px-14 xl:px-20 sm:py-20">
-            <Hero />
-
-            <TldrPanel />
+          <article className="w-full px-10 sm:px-14 xl:px-20">
+            <div className="flex min-h-screen snap-start flex-col justify-center gap-10">
+              <Hero />
+              <TldrPanel />
+            </div>
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
               <p>
@@ -156,72 +158,144 @@ export function Writeup() {
                   renewal risk alerts.
                 </li>
                 <li>
-                  <b>Skill file:</b> a markdown document that defines an artifact.
-                  What data to pull, how to structure it, what voice to write in,
-                  what rules it must follow.
+                  <b>Skill file:</b> a markdown policy document the LLM has to
+                  live inside. Rules, structure, voice, forbidden behaviors —
+                  not a prompt, a contract.
                 </li>
               </BulletList>
+
+              <Subhead>The artifact: a pre-call brief in four modes</Subhead>
               <p>
-                <b>Today's artifact: the pre-call brief.</b> A single-page web app
-                with four modes (Reading, Workspace, Split, Writeup), all rendering
-                one brief per account.
+                Single-page app, one brief per account. Four modes — Reading,
+                Workspace, Split, Writeup — render the same brief at
+                different information densities for different moments
+                (reviewing, working a call live, comparing brief to
+                evidence).
               </p>
-              <p>The brief itself has five sections:</p>
+              <p>The brief has five sections:</p>
               <BulletList>
                 <li>
-                  <b>The read.</b> What's the call about, in one paragraph.
+                  <b>The read.</b> What's the call about, in two sentences.
                 </li>
                 <li>
                   <b>Why this read.</b> The evidence behind it.
                 </li>
                 <li>
-                  <b>What to do on the call.</b> Specific actions.
+                  <b>What to do on the call.</b> Three specific actions.
                 </li>
                 <li>
-                  <b>Discovery questions.</b> Three to five questions tied to the
-                  read. Sales runs on questions.
+                  <b>Discovery questions.</b> 3–5 questions tied to the read.
+                  Sales runs on questions.
                 </li>
                 <li>
                   <b>Suggested talk track.</b> Language to actually use.
                 </li>
               </BulletList>
+
+              <Subhead>The skill system — where the playbook lives</Subhead>
               <p>
-                At production, the brief also surfaces{" "}
-                <b>revenue × health by product</b> ("paying $X for Flows Pro at
-                health 82, $Y for Journeys at 61") so the rep sees combined
-                value-and-risk per line, not separately.
+                Skills are a three-tier hierarchy of markdown files. The LLM
+                reads them as instructions. The whole stack — including the
+                validator's own skill — is ~290 lines of rules.
               </p>
               <p>
-                <b>Stretch goals I scoped out:</b>
+                <b>Master skill</b> (constitutional, applies to every artifact):
+              </p>
+              <RuleQuote>
+                <p>
+                  If you can't cite it, you can't claim it. If the data is
+                  missing, name the absence rather than inferring.
+                </p>
+              </RuleQuote>
+              <p>
+                <b>Artifact skill</b> (specializes per artifact type):
+              </p>
+              <RuleQuote>
+                <p>
+                  Take a position. Argue, don't summarize. The brief exists
+                  because a dashboard isn't opinionated enough.
+                </p>
+              </RuleQuote>
+              <p>
+                <b>Validation skill</b> (the validator has its own skill — it
+                judges by rules, not vibes):
+              </p>
+              <RuleQuote>
+                <p>
+                  Be strict but not pedantic. Prefer silence over false
+                  positives.
+                </p>
+              </RuleQuote>
+              <p>
+                The skill files are the moat. Adding a new artifact type is
+                writing a new skill file, not retraining a model. Variant
+                skills under each artifact (renewal-call brief, expansion
+                brief, trust-repair brief) inherit the master rules and
+                specialize voice and content for the call type.
+              </p>
+
+              <Subhead>The agents — who does the work</Subhead>
+              <p>
+                Three specialized agents, each pinned to its own skill file.
+                Different models, different prompts, different jobs.
               </p>
               <BulletList>
                 <li>
-                  <b>Calendar-aware brief generation.</b> Wire Google Calendar /
-                  Outlook. Brief auto-generates 30 minutes before a customer call.
+                  <b>The Writer</b> (Sonnet 4.6) — drafts the brief in one
+                  LLM call. Guided by the master skill plus the pre-call
+                  brief artifact skill. Reads the fact index; writes prose
+                  with inline <Mono>·N</Mono> citations.
                 </li>
                 <li>
-                  <b>Slack as a distribution surface.</b>{" "}
-                  <Mono>/primer [account]</Mono> slash command, or auto-post briefs
-                  into deal channels on calendar trigger.
+                  <b>The Validator</b> (Haiku) — flags potential violations
+                  in one LLM call. Guided by the validation skill. Emits
+                  structured JSON — type, severity, excerpt, sources — for
+                  each warning.
                 </li>
                 <li>
-                  <b>Mobile read view.</b> Brief renders cleanly on phone for the
-                  rep checking it in the Uber to the meeting.
-                </li>
-                <li>
-                  <b>Email digest.</b> Daily morning summary of upcoming calls and
-                  their briefs, in the inbox.
-                </li>
-                <li>
-                  <b>Pipeline ops uptime monitoring.</b> Health-check dashboard for
-                  the MCP servers. Alerts when a connector starts failing silently.
-                </li>
-                <li>
-                  <b>User analytics tracking.</b> Per-rep usage dashboard: which
-                  briefs got opened, time-on-page, edit patterns,
-                  helpful/not-helpful rates.
+                  <b>The Scorer</b> (Haiku, committee) — for every warning
+                  the Validator emits, runs <b>four narrow checks</b>: one
+                  mechanical (does the number in the claim actually appear
+                  in the cited fact?) plus three single-purpose Haiku
+                  judges — <em>source appropriateness</em>,{" "}
+                  <em>semantic drift</em>, <em>inference legitimacy</em>.
+                  Each judge gets a tight prompt and 80 tokens. Final
+                  confidence is a 60/15/15/10 weighted average.
                 </li>
               </BulletList>
+              <p>
+                Per brief: 1 Sonnet call (Writer) + 1 Haiku call (Validator)
+                + 3 narrow Haiku calls per warning (Scorer's judges). The
+                committee shape keeps cost bounded — each judge is tiny and
+                independent — and gives the system a confidence score, not a
+                binary verdict.
+              </p>
+
+              <Subhead>What else shipped behind the brief</Subhead>
+              <BulletList>
+                <li>
+                  <b>Six MCP source handlers</b> in a typed registry —
+                  Salesforce, Snowflake, Catalyst, NetSuite, Gong, Exa. Each
+                  extracts specific facts into the index with a stable{" "}
+                  <Mono>fact_id</Mono>.
+                </li>
+                <li>
+                  <b>Reliability layer</b> — circuit breakers, retry, trace
+                  IDs, structured logging on every MCP call. A connector
+                  failing silently is the worst case; this catches it.
+                </li>
+                <li>
+                  <b>Account Intelligence rail</b> — every fact in the index,
+                  grouped by topic (Commercial, Conversations, Relationship,
+                  Product usage, External signals, Portfolio). Click any{" "}
+                  <Mono>·N</Mono> chip in the brief to jump to its receipt.
+                </li>
+              </BulletList>
+
+              <p>
+                Calendar-aware brief generation and Slack distribution are
+                stretch goals — see the 90-day plan.
+              </p>
             </Section>
 
             <Section id="architectures" number="03" claim="Three architectures I considered">
@@ -235,36 +309,40 @@ export function Writeup() {
                   licenses.
                 </li>
                 <li>
-                  <em>Cons:</em> Salesforce can only synthesize what Salesforce can
-                  see. Catalyst, Snowflake usage, NetSuite, Slack, external signals
-                  all live outside.
+                  <em>Cons:</em> Salesforce can only synthesize what Salesforce
+                  can see — but doesn't tell the rep what it's missing. The
+                  brief looks complete even when half the signal lives outside.
                 </li>
               </BulletList>
               <p>
-                <b>Option B: Vector DB / RAG layer.</b>
+                <b>Option B: Vector database / semantic search.</b>
+              </p>
+              <p>
+                Embed every fact and conversation into a database that lets
+                you search by meaning instead of keyword. "Find notes about
+                pricing pushback" works even when no note literally says
+                those words.
               </p>
               <BulletList>
                 <li>
-                  Embed every fact and document into a vector store. Retrieve
-                  relevant chunks per brief via semantic search.
+                  <em>Pros:</em> handles the long tail. Once you have years
+                  of Gong calls, multi-quarter Catalyst notes, and
+                  cross-account history, semantic search is the only way to
+                  find what matters.
                 </li>
                 <li>
-                  <em>Embeddings:</em> vector representations of unstructured text
-                  that allow semantic retrieval. "Find notes about pricing
-                  pushback" works even if no note literally says those words.
-                </li>
-                <li>
-                  <em>Vector DB:</em> where embeddings live (Pinecone, Weaviate,
-                  pgvector).
-                </li>
-                <li>
-                  <em>Cons:</em> retrieval is lossy. Hard to guarantee a specific
-                  fact (champion name, exact ARR) makes it into context. Hybrid
-                  keyword + semantic search reduces some failure modes (Dispatch
-                  ran this way), but the hallucination risk compounds with corpus
-                  size.
+                  <em>Cons:</em> retrieval is fuzzy. The brief might miss a
+                  specific fact (champion name, exact ARR) because the
+                  embedding pulled adjacent content instead. For a pre-call
+                  brief where every claim has to be cited, that's the wrong
+                  tradeoff today.
                 </li>
               </BulletList>
+              <p>
+                Right answer for V3, not V1. Once Primer has months of Gong
+                transcripts and customer-specific signal, vector search
+                becomes the scaling answer. V1 doesn't have that volume yet.
+              </p>
               <p>
                 <b>
                   Option C: Read-layer with deterministic pre-fetch via MCP.
@@ -320,47 +398,34 @@ export function Writeup() {
 
               <Subhead>3. Skills are the playbook layer</Subhead>
               <p>
-                Skills are organized as a hierarchy. A constitutional{" "}
-                <b>master skill</b> sets the universal rules.{" "}
-                <b>Artifact-type skills</b> define shape (the pre-call brief always
-                has these five sections, the same data sources, the same voice).{" "}
-                <b>Variant skills</b> under each type adjust content per situation.
-              </p>
-              <p>Take the master skill rules. They read like laws:</p>
-              <RuleQuote>
-                <p>Never claim something you can't cite.</p>
-                <p>
-                  Never write "the customer is happy" when the data only says
-                  "health score is 72."
-                </p>
-                <p>
-                  When the rep asks who the champion is and three sources disagree,
-                  show all three. Don't pick.
-                </p>
-              </RuleQuote>
-              <p>
-                Take a variant. The renewal-call brief variant adds rules like{" "}
-                <em>"open with renewal posture in the first sentence"</em> and{" "}
-                <em>"flag any unresolved billing items in 'what to do.'"</em> The
-                discovery-call variant says{" "}
-                <em>
-                  "open with what we know about the prospect's stated pain"
-                </em>{" "}
-                and{" "}
-                <em>
-                  "the talk track section should focus on credibility, not
-                  features."
-                </em>
+                The decision was: where do business rules live? Three options.
+                In the model's weights (retrain or fine-tune per company —
+                expensive, slow, opaque). In the prompt (rebuilt per call —
+                fragile, no separation of concerns). Or in <b>versioned
+                policy files</b> the LLM has to live inside.
               </p>
               <p>
-                Same shape. Different content. Variants are where the playbook
-                actually lives.
+                Primer takes the third. Skills are markdown files: a
+                constitutional master skill, an artifact-type skill per
+                output shape, and variant skills under each type for
+                situational specialization. Section 02 has sample rules from
+                each level.
               </p>
               <p>
-                Skills anchor the LLM to business context. They're permanent
-                knowledge structures: how a brief should read, when to escalate,
-                what "expansion-ready" looks like at this company. The LLM is the
-                rendering engine. Skills are how it learns the business.
+                Variants are where the playbook actually lives. The
+                renewal-call variant adds <em>"open with renewal posture
+                in the first sentence"</em> and{" "}
+                <em>"flag any unresolved billing items in 'what to do.'"</em>{" "}
+                The discovery-call variant says{" "}
+                <em>"open with what we know about the prospect's stated
+                pain"</em> and{" "}
+                <em>"the talk track section should focus on credibility,
+                not features."</em>
+              </p>
+              <p>
+                Same shape. Different content. The LLM is the rendering
+                engine; skills are how it learns the business. Adding a new
+                customer or call type is editing markdown, not retraining.
               </p>
 
               <Subhead>4. The validator agent</Subhead>
@@ -413,17 +478,10 @@ data_as_of: 2026-04-23`}
               </ExampleQuote>
               <p>The brief invented a percentage. The validator caught the math.</p>
               <p>
-                <b>Decomposed confidence scoring.</b> The validator doesn't
-                emit binary pass/fail. Each warning gets a score from{" "}
-                <Mono>0</Mono> to <Mono>1</Mono>, weighted across four
-                factors: <b>citation match</b> (60%) — do the numbers in
-                the claim appear in the cited fact; <b>source
-                appropriateness</b> (15%) — is the right system cited for
-                this kind of claim; <b>semantic drift</b> (15%) — has the
-                claim shifted meaning from what the fact actually says; and{" "}
-                <b>inference legitimacy</b> (10%) — when the claim is an
-                inference, is the leap defensible. The "adoption dropped
-                17%" catch above scored <Mono>0.71</Mono>: citation match
+                Each warning gets a confidence score, not a binary
+                reject — the Scorer (section 02) runs four narrow checks
+                per warning and weights them. The "adoption dropped 17%"
+                catch above scored <Mono>0.71</Mono>: citation match
                 fired hard because the numbers don't reconcile to either
                 cited fact. Severity (critical / watch) buckets from the
                 score, so the rep sees a graded warning, not a binary alarm.
@@ -618,7 +676,7 @@ data_as_of: 2026-04-23`}
                 <b>Freshness.</b>
               </p>
               <BulletList>
-                <li>15-minute Redis cache. Regeneration on explicit refresh.</li>
+                <li>Briefs are cached for 15 minutes. Click refresh to regenerate.</li>
                 <li>
                   Every citation shows data age. Stale past threshold, the brief
                   calls it out.
@@ -645,16 +703,13 @@ data_as_of: 2026-04-23`}
               <p>
                 <b>Opinion vs. informational.</b>
               </p>
-              <BulletList>
-                <li>
-                  A neutral summary forces the rep to do the synthesis themselves.
-                </li>
-                <li>An opinionated brief is higher-leverage and higher-risk.</li>
-                <li>
-                  The validator agent and the four guardrails make opinion safe to
-                  ship.
-                </li>
-              </BulletList>
+              <p>
+                A neutral summary says "health score is 61." An opinionated
+                brief says "the renewal is at risk; the conversation should
+                be about what broke operationally, not defending the
+                renewal." Higher leverage, higher risk. The validator agent
+                and four guardrails make the opinion safe to ship.
+              </p>
             </Section>
 
             <Section id="scaling" number="07" claim="What scaling this would surface">
@@ -681,7 +736,9 @@ data_as_of: 2026-04-23`}
                 }
               >
                 The brief has to beat 5 minutes of grepping Salesforce, every
-                time, or it's abandoned by week 3.
+                time, or it's abandoned by week 3. The way you prevent that
+                is the Phase 1 validation work: 3-5 reps on real calls,
+                structured feedback, cut what doesn't work before scaling.
               </SlidePoint>
 
               <SlidePoint
@@ -701,54 +758,27 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <SlidePoint
-                headline="Model spend isn't where this gets expensive."
+                headline="Model spend is lunch money."
                 cite={3}
                 note={
-                  <>
-                    <p>
-                      <b>Source APIs:</b> Gong transcript pulls and Catalyst
-                      event endpoints have per-call pricing.
-                    </p>
-                    <p>
-                      <b>MCP:</b> six stateful services × multi-region HA.
-                    </p>
-                    <p>
-                      <b>Validator:</b> confidence-scored two-pass consistency
-                      is months of work.
-                    </p>
-                  </>
-                }
-              >
-                Sonnet 4.6 runs ~$0.06/brief end-to-end. 120 AEs × 4 briefs ×
-                250 days = ~$7K/yr. What scales: source-system API egress, MCP
-                HA, validator engineering.
-              </SlidePoint>
-
-              <SlidePoint
-                headline="Severity classification is the wrong layer at scale."
-                cite={4}
-                note={
                   <p>
-                    Section 04 shows V1's solution: decompose into four weighted
-                    factors so most of the score becomes deterministic. At
-                    Attentive scale, the LLM sub-scores need rubric tuning per
-                    call type, and the score thresholds need to be configurable
-                    per customer. Reps in regulated industries care about source
-                    appropriateness more than tone drift; reps in consumer brands
-                    flip those weights. V2 turns the weights into config, not
-                    constants.
+                    A single AE's salary is 20-30x the annual model spend.
+                    The model isn't the cost. What scales: source-system API
+                    costs (Gong and Catalyst charge per call), running the
+                    six MCP servers reliably across regions, and the
+                    engineering time to keep the validator getting smarter
+                    as the corpus grows.
                   </p>
                 }
               >
-                The decomposed scoring from decision 4 works for V1. At scale,
-                different customer segments weight the factors differently. No
-                one-size-fits-all confidence score across Attentive's customer
-                base.
+                ~$0.06 per brief end-to-end. At Attentive scale — 120 AEs ×
+                4 briefs/day × 250 days = 120K briefs/year — that's about
+                $7K/year in Anthropic costs.
               </SlidePoint>
 
               <SlidePoint
                 headline="Six MCP servers means six failure points."
-                cite={5}
+                cite={4}
                 note={
                   <p>
                     Silent-stale-data is the worst case — brief still generates,
@@ -910,7 +940,7 @@ data_as_of: 2026-04-23`}
 
 function Hero() {
   return (
-    <header id="top" className="border-b border-line pb-14">
+    <header id="top" className="flex flex-col">
       <h1
         className="font-serif font-medium leading-[1.05] tracking-[-0.02em] text-ink"
         style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)" }}
@@ -925,15 +955,20 @@ function Hero() {
       </p>
       <p className="mt-6 text-[13px] text-ink-3">Nick Ruzicka · April 2026</p>
       <div className="mt-7 flex flex-wrap gap-2.5">
-        <CTAButton primary onClick={() => null}>
+        <CTAButton primary onClick={() => setMode("split")}>
           Open the prototype →
         </CTAButton>
-        <CTAButton onClick={() => null}>
+        <CTAButton
+          onClick={() => {
+            document
+              .getElementById("problem")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        >
           Read the architecture below
           <ChevronDown size={14} className="ml-1.5" />
         </CTAButton>
       </div>
-      <hr className="mt-20 border-line" />
     </header>
   );
 }
@@ -1070,7 +1105,11 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section id={id} data-section className="mt-32 scroll-mt-20">
+    <section
+      id={id}
+      data-section
+      className="flex min-h-screen snap-start scroll-mt-0 flex-col pt-16 pb-12"
+    >
       <header className="mb-10 flex items-start gap-4">
         <div className="mt-3 h-10 w-[3px] flex-none rounded-full bg-accent" />
         <div>
