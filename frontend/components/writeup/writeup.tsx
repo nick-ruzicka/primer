@@ -125,32 +125,32 @@ export function Writeup() {
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
               <p>
-                A SaaS company forecasts a renewal at 70% likelihood. The
-                deal dies. The decision-maker left months earlier and a new
-                CFO arrived. The sales team didn't know.
-              </p>
-              <PullQuote>
-                AEs don't have a dashboards problem. They have an{" "}
-                <em>awareness</em> problem.
-              </PullQuote>
-              <p>
-                Each account has a decision-making structure — who has
-                authority, who's the champion, who's blocking — and that
+                AEs at enterprise SaaS companies cover dozens of accounts.
+                Each account has decision-making structure — champions,
+                blockers, exec sponsors, finance contacts — and that
                 structure changes constantly across systems no single tool
-                watches. By the time the rep notices, the deal is already
-                moving against them.
+                watches. The signals that matter (a champion leaving, a
+                payables block, a usage cliff, a competitor sniff) live in
+                places the rep doesn't think to check. By the time anyone
+                notices, the deal is already moving against them.
               </p>
               <p>
-                Synthesis is the visible part. Six tabs, an hour of prep, a
+                This is an <em>information overload</em> problem, not a
+                dashboards problem. A rep tracking 40 accounts can't watch
+                every system every day. The rep who forecasts a renewal at
+                70% likelihood and then loses the deal isn't lazy — they
+                didn't see the new CFO arrived three weeks ago.
+              </p>
+              <p>
+                Synthesis is the visible part: six tabs, an hour of prep, a
                 story the rep assembles in their head under time pressure.
-                The deeper problem is what the rep doesn't think to look
-                for.
+                The deeper problem is what they didn't think to look for.
               </p>
               <p>
-                Primer is a synthesis layer that tracks decision-making
-                across the systems where it changes. The brief takes a
-                position on what the call is about, grounds every claim in
-                a source, and refuses to make claims it can't ground.
+                Primer is the start of an account intelligence platform. V1
+                ships the pre-call brief: every claim grounded in a source,
+                every claim it can't ground refused, the most call-relevant
+                account state surfaced in one read.
               </p>
             </Section>
 
@@ -647,10 +647,25 @@ export function Writeup() {
             </Section>
 
             <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive">
+              <p>
+                Primer in V1 is a brief. Primer at maturity is a platform
+                that watches account state across systems and tells the rep
+                what changed and what to do about it. The brief is the
+                wedge: it proves the architecture (deterministic citations,
+                validator-caught hallucinations, opinionated synthesis) on
+                a single high-leverage artifact. From there, the same
+                skill stack extends to other artifacts on the same data
+                layer — outreach drafts grounded in account state,
+                competitive intel as another signal, post-call evaluation
+                that asks whether the brief actually prepped the rep,
+                churn prediction that fires before the renewal forecast
+                does.
+              </p>
               <p className="italic text-ink-3">
-                Parallel tracks for the first two weeks — validate the product,
-                seed the skills library. The back half adapts based on what V1.5
-                telemetry shows.
+                The 90-day plan ships V1 well, then lets V1.5 telemetry
+                decide which artifact comes next. Parallel tracks for the
+                first two weeks — validate the product, seed the skills
+                library. The back half adapts based on what the data says.
               </p>
 
               <PhaseHeader label="DAYS 0-14" title="Product Validation" />
