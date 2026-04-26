@@ -267,12 +267,15 @@ function WarningRow({ warning }: { warning: ValidationWarning }) {
           )}
         >
           {warning.severity}
-          {warning.warning_confidence !== undefined && (
-            <span className="ml-1 font-normal opacity-60">
-              · {warning.warning_confidence.toFixed(2)}
-            </span>
-          )}
         </span>
+        {warning.warning_confidence !== undefined && (
+          <span className={cn(
+            "flex-shrink-0 font-mono text-[10px] tabular-nums",
+            critical ? "text-bad" : "text-warn-strong",
+          )}>
+            {warning.warning_confidence.toFixed(2)}
+          </span>
+        )}
         {warning.sources && warning.sources.length > 0 && (
           <span className="flex flex-shrink-0 gap-1">
             {warning.sources.map((src) => (
@@ -327,9 +330,9 @@ function WarningRow({ warning }: { warning: ValidationWarning }) {
                       <span className="w-16 flex-shrink-0 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-4">
                         {label}
                       </span>
-                      <div className="h-1 flex-1 rounded-full bg-surface-sunk">
+                      <div className="h-1.5 flex-1 rounded-full bg-surface-sunk">
                         <div
-                          className={cn("h-1 rounded-full transition-all", scoreBarColor(val))}
+                          className={cn("h-1.5 rounded-full transition-all", scoreBarColor(val))}
                           style={{ width: `${val * 100}%` }}
                         />
                       </div>
