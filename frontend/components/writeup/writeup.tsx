@@ -571,45 +571,60 @@ data_as_of: 2026-04-23`}
                 level up at Attentive scale.
               </p>
               <p>
-                <b>Validator severity is non-deterministic.</b> Same brief,
-                four runs, different critical/watch counts. Haiku temperature
-                noise on judgment calls. V1.5 fix is a two-pass consistency
-                check, but at scale across hundreds of accounts, even that
-                gets fuzzy at boundaries. Production needs a confidence-scored
-                validator, not a binary one.
+                <b>Adoption is the long pole, not technology.</b> The hardest
+                part of any rep-facing tool isn't building it — it's getting
+                reps to use it. Primer assumes the rep opens it before every
+                call. In reality, reps default to old habits. The brief has
+                to be demonstrably better than 5 minutes of grepping
+                Salesforce, every time, or it gets abandoned by week 3. The
+                instrumentation (helpful/not-helpful rates, edit rates)
+                catches abandonment after it happens. Preventing it is the
+                real V2 work.
+              </p>
+              <p>
+                <b>Trust is a one-strike system.</b> A brief that confidently
+                states a wrong fact during a customer call burns the rep
+                forever. The validator helps, but isn't perfect. The first
+                time the brief says "your champion is Priya Shah" and Priya
+                left three weeks ago, the rep stops using the tool. V2 needs
+                human-in-the-loop verification for high-stakes facts
+                (champion identity, contract values, recent leadership
+                changes) — not just automated validation.
               </p>
               <p>
                 <b>Model spend isn't where this gets expensive.</b> Sonnet 4.6
-                generation at this brief size runs ~$0.06 per brief end-to-end
-                including the validator pass. Even at Attentive scale — 120
-                AEs × 4 briefs/day × 250 working days = 120K briefs/year —
-                that's ~$7K in model spend. Lunch money. What does scale:
-                source-system API costs (Gong transcript pulls and Catalyst
-                event endpoints both have per-call pricing that adds up), MCP
-                infrastructure (six stateful services × multi-region HA), and
-                engineering time on the validator (binary critical/watch is
-                fine for V1; confidence-scored validator with two-pass
-                consistency is months of work).
+                generation runs ~$0.06 per brief end-to-end including the
+                validator pass. At Attentive scale — 120 AEs × 4 briefs/day ×
+                250 days = 120K briefs/year — that's ~$7K in model spend.
+                Lunch money. What does scale: source-system API costs (Gong
+                transcript pulls and Catalyst event endpoints both have
+                per-call pricing that adds up), MCP infrastructure (six
+                stateful services × multi-region HA), and engineering time on
+                the validator (binary critical/watch is fine for V1;
+                confidence-scored validator with two-pass consistency is
+                months of work).
+              </p>
+              <p>
+                <b>Validator severity is the wrong abstraction.</b> Right now
+                the validator emits binary critical/watch flags. Same brief,
+                four runs, different counts — Haiku temperature noise on a
+                judgment call. The fix isn't more determinism; it's a
+                continuous confidence score (0–1) per warning, with the UI
+                layer deciding how to render it. That's how production
+                content-moderation systems actually work — you don't
+                classify, you score.
               </p>
               <p>
                 <b>Six MCP servers means six failure points.</b> A connector
                 returning stale data silently is the worst case — brief still
-                generates, but with bad inputs. Real production needs per-MCP
-                health monitoring, automatic stale-data detection, and
-                graceful degradation when one source goes dark.
+                generates, but with bad inputs. Production needs partial
+                generation as a first-class behavior: when one source fails,
+                the brief notes which sections are degraded ("Renewal status
+                unavailable — Salesforce sync failed"), and the validator
+                gets told which sources are missing so it doesn't flag claims
+                as ungrounded.
               </p>
-              <p>
-                <b>The skill library is the moat — and the long pole.</b> New
-                customer onboarding is fast on architecture, slow on authoring
-                the right variant skills. A renewal-call brief at Attentive
-                looks different from one at Stripe. Mining the Gong corpus is
-                how this scales but it requires real time investment per
-                customer.
-              </p>
-              <p>
-                <b>Exa is V1-stubbed.</b> External signals come from a seeded
-                table. Live Exa wrapper is a half-day swap.
-              </p>
+              <p>Exa is V1-stubbed. Live Exa wrapper is a half-day swap.</p>
             </Section>
 
             <Section id="plan" number="08" claim="The 90-day plan if I joined Attentive">
