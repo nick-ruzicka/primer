@@ -195,9 +195,10 @@ export function Writeup() {
                 <b>Why skills, not prompts or fine-tuning.</b> Every LLM
                 system has the same hard problem: finite context. What you
                 put in it decides what the model can reason about. Most
-                products solve this with RAG (retrieval is fuzzy, misses
-                specific facts) or fine-tuning (bakes business rules into
-                model weights, brittle, expensive to update). Skills are a
+                products solve this with RAG (retrieval is approximate,
+                can drop the specific fact you need) or fine-tuning (bakes
+                business rules into model weights, brittle, expensive to
+                update). Skills are a
                 third option: versioned markdown loaded into context per
                 request. The model stays general. The business knowledge
                 stays editable, inspectable, and auditable.
@@ -240,25 +241,26 @@ export function Writeup() {
                 </li>
               </BulletList>
               <p>
-                <b>Option B: Vector database / semantic search.</b> Embed
-                every fact and conversation into a database that lets you
-                search by meaning instead of keyword.
+                <b>Option B: Vector database / semantic search.</b>
               </p>
               <p>
-                <em>Pros:</em> handles the long tail. Once you have years of
-                Gong calls and multi-quarter Catalyst notes, semantic search
-                is the only way to find what matters.
+                Embed every fact and conversation into a database. Search
+                by meaning instead of by keyword.
+              </p>
+              <p>
+                <em>Pros:</em> handles the long tail. Once you have years
+                of Gong calls and multi-quarter Catalyst notes, semantic
+                search is the only way to find what matters in a corpus
+                that big.
               </p>
               <p>
                 <em>Cons:</em> retrieval is fuzzy. The brief might miss a
                 specific fact (champion name, exact ARR) because the
-                embedding pulled adjacent content. For a brief where every
-                claim has to be cited, that's the wrong tradeoff today.
+                search returned something <em>similar</em> instead of the
+                exact value. For a brief where every claim has to be
+                cited, that's the wrong tradeoff today.
               </p>
-              <p>
-                Right answer for V3, not V1. V1 doesn't have the corpus
-                volume yet.
-              </p>
+              <p>Right answer for V3, not V1.</p>
               <p>
                 <b>
                   Option C: Read-layer with deterministic pre-fetch via MCP.
@@ -273,6 +275,30 @@ export function Writeup() {
                 to maintain. C trades flexibility for predictability —
                 exactly the trade you want when the product's job is making
                 confident, defensible claims.
+              </p>
+
+              <Subhead>A note on databases</Subhead>
+              <p>
+                V1 doesn't need one. The fact index is rebuilt per request
+                from the MCP layer; the corpus per brief is small and
+                bounded. V1.5 adds Postgres — but not as a vector DB. The
+                use case is the post-call feedback loop: every brief gets
+                logged, every call outcome gets logged (from Gong
+                transcripts, rep ratings, Salesforce stage changes), and
+                we compare what the brief predicted to what actually
+                happened. If the brief said "this is a consolidation
+                conversation" and the call turned out to be pricing
+                pushback, the brief was wrong about the read. That
+                mismatch is the signal. Skills that produce accurate reads
+                stay; skills that don't get revised. Plain SQL on
+                structured rows — no embeddings, no vectors, just the
+                audit log that lets the system learn.
+              </p>
+              <p>
+                V3 is when vectors come back, for the long tail: years of
+                Gong transcripts, cross-account patterns, "find me deals
+                where pricing pushback came up at demo stage." Different
+                problem, different tool.
               </p>
             </Section>
 
