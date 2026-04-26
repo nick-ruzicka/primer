@@ -1138,13 +1138,17 @@ async def validate_brief(
     # Apply decomposed scoring to each warning
     from .scorer import compute_warning_confidence
 
+    scorer_system = _system_prompt(
+        "You are a precise, impartial scoring assistant. "
+        "Respond only with a number 0.0-1.0 followed by a brief reason."
+    )
     fact_lookup = fact_book.lookup if fact_book is not None else None
     scored: list[dict[str, Any]] = []
     for w in clean:
         try:
             scored.append(
                 await compute_warning_confidence(
-                    w, fact_lookup, client, SETTINGS.validation_model
+                    w, fact_lookup, client, SETTINGS.validation_model, scorer_system
                 )
             )
         except Exception:  # noqa: BLE001
