@@ -650,16 +650,20 @@ export function Writeup() {
                 cite={3}
                 note={
                   <p>
-                    A single AE's salary is 20-30x the annual model spend.
-                    The model isn't the cost. What scales: source-system API
-                    costs (Gong and Catalyst charge per call) and the
-                    engineering time to keep the validator getting smarter.
+                    The combined GTM team's loaded comp dwarfs that by
+                    orders of magnitude. The model isn't the cost. What
+                    scales: per-call charges from source systems (Gong and
+                    Catalyst meter their APIs) and engineering time to
+                    keep skills, validators, and integrations current as
+                    the business and its data sources change.
                   </p>
                 }
               >
-                ~$0.06 per brief end-to-end. At Attentive scale (120 AEs ×
-                4 briefs/day × 250 days = 120K briefs/year), that's
-                ~$7K/year in Anthropic costs.
+                ~$0.06 per brief end-to-end. Back-of-envelope at Attentive
+                scale (~115 quota-carrying AEs plus a sizable CSM org,
+                call it ~3 briefs per rep per working day): roughly
+                100-200K briefs/year, roughly $6-12K/year in Anthropic
+                costs.
               </SlidePoint>
 
               <SlidePoint
