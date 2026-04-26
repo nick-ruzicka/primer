@@ -21,10 +21,7 @@ export type ViewMode = "split" | "workspace" | "reading" | "writeup";
 
 export type ConfidenceLevel = "very-likely" | "likely" | "rec" | "draft";
 
-// TODO: vocabulary is split — backend emits "warn", CSS class is
-// "watch", user-facing pill reads "WATCH". Standardize in a future
-// cleanup pass. Keeping "warn" here now to match runtime.
-export type Severity = "critical" | "warn";
+export type Severity = "critical" | "watch";
 
 export type IntelSectionId =
   | "relationship"
@@ -175,6 +172,19 @@ export interface ValidationWarning {
   message: string;
   brief_excerpt?: string;
   sources?: SourceId[];
+  // Decomposed confidence scoring (V1: threaded through but not yet rendered)
+  warning_confidence?: number;
+  scores?: {
+    citation_match: number;
+    source_appropriateness: number;
+    semantic_drift: number;
+    inference_legitimacy: number;
+  };
+  reasoning?: {
+    source_appropriateness: string;
+    semantic_drift: string;
+    inference_legitimacy: string;
+  };
 }
 
 export interface BriefSections {
