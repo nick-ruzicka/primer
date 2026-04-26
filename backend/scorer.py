@@ -150,9 +150,11 @@ async def _llm_score(
             create_kwargs["system"] = system_payload
         resp = await client.messages.create(**create_kwargs)
         text = resp.content[0].text.strip()
-        first_token, _, rest = text.partition(" ")
-        score = float(first_token)
-        return max(0.0, min(1.0, score)), rest.strip()
+        # Split on any whitespace (space or newline) to separate score from reason
+        parts = text.split(None, 1)
+        score = float(parts[0])
+        reason = parts[1].strip() if len(parts) > 1 else ""
+        return max(0.0, min(1.0, score)), reason
     except Exception:
         log.exception("scorer.llm_score_failed")
         return 0.5, "scoring unavailable"
