@@ -85,6 +85,12 @@ class Fact:
     data_as_of: str | None = None
     url: str | None = None               # surfaced only (in V1)
     meta: dict[str, Any] = _dc_field(default_factory=dict)
+    # Deterministic pointer to the matching intelligence-panel card. Set by
+    # build_context_blob via the (source, field) → intel_evid index built
+    # from shape_sections_for_frontend. None when no intel card matches —
+    # the citation chip still renders, the workspace verification mode just
+    # has nothing to highlight.
+    intel_evid: str | None = None
 
     @property
     def timestamp(self) -> str | None:
@@ -97,9 +103,21 @@ class FactBook:
     """Monotonic fact_id allocator. Each add() produces a single cited fact
     tagged with provenance metadata (spec §4.1)."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        intel_evid_index: dict[tuple[str, str], str] | None = None,
+    ) -> None:
         self._facts: list[Fact] = []
+        # Insertion-order list above is authoritative for to_raw_context()
+        # rendering and the monotonic-id contract; this dict is just a
+        # lookup index keyed by fact_id.
+        self._by_id: dict[int, Fact] = {}
         self._counter = 0
+        # When set, add() auto-populates fact.intel_evid by looking up
+        # (source, field) in this index. Lets every existing fb.add() call
+        # site stay unchanged while still emitting deterministic
+        # citation→intel pointers in the SSE source_cited payload.
+        self._intel_evid_index = intel_evid_index or {}
 
     def add(
         self,
@@ -117,8 +135,18 @@ class FactBook:
         data_as_of: str | None = None,
         url: str | None = None,
         meta: dict[str, Any] | None = None,
+        intel_evid: str | None = None,
     ) -> Fact:
         self._counter += 1
+        # If caller didn't pass an explicit intel_evid, look it up by
+        # (source, field) in the index seeded from the intel sections.
+        # The fact's source is the short id ("salesforce") but the index
+        # is keyed on the normalized id ("sf") to match what the frontend
+        # consumes — normalize before lookup.
+        if intel_evid is None and field is not None:
+            intel_evid = self._intel_evid_index.get(
+                (_normalize_source(source), field)
+            )
         fact = Fact(
             fact_id=self._counter,
             provenance=provenance,
@@ -134,15 +162,14 @@ class FactBook:
             url=url,
             text=text.strip(),
             meta=meta or {},
+            intel_evid=intel_evid,
         )
         self._facts.append(fact)
+        self._by_id[fact.fact_id] = fact
         return fact
 
     def lookup(self, fact_id: int) -> Fact | None:
-        for f in self._facts:
-            if f.fact_id == fact_id:
-                return f
-        return None
+        return self._by_id.get(fact_id)
 
     def all(self) -> list[Fact]:
         return list(self._facts)
@@ -175,9 +202,22 @@ def _fmt_pct(v: float | int | None) -> str:
     return f"{v:+.1f}%"
 
 
-def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str, FactBook]:
-    """Assemble the context blob + FactBook for the briefing agent."""
-    fb = FactBook()
+def build_context_blob(
+    account_id: str,
+    bundle: IntelligenceBundle,
+    intel_evid_index: dict[tuple[str, str], str] | None = None,
+) -> tuple[str, FactBook]:
+    """Assemble the context blob + FactBook for the briefing agent.
+
+    `intel_evid_index` is the (source, field) → intel_evid lookup built by
+    intelligence.build_intel_evid_index. When provided, every fact whose
+    (source, field) is in the index gets fact.intel_evid populated
+    automatically by FactBook.add(), so the source_cited SSE event can
+    carry a deterministic pointer to the matching intel card. Optional for
+    back-compat; absent → all facts emit intel_evid=None (frontend's
+    verification mode just doesn't highlight).
+    """
+    fb = FactBook(intel_evid_index=intel_evid_index)
 
     # ---- Salesforce: Account (all RAW) ----
     acc = bundle.salesforce.get("get_account")
@@ -739,7 +779,7 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
             if not snippet:
                 continue
             title = hit.get("title", "")
-            published = hit.get("published_at") or hit.get("date")
+            published = hit.get("signal_date") or hit.get("published_at") or hit.get("date")
             url = hit.get("url")
             fb.add(
                 provenance="surfaced",
@@ -764,7 +804,7 @@ def build_context_blob(account_id: str, bundle: IntelligenceBundle) -> tuple[str
                 continue
             author = hit.get("author", "")
             title = hit.get("title", "")
-            published = hit.get("published_at") or hit.get("date")
+            published = hit.get("signal_date") or hit.get("published_at") or hit.get("date")
             url = hit.get("url")
             module = f"{title} · {author}" if (title and author) else (title or author or "Web result")
             fb.add(
@@ -812,11 +852,29 @@ def get_client() -> AsyncAnthropic:
         return _client
 
     mode = _auth_mode()
-    if mode == "oauth":
-        # The SDK prefers api_key when both are set. Pass ``api_key=None`` and
-        # also scrub the env var so the client can't fall back to x-api-key.
-        import os as _os
+    # Why we mutate os.environ here (load-bearing, not paranoia):
+    #
+    # The Anthropic SDK unconditionally falls back to env at client init
+    # (anthropic/_client.py ~L96-98):
+    #     if auth_token is None:
+    #         auth_token = os.environ.get("ANTHROPIC_AUTH_TOKEN")
+    #     self.auth_token = auth_token
+    # Header construction then checks ``if auth_token is None`` rather than
+    # truthiness. python-dotenv exposes an unset/blank line as ``""``, which
+    # slips past the None check and produces a malformed
+    # ``Authorization: Bearer `` header that httpx rejects (the request
+    # never reaches Anthropic's auth check).
+    #
+    # Passing ``api_key=None`` / ``auth_token=None`` to the constructor
+    # is therefore not enough — the SDK overrides our explicit None with
+    # the empty string from env. Scrubbing the unused var here forces the
+    # SDK to use the credential we actually want.
+    #
+    # Remove this only if the SDK changes its fallback to coerce empty
+    # strings to None, or exposes a flag to disable env-fallback.
+    import os as _os
 
+    if mode == "oauth":
         _os.environ.pop("ANTHROPIC_API_KEY", None)
         _client = AsyncAnthropic(
             api_key=None,
@@ -826,12 +884,6 @@ def get_client() -> AsyncAnthropic:
         _using_oauth = True
         log.info("agent.client.init", extra={"mode": "oauth"})
     elif mode == "api_key":
-        # Symmetric to the oauth branch: scrub any stale auth_token from env
-        # so the SDK doesn't send ``Authorization: Bearer `` (empty) alongside
-        # the api_key. python-dotenv sets empty env vars to "", which the SDK
-        # reads as "auth_token is set" and produces a malformed header.
-        import os as _os
-
         _os.environ.pop("ANTHROPIC_AUTH_TOKEN", None)
         _client = AsyncAnthropic(
             api_key=SETTINGS.anthropic_api_key,
@@ -922,6 +974,11 @@ def _build_source_cited_payload(fact: Fact) -> dict[str, Any]:
         "time_ago": fact.time_ago,
         "url": fact.url,
         "evid": fact.text,  # stable id for citation chip ↔ reference lookup
+        # Deterministic pointer to the matching intelligence panel card
+        # (when one exists). Frontend Workspace verification mode uses this
+        # to scroll/highlight the card on citation click. Null for facts
+        # without a matching intel item (composite/aggregate items).
+        "intel_evid": fact.intel_evid,
     }
 
 
@@ -946,6 +1003,11 @@ async def stream_brief(
 
     accumulated = ""
     emitted_citations: set[int] = set()
+    # Position past which we've already scanned for citation markers. Advanced
+    # only past matches whose trailing digits are definitely complete (i.e.
+    # followed by at least one non-digit char), so an in-progress digit run
+    # like ``·1`` → ``·15`` across chunks still gets re-found correctly.
+    scan_pos = 0
     total_input_tokens = 0
     total_output_tokens = 0
 
@@ -991,30 +1053,31 @@ async def stream_brief(
             accumulated += delta
             yield BriefStreamEvent("brief_chunk", {"delta": delta})
 
-            # Look for citation markers in the running text. We only emit
-            # citations whose trailing digits are definitely complete, i.e.
-            # the number is followed by at least one non-digit character.
-            for match in _CITATION_RE.finditer(accumulated):
+            # Look for citation markers in the running text starting from
+            # scan_pos. We only emit citations whose trailing digits are
+            # definitely complete; the first incomplete match ends the loop
+            # and leaves scan_pos behind it for retry next chunk.
+            for match in _CITATION_RE.finditer(accumulated, scan_pos):
                 end = match.end()
                 if end >= len(accumulated):
-                    # digits might still be extending in the next chunk
-                    continue
+                    # digits might still be extending in the next chunk —
+                    # don't advance scan_pos past this position
+                    break
                 num = int(match.group(1))
-                if num in emitted_citations:
-                    continue
-                fact = fact_book.lookup(num)
-                if fact is None:
-                    log.warning(
-                        "agent.unknown_citation",
-                        extra={"account_id": account_id, "citation": num},
-                    )
+                if num not in emitted_citations:
                     emitted_citations.add(num)
-                    continue
-                emitted_citations.add(num)
-                yield BriefStreamEvent(
-                    "source_cited",
-                    _build_source_cited_payload(fact),
-                )
+                    fact = fact_book.lookup(num)
+                    if fact is None:
+                        log.warning(
+                            "agent.unknown_citation",
+                            extra={"account_id": account_id, "citation": num},
+                        )
+                    else:
+                        yield BriefStreamEvent(
+                            "source_cited",
+                            _build_source_cited_payload(fact),
+                        )
+                scan_pos = end
 
         final_message = await stream.get_final_message()
         total_input_tokens = final_message.usage.input_tokens

@@ -420,6 +420,13 @@ body {
     0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent),
     var(--shadow-md);
 }
+.intel-card.focused {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface-2));
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    var(--shadow-md);
+}
 .card-flag {
   display: inline-flex;
   align-items: center;
@@ -468,13 +475,13 @@ body {
 }
 .card-hero-number {
   font-family: var(--font-serif);
-  font-size: 40px;
+  font-size: 26px;
   font-weight: 500;
   color: var(--color-ink);
   letter-spacing: -0.02em;
-  line-height: 1.05;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 .card-hero-label {
   font-size: 10.5px;
@@ -637,4 +644,63 @@ body {
   position: relative;
   padding-left: 14px;
   border-left: 2px solid var(--color-warn-strong);
+}
+
+/* Hide scrollbars while preserving scroll. Used on the left rail and the
+   intelligence panel where the visible scrollbar competes with the dense
+   content for attention. Cross-browser: WebKit hides via shadow DOM, Firefox
+   via scrollbar-width, legacy IE/Edge via -ms-overflow-style. */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Question-list markers (spec §discovery-vs-talktrack):
+   Discovery uses a question-mark circle in accent (sales hypothesis-testing
+   tone); talk track uses a plain message bubble in muted ink (conversational
+   opener tone). Same list grid, different artifact at a glance. */
+.question-marker {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  margin-right: 7px;
+  opacity: 0.85;
+}
+.question-marker.discovery {
+  color: var(--color-accent);
+}
+.question-marker.talktrack {
+  color: var(--color-ink-3);
+}
+
+/* ---------- Writeup (Mode 4) scroll + typography ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+[data-section] {
+  scroll-margin-top: 80px;
+}
+
+.pull-quote {
+  opacity: 0;
+  transition: opacity 400ms ease-in;
+}
+.pull-quote.visible {
+  opacity: 1;
+}
+
+article b,
+article strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+article ul li {
+  line-height: 1.5;
 }

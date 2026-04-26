@@ -122,7 +122,7 @@ async def test_context_blob_has_monotonic_fact_ids(pool: MCPPool) -> None:
     for i, f in enumerate(facts, start=1):
         assert f.fact_id == i
     # Forecast disagreement should be two separate facts with different sources.
-    cat_forecast_facts = [f for f in facts if "Catalyst renewal forecast" in f.text]
+    cat_forecast_facts = [f for f in facts if "Catalyst renewal_forecast" in f.text]
     sf_renewal_facts = [f for f in facts if "Renewal FY27" in f.text]
     assert cat_forecast_facts and sf_renewal_facts
     assert cat_forecast_facts[0].source == "catalyst"

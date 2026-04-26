@@ -25,14 +25,18 @@ export function CitationChip({
   onClick,
 }: Props) {
   const src = citation?.source_system?.toLowerCase() ?? "internal";
-  const title = citation
-    ? `${citation.source_system ?? "unknown"} · ${citation.time_ago}`
-    : `Citation ${n} · loading…`;
+  // aria-label keeps screen-reader access; we deliberately don't set the
+  // native `title` attribute because the React CitationTooltip provides
+  // a richer hover preview, and the OS tooltip would render a clashing
+  // delayed bubble on top of it.
+  const ariaLabel = citation
+    ? `Citation ${n} from ${citation.source_system ?? "unknown source"}, ${citation.time_ago}`
+    : `Citation ${n}, loading`;
   return (
     <button
       type="button"
       className={cn("cite", `src-${src}`, hovered && "hot")}
-      title={title}
+      aria-label={ariaLabel}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}

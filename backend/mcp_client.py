@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import shutil
 import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
@@ -19,6 +20,20 @@ from mcp import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
 log = logging.getLogger(__name__)
+
+_SENSITIVE_KEYS = {"api_key", "password", "token", "auth_token", "secret"}
+
+
+def _redact(arguments: dict[str, Any]) -> dict[str, Any]:
+    """Redact known-sensitive values before logging tool arguments. DEBUG
+    logging of raw arguments is convenient, but a future tool that takes an
+    api_key parameter shouldn't leak it to the log file."""
+    if not arguments:
+        return arguments
+    return {
+        k: ("<redacted>" if k.lower() in _SENSITIVE_KEYS else v)
+        for k, v in arguments.items()
+    }
 
 
 MCP_MODULES: dict[str, str] = {
@@ -59,12 +74,21 @@ class MCPPool:
     async def connect_all(self) -> None:
         if self._started:
             return
+        # Resolve uv up front — if it's not on PATH (systemd env, stripped
+        # container, renamed) we want to fail loudly at startup, not silently
+        # when the first MCP server fails to spawn.
+        uv_path = shutil.which("uv")
+        if not uv_path:
+            raise RuntimeError(
+                "`uv` not found on PATH; required to spawn MCP servers. "
+                "Check the service's Environment=PATH or install uv."
+            )
         await self._stack.__aenter__()
         try:
             for name, module in MCP_MODULES.items():
                 t0 = time.perf_counter()
                 params = StdioServerParameters(
-                    command="uv",
+                    command=uv_path,
                     args=["run", "python", "-m", module],
                 )
                 read, write = await self._stack.enter_async_context(stdio_client(params))
@@ -137,7 +161,7 @@ class MCPPool:
             extra={
                 "server": server,
                 "tool": tool,
-                "args": arguments,
+                "args": _redact(arguments),
                 "duration_ms": duration_ms,
             },
         )

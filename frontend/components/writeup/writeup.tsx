@@ -1,912 +1,994 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { AlignJustify, ChevronDown, FileText, Mail, Package, Rocket } from "lucide-react";
+import { WriteupToc } from "./writeup-toc";
 
-/**
- * Mode 4 · Writeup — full v3 content from specs/08_WRITEUP_MODE4_DRAFT.md.
- * Slide-style: each section renders a Fraunces claim header, a larger-body
- * subthesis, bullet evidence, optional "What I considered / rejected" block,
- * and a collapsible Speaker notes <details>. Visual-moment placeholders
- * appear where the spec flagged screenshots/diagrams for later.
- */
+const TOC_SECTIONS = [
+  { id: "top", number: "", title: "Top" },
+  { id: "problem", number: "01", title: "The problem we're actually solving" },
+  { id: "what-built", number: "02", title: "What I built" },
+  { id: "architectures", number: "03", title: "Three architectures I considered" },
+  { id: "decisions", number: "04", title: "The architecture in four decisions" },
+  { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer" },
+  { id: "tradeoffs", number: "06", title: "Tradeoffs" },
+  { id: "scaling", number: "07", title: "What scaling this would surface" },
+  { id: "plan", number: "08", title: "The 90-day plan if I joined " },
+  { id: "how-built", number: "09", title: "How I built this" },
+  { id: "closing", number: "", title: "Closing" },
+];
+
 export function Writeup() {
+  const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
+  const [activeSection, setActiveSection] = useState("top");
+  const [tocOpen, setTocOpen] = useState(false);
+
+  // Track active ToC item on scroll
+  useEffect(() => {
+    if (!scrollEl) return;
+    const update = () => {
+      const sections = Array.from(scrollEl.querySelectorAll<HTMLElement>("[data-section]"));
+      let active = "top";
+      const base = scrollEl.getBoundingClientRect().top;
+      for (const el of sections) {
+        if (el.getBoundingClientRect().top - base < 100) active = el.id;
+      }
+      setActiveSection(active);
+    };
+    scrollEl.addEventListener("scroll", update, { passive: true });
+    update();
+    return () => scrollEl.removeEventListener("scroll", update);
+  }, [scrollEl]);
+
+  // Fade-in for pull quotes on scroll into view
+  useEffect(() => {
+    if (!scrollEl) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("visible");
+            observer.unobserve(e.target);
+          }
+        });
+      },
+      { root: scrollEl, threshold: 0.15 },
+    );
+    scrollEl.querySelectorAll(".pull-quote").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [scrollEl]);
+
   return (
-    <div className="flex-1 overflow-y-auto bg-bg">
-      <article className="mx-auto max-w-[720px] px-8 pb-24">
-        <Hero />
+    <div className="w-full overflow-y-auto bg-bg" ref={setScrollEl}>
+      {/* Floating ToC button — narrow viewports only */}
+      <button
+        className="xl:hidden fixed bottom-6 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 text-ink-3 shadow-md transition-colors hover:text-ink"
+        onClick={() => setTocOpen(true)}
+        aria-label="Open table of contents"
+      >
+        <AlignJustify size={16} />
+      </button>
 
-        <WriteupSection
-          number="02"
-          claim="The problem we're actually solving"
-          subthesis="Account executives don't have a dashboards problem. They have a synthesis problem."
-        >
-          <p>
-            Six source systems can agree on forty facts and still fail to tell
-            you what the call is about. The gap between <em>fact</em> and{" "}
-            <em>read</em> is where reps lose an hour a day, and where one-off
-            prep guides stop working.
-          </p>
-          <BulletList>
-            <li>
-              A rep has Salesforce open, Gong tabs, Catalyst dashboard, NetSuite
-              finance view, Snowflake usage reports, and a LinkedIn window. Each
-              one has signal. None has synthesis.
-            </li>
-            <li>
-              The hour of prep before a call is spent assembling a story — and
-              that assembly is where value gets created <em>and</em> where
-              mistakes get made, because it happens under time pressure with
-              incomplete recall.
-            </li>
-            <li>
-              Making the dashboards prettier doesn't help. Making a chat
-              interface that answers questions doesn't help — the rep doesn't
-              know what to ask. What helps is a tool that takes a position.
-            </li>
-          </BulletList>
-          <SpeakerNotes>
-            <p>
-              The industry default is more dashboards, more panels, more tabs.
-              Every CRM and revenue intelligence product I've looked at treats
-              the AE as an analyst: give them more data, they'll figure it out.
-              This is wrong at the first-principles level. The rep isn't short
-              on data; the rep is short on time to synthesize it.
-            </p>
-            <p>
-              Primer inverts the relationship. The tool does the synthesis; the
-              rep verifies it. A rep can read three paragraphs and know what the
-              call is about. Everything else on the screen — the flagged
-              intelligence cards, the portfolio comparisons, the
-              competitor-mention counts — is evidence the rep can dip into when
-              they want to verify a claim or look past the read.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+      {/* ToC slide-out drawer — narrow viewports only */}
+      {tocOpen && (
+        <div className="xl:hidden fixed inset-0 z-40" role="dialog" aria-modal>
+          <div className="absolute inset-0 bg-ink/20" onClick={() => setTocOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-[280px] overflow-y-auto border-r border-line bg-surface p-6 shadow-md">
+            <div className="mb-6 flex items-center justify-between">
+              <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
+                Contents
+              </span>
+              <button
+                onClick={() => setTocOpen(false)}
+                className="text-ink-3 hover:text-ink"
+                aria-label="Close"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <WriteupToc
+              sections={TOC_SECTIONS}
+              activeId={activeSection}
+              onNavigate={() => setTocOpen(false)}
+            />
+          </div>
+        </div>
+      )}
 
-        <WriteupSection
-          number="03"
-          claim="What I built (and what I considered building)"
-          subthesis="Three interaction modes for three moments in the rep's workflow, all delivering one opinionated brief."
-        >
-          <p>
-            One briefing per account. Four sections:{" "}
-            <em>
-              The read · Why this read · What to do on the call · Suggested talk
-              track.
-            </em>
-          </p>
-          <BulletList>
-            <li>
-              <b>Reading mode</b> — 60-second scan before the call. Opinionated
-              prose with inline source citations and section-level confidence
-              hedges.
-            </li>
-            <li>
-              <b>Prep mode</b> — deeper exploration, an hour before or mid-week.
-              Brief compresses to a nav strip; Account Intelligence takes the
-              foreground.
-            </li>
-            <li>
-              <b>Split mode</b> — live during the call. Brief on one side,
-              Account Intelligence on the other. Click a citation in the brief
-              to jump to the supporting row.
-            </li>
-            <li>
-              <b>Mode 4 is this writeup.</b> The prototype and the thinking in
-              one link.
-            </li>
-          </BulletList>
-          <RejectedBlock>
-            <li>
-              <b>Chat interface.</b> Every AI-in-GTM tool today defaults to
-              chat. For pre-call prep it's the wrong pattern — the rep doesn't
-              know what to ask. Writing first, letting the rep click for depth,
-              is higher-leverage per rep-minute.
-            </li>
-            <li>
-              <b>Dashboard with AI summary on top.</b> Concentrates manual work
-              in one tab instead of five. Rep still has to synthesize. Doesn't
-              solve the hour of prep.
-            </li>
-            <li>
-              <b>Slack bot.</b> Useful for notifications but wrong for prep —
-              the rep needs to read and navigate, not skim a thread.
-            </li>
-            <li>
-              <b>Chrome extension layered on Salesforce/Gong.</b> Meets reps
-              where they are, but inherits their UI constraints. Standalone app
-              gives more design freedom in the 48-hour window.
-            </li>
-          </RejectedBlock>
-          <StretchBlock>
-            <li>
-              <b>
-                Revenue by product, cross-referenced with health by product.
-              </b>{" "}
-              You see ARR and pipeline separately. You don't see "paying $X for
-              Flows Pro, running at health 82 — paying $Y for Journeys, running
-              at 61." The next skill I'd author. The data is already in the
-              pre-fetch context.
-            </li>
-            <li>
-              <b>Longitudinal account trend analysis.</b> Primer sees the
-              current health score and the previous value. It doesn't see the
-              six-month shape. Needs historical snapshots of Catalyst data, not
-              an architecture change.
-            </li>
-            <li>
-              <b>Outbound scoring for prospects.</b> This portfolio piece was scoped to
-              existing customers. The same architecture extends cleanly to
-              outbound — different signals (funding rounds, hiring,
-              technographic gaps, intent data), different skill file, same MCP
-              reads plus Exa, Crunchbase, Harmonic layered in. I've shipped this
-              pattern before at Linera (+18% SQLs from a signal engine), and
-              it's the obvious adjacent artifact for Primer.
-            </li>
-          </StretchBlock>
-          <p>
-            The three-mode design emerged from the observation that reps use
-            prep tools in genuinely different states. A "one-size layout"
-            product forces the rep to adapt; Primer's modes are designed around
-            the moment.
-          </p>
-          <SpeakerNotes>
-            <p>
-              The three modes aren't cosmetic. They're three distinct rep
-              states. The keyboard shortcuts (<Mono>1</Mono>/<Mono>2</Mono>/
-              <Mono>3</Mono>/<Mono>4</Mono>) make mode-switching cost-free, so
-              the rep can fluidly move between scanning and verifying during a
-              call.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+      <div className="xl:grid xl:grid-cols-[220px_minmax(0,1fr)]">
+          {/* Left col: sticky ToC */}
+          <aside className="hidden xl:block">
+            <div className="sticky top-0 pl-4 pr-6 pt-16">
+              <WriteupToc sections={TOC_SECTIONS} activeId={activeSection} />
+            </div>
+          </aside>
 
-        <WriteupSection
-          number="04"
-          claim="The core architectural decision: a read layer, not a write layer"
-          subthesis="Primer never mutates upstream data. Six MCP servers wrap existing APIs, reason across them, write a brief. Nothing writes back."
-        >
-          <p>
-            The prompt names a RevTech team that owns Salesforce architecture
-            and long-term systems strategy. They have a unified data layer on
-            the roadmap. This is the single most important constraint in the
-            brief, and it shaped everything downstream.
-          </p>
-          <BulletList>
-            <li>
-              <b>Read-only architecture</b> means Primer sits on top of what
-              RevTech already owns and never competes with it.
-            </li>
-            <li>
-              <b>
-                When RevTech ships their unified layer, MCP servers repoint.
-              </b>{" "}
-              The agent doesn't change. The interface doesn't change. The skill
-              library doesn't change. Primer is designed as a migration target
-              for their work, not a migration blocker.
-            </li>
-            <li>
-              <b>Drafted actions, not direct mutations.</b> Email follow-ups,
-              proposed SFDC field updates, Slack posts to deal channels are
-              generated as proposals for the rep to approve and send themselves.
-              The rep is the actor; the agent is the analyst.
-            </li>
-          </BulletList>
-          <VisualMoment caption="Architecture sketch: read-layer over existing APIs, repointable to RevTech's unified layer when it ships." />
-          <SpeakerNotes>
-            <p>
-              The temptation with any new GTM tool is to build it as a
-              replacement — a new CRM, a new system of record. That path
-              competes with RevTech's roadmap, requires migration, and creates
-              political friction. Primer's architecture assumes the existing
-              stack stays; value is added via intelligent reading, not by
-              rebuilding what works.
-            </p>
-            <p>
-              The MCP protocol is the right abstraction here. Each source system
-              gets a server that exposes read-only tools. If  swaps
-              Catalyst for Gainsight tomorrow, we swap the Catalyst MCP server.
-              If RevTech ships the unified layer in 18 months, we point the
-              servers at the new endpoints. The rest of the system is invariant.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+          {/* Right col: content — no max-width, fills available space */}
+          <article className="w-full px-10 py-16 sm:px-14 xl:px-20 sm:py-20">
+            <Hero />
 
-        <WriteupSection
-          number="05"
-          claim="Three ways this could have been built — and why I chose this one"
-          subthesis="Given the RevTech constraint, there were three plausible architectures. Each has a specific failure mode."
-        >
-          <OptionBlock letter="A" title="Salesforce-native">
-            Build Primer as a Lightning panel inside Salesforce. <b>Pros:</b>{" "}
-            reps already live there; leverages existing auth; feels integrated.{" "}
-            <b>Cons:</b> requires Apex and Lightning Web Component development;
-            inherits Salesforce's UI constraints; directly overlaps RevTech's
-            ownership; locks the product to one CRM forever.
-          </OptionBlock>
-          <OptionBlock letter="B" title="Build on RevTech's future data layer">
-            Wait for their unified customer data roadmap, build Primer on top of
-            it. <b>Pros:</b> single source of truth; clean architecture; aligns
-            with their strategy. <b>Cons:</b> 12-18 month wait before AEs see
-            any value; Primer becomes a downstream dependency of a roadmap I
-            don't own; no shipping learnings during the wait.
-          </OptionBlock>
-          <OptionBlock letter="C" title="Adjacent read-layer (chosen)" chosen>
-            Six MCP servers sitting on top of existing APIs, a standalone web
-            app, designed to repoint at the unified layer when it ships.{" "}
-            <b>Pros:</b> RevTech-independent; ships in 48 hours; AEs get value
-            immediately; seamless upgrade path. <b>Cons:</b> temporarily
-            duplicates some data access; staleness management needs to be
-            explicit.
-          </OptionBlock>
-          <h3 className="mt-7 mb-2 font-serif text-[18px] font-medium text-ink">
-            Why Option C wins for this problem:
-          </h3>
-          <BulletList>
-            <li>
-              It's the only option that delivers value within the 30-day window
-              the prompt asked for.
-            </li>
-            <li>
-              It's the only option that doesn't create RevTech coordination
-              overhead.
-            </li>
-            <li>
-              The tradeoff — temporary data duplication — is managed with
-              explicit staleness indicators on every cached fact. The rep always
-              knows when data is fresh vs. 15 minutes old.
-            </li>
-            <li>
-              When RevTech's layer ships, migration is a configuration change,
-              not a rewrite.
-            </li>
-          </BulletList>
-          <SpeakerNotes>
-            <p>
-              This is the question that most separates a junior GTM Engineer
-              from a senior one. The junior engineer picks the architecture
-              that's "most correct" in isolation. The senior engineer picks the
-              architecture that works inside the organization — respecting
-              existing ownership, avoiding political friction, delivering value
-              on the team's timeline, and leaving room for the right long-term
-              architecture to emerge.
-            </p>
-            <p>
-              Option C reads as pragmatic rather than elegant. That's the point.
-              Elegance that requires organizational change is harder to ship
-              than pragmatism that preserves it.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+            <TldrPanel />
 
-        <WriteupSection
-          number="06"
-          claim="The brief takes a position"
-          subthesis="An opinionated brief does the synthesis for the rep. A dashboard concentrates manual work in one tab instead of five."
-        >
-          <BulletList>
-            <li>
-              For Northstar Beauty, the brief opens:{" "}
-              <em>"Renewal on paper — trust-repair underneath."</em>
-            </li>
-            <li>
-              For a healthy expansion account, the brief would open completely
-              differently — same system, same architecture, different read.
-            </li>
-            <li>The rep walks in knowing the posture, not juggling signals.</li>
-            <li>
-              Comes with real risk: an opinionated product can be wrong. That's
-              why the architecture below matters.
-            </li>
-          </BulletList>
-          <RejectedBlock>
-            <li>
-              <b>Neutral summary product.</b> Lower risk, lower value. A neutral
-              summary requires the rep to form the opinion themselves — which is
-              exactly the synthesis work Primer is trying to remove.
-            </li>
-            <li>
-              <b>Confidence-weighted claims with no position.</b> Hedging every
-              sentence makes the brief unreadable as prose and doesn't actually
-              help the rep. Better to take a position and ground every claim
-              than to hedge everything.
-            </li>
-          </RejectedBlock>
-          <p>
-            The product's value per minute of rep time is proportional to how
-            much synthesis it does. An opinionated brief delivers 100%
-            synthesis. A dashboard delivers ~20%. The gap between them is the
-            product.
-          </p>
-        </WriteupSection>
+            <Section id="problem" number="01" claim="The problem we're actually solving">
+              <p>
+                A rep walks into a customer call with six tabs open: Salesforce,
+                Gong, Catalyst, NetSuite, Snowflake, LinkedIn. Each has signal.
+                None tells you what the call is about.
+              </p>
+              <p>The hour of prep is spent assembling a story:</p>
+              <BulletList>
+                <li>What state is this account actually in?</li>
+                <li>Who's the new decision-maker?</li>
+                <li>What did we agree to last quarter and never follow up on?</li>
+                <li>Renewal, trust-repair, or expansion?</li>
+              </BulletList>
+              <p>
+                The assembly happens in the rep's head, under time pressure, with
+                incomplete recall. That's where deals get lost.
+              </p>
+              <PullQuote>
+                AEs don't have a dashboards problem. They have a synthesis problem.
+              </PullQuote>
+              <p>
+                Primer takes a position. Every claim grounded in a source. Every
+                claim it can't ground, it refuses to make.
+              </p>
+            </Section>
 
-        <WriteupSection
-          number="07"
-          claim="Deterministic vs. probabilistic — load-bearing but invisible"
-          subthesis="Every piece of content is either a fact from a source system or an inference from the agent. The distinction drives how the product handles trust."
-        >
-          <BulletList>
-            <li>
-              Facts carry inline source chips (<Mono>·N</Mono>). Inferences use
-              hedged voice:{" "}
-              <em>
-                "this suggests," "reads less like X and more like Y," "likely."
-              </em>
-            </li>
-            <li>
-              Section confidence is expressed in words, not numbers:{" "}
-              <em>
-                "— very likely," "— likely," "— agent recommendation," "—
-                draft."
-              </em>
-            </li>
-            <li>
-              The rep never sees the words "deterministic" or "probabilistic."
-              The pattern is encoded in typography and language, not labels.
-            </li>
-            <li>
-              A careful reader picks up the rule: cited claims are facts, hedged
-              claims are inferences, and the brief refuses to state things it
-              can't ground.
-            </li>
-          </BulletList>
-          <VisualMoment caption="Side-by-side — the same sentence, one with a source chip, one in hedged voice." />
-          <SpeakerNotes>
-            <p>
-              An AI summary tool blurs fact and inference into a single
-              confident paragraph. A briefing product distinguishes them so the
-              rep knows what they can cite on the call and what they need to
-              verify first. This distinction is the most important design
-              decision in the product — it's what separates "useful prep" from
-              "a summary I can't trust."
-            </p>
-            <p>
-              The rep doesn't need to learn architecture. They learn by use:
-              after a few briefs, the pattern is natural. Cited is verified;
-              hedged is my judgment call to make.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+            <Section id="what-built" number="02" claim="What I built">
+              <p>Two terms before anything else:</p>
+              <BulletList>
+                <li>
+                  <b>Artifact:</b> whatever Primer produces for a rep. Today: the
+                  pre-call brief. Tomorrow: post-call summaries, drafted outreach,
+                  renewal risk alerts.
+                </li>
+                <li>
+                  <b>Skill file:</b> a markdown document that defines an artifact.
+                  What data to pull, how to structure it, what voice to write in,
+                  what rules it must follow.
+                </li>
+              </BulletList>
+              <p>
+                <b>Today's artifact: the pre-call brief.</b> A single-page web app
+                with four modes (Reading, Workspace, Split, Writeup), all rendering
+                one brief per account.
+              </p>
+              <p>The brief itself has five sections:</p>
+              <BulletList>
+                <li>
+                  <b>The read.</b> What's the call about, in one paragraph.
+                </li>
+                <li>
+                  <b>Why this read.</b> The evidence behind it.
+                </li>
+                <li>
+                  <b>What to do on the call.</b> Specific actions.
+                </li>
+                <li>
+                  <b>Discovery questions.</b> Three to five questions tied to the
+                  read. Sales runs on questions.
+                </li>
+                <li>
+                  <b>Suggested talk track.</b> Language to actually use.
+                </li>
+              </BulletList>
+              <p>
+                At production, the brief also surfaces{" "}
+                <b>revenue × health by product</b> ("paying $X for Flows Pro at
+                health 82, $Y for Journeys at 61") so the rep sees combined
+                value-and-risk per line, not separately.
+              </p>
+              <p>
+                <b>Stretch goals I scoped out:</b>
+              </p>
+              <BulletList>
+                <li>
+                  <b>Calendar-aware brief generation.</b> Wire Google Calendar /
+                  Outlook. Brief auto-generates 30 minutes before a customer call.
+                </li>
+                <li>
+                  <b>Slack as a distribution surface.</b>{" "}
+                  <Mono>/primer [account]</Mono> slash command, or auto-post briefs
+                  into deal channels on calendar trigger.
+                </li>
+                <li>
+                  <b>Mobile read view.</b> Brief renders cleanly on phone for the
+                  rep checking it in the Uber to the meeting.
+                </li>
+                <li>
+                  <b>Email digest.</b> Daily morning summary of upcoming calls and
+                  their briefs, in the inbox.
+                </li>
+                <li>
+                  <b>Pipeline ops uptime monitoring.</b> Health-check dashboard for
+                  the MCP servers. Alerts when a connector starts failing silently.
+                </li>
+                <li>
+                  <b>User analytics tracking.</b> Per-rep usage dashboard: which
+                  briefs got opened, time-on-page, edit patterns,
+                  helpful/not-helpful rates.
+                </li>
+              </BulletList>
+            </Section>
 
-        <WriteupSection
-          number="08"
-          claim="Hallucination guardrails are architectural, not prompted"
-          subthesis="The failure mode that kills trust in tools like this is confident wrong answers. We prevent them at the rendering layer, not the prompt."
-        >
-          <BulletList>
-            <li>
-              <b>Structured output</b> — every claim the agent makes is tied to
-              a specific <Mono>fact_id</Mono> in the pre-fetched context.
-              Citations aren't generated; they reference a pre-built fact index.
-            </li>
-            <li>
-              <b>Validation agent</b> — a second Claude pass reads the generated
-              brief against the raw tool outputs and flags contradictions{" "}
-              <em>before</em> render. Source contradictions, unsupported claims,
-              stale data — all surfaced as warnings at the top of the brief.
-            </li>
-            <li>
-              <b>Refusal over inference</b> — when a source is missing or
-              unreachable, the system says so explicitly rather than inventing a
-              plausible value.
-            </li>
-            <li>
-              <b>Staleness indicators</b> — every cached fact shows its age. The
-              rep knows when they're looking at 2-minute-old data vs. 2-day-old
-              data.
-            </li>
-          </BulletList>
-          <RejectedBlock>
-            <li>
-              <b>Prompt-based hallucination controls</b> ("be careful," "cite
-              your sources," "don't make things up"). Fragile. Work in 95% of
-              cases and fail in the 5% that matter most.
-            </li>
-            <li>
-              <b>Output parsing with regex rule checks.</b> Catches shape but
-              not semantic contradictions. A regex can confirm a <Mono>·N</Mono>{" "}
-              citation exists; it can't confirm the claim matches the underlying
-              fact.
-            </li>
-            <li>
-              <b>No validation layer.</b> The common industry choice. Works
-              until it doesn't, and then it breaks trust catastrophically.
-            </li>
-          </RejectedBlock>
-          <VisualMoment caption="Screenshot of the validation warning banner from Northstar Beauty — the 'Forecast vs. evidence conflict' one." />
-          <SpeakerNotes>
-            <p>
-              The validation agent is where architectural discipline becomes
-              automatic. For Northstar Beauty it flags the Salesforce-Commit vs.
-              Catalyst-Best-Case contradiction — exactly the disagreement a
-              careful AE would notice when cross-referencing systems, surfaced
-              automatically before the rep even reads the brief.
-            </p>
-            <p>
-              Prompt-based controls are discouragement. Architectural controls
-              are enforcement. They're different things, and the difference
-              matters when you're asking a rep to walk into a call and cite what
-              the product said.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+            <Section id="architectures" number="03" claim="Three architectures I considered">
+              <p>
+                <b>Option A: Salesforce-native (Lightning panel + Agentforce).</b>
+              </p>
+              <BulletList>
+                <li>Build inside Salesforce. Use Agentforce for synthesis.</li>
+                <li>
+                  <em>Pros:</em> meets reps where they live, leverages existing
+                  licenses.
+                </li>
+                <li>
+                  <em>Cons:</em> Salesforce can only synthesize what Salesforce can
+                  see. Catalyst, Snowflake usage, NetSuite, Slack, external signals
+                  all live outside.
+                </li>
+              </BulletList>
+              <p>
+                <b>Option B: Vector DB / RAG layer.</b>
+              </p>
+              <BulletList>
+                <li>
+                  Embed every fact and document into a vector store. Retrieve
+                  relevant chunks per brief via semantic search.
+                </li>
+                <li>
+                  <em>Embeddings:</em> vector representations of unstructured text
+                  that allow semantic retrieval. "Find notes about pricing
+                  pushback" works even if no note literally says those words.
+                </li>
+                <li>
+                  <em>Vector DB:</em> where embeddings live (Pinecone, Weaviate,
+                  pgvector).
+                </li>
+                <li>
+                  <em>Cons:</em> retrieval is lossy. Hard to guarantee a specific
+                  fact (champion name, exact ARR) makes it into context. Hybrid
+                  keyword + semantic search reduces some failure modes (Dispatch
+                  ran this way), but the hallucination risk compounds with corpus
+                  size.
+                </li>
+              </BulletList>
+              <p>
+                <b>
+                  Option C: Read-layer with deterministic pre-fetch via MCP.
+                </b>{" "}
+                ← chosen
+              </p>
+              <BulletList>
+                <li>
+                  Pre-fetch every value through MCP servers. Bundle into a fact
+                  index with unique IDs. Citations point at specific{" "}
+                  <Mono>fact_id</Mono>s.
+                </li>
+                <li>
+                  <em>Pros:</em> every fact is structurally addressable. Citations
+                  can't hallucinate. No shadow database.
+                </li>
+              </BulletList>
+              <p>
+                C trades flexibility for predictability. Exactly the trade you want
+                when the product's job is making confident, defensible claims.
+              </p>
+            </Section>
 
-        <WriteupSection
-          number="09"
-          claim="Skills as the playbook layer"
-          subthesis="The AI is the rendering engine. Skills are the intellectual property."
-        >
-          <p>
-            Today, Primer generates pre-call briefs using one skill file. A
-            skill encodes what an artifact is — what data to pre-fetch, how to
-            structure the output, what voice to write in, what rules it must
-            follow. Every artifact the system produces is defined by a skill.
-          </p>
-          <p>This matters because it flips the product:</p>
-          <BulletList>
-            <li>Without skills, Primer is "an AI that generates briefs."</li>
-            <li>
-              With skills, Primer is{" "}
-              <b>
-                "a system for capturing and operationalizing GTM knowledge, with
-                briefs as the first visible artifact."
-              </b>
-            </li>
-            <li>
-              The AI rendering layer is replaceable. The skill library
-              accumulates. It's what compounds.
-            </li>
-          </BulletList>
+            <Section id="decisions" number="04" claim="The architecture in four decisions">
+              <Subhead>1. Read-only, not write-back</Subhead>
+              <BulletList>
+                <li>Six MCP servers read. Primer never writes back.</li>
+                <li>Drafted actions for the rep to approve and send themselves.</li>
+                <li>
+                  When RevTech's unified data layer ships, MCP servers repoint.
+                </li>
+              </BulletList>
 
-          <h3 className="mt-7 mb-2 font-serif text-[18px] font-medium text-ink">
-            Skills are hierarchical:
-          </h3>
-          <BulletList>
-            <li>
-              A <b>master skill</b> defines the constitution every brief must
-              follow: citation discipline, voice hedging, confidence expression,
-              refusal rules, forbidden phrases. Every other skill inherits from
-              it. The validation agent reads the master and checks every brief
-              against it — that's how the deterministic/probabilistic discipline
-              becomes automatic across the library.
-            </li>
-            <li>
-              <b>Artifact skills</b> define specific artifact types: pre-call
-              brief, QBR prep, renewal risk alert, drafted follow-up.
-            </li>
-            <li>
-              <b>Variants</b> handle account state: healthy renewal vs. at-risk
-              vs. new-business discovery. Rule-based routing over deterministic
-              account metadata — no Claude classifier in the routing layer, no
-              hallucinations in routing.
-            </li>
-          </BulletList>
+              <Subhead>2. Pre-fetch, not agentic loop</Subhead>
+              <BulletList>
+                <li>
+                  An <em>agentic loop</em> is when the model decides what to do
+                  next on each step (call this tool, then that one, then
+                  synthesize). Pre-fetch is the opposite: pull everything first,
+                  reason once.
+                </li>
+                <li>
+                  Pre-fetch wins for one artifact with a known shape. Latency
+                  bounded, cost fixed per brief.
+                </li>
+                <li>
+                  Agentic loops are right when artifacts multiply and the model has
+                  to decide which tools to call.
+                </li>
+              </BulletList>
 
-          <h3 className="mt-7 mb-2 font-serif text-[18px] font-medium text-ink">
-            In production, skills become an editable layer inside the app:
-          </h3>
-          <BulletList>
-            <li>
-              RevOps and Enablement leads author and tune skills without filing
-              engineering tickets.
-            </li>
-            <li>
-              Preview mode shows what a skill change would do — before-vs-after
-              briefs on a test account, side by side.
-            </li>
-            <li>Version history and rollback for every edit.</li>
-            <li>
-              Reps see which skill generated a given brief (small affordance),
-              but editing is admin-only. Exposing skill machinery to reps would
-              break the magic; reps just see the brief.
-            </li>
-          </BulletList>
+              <Subhead>3. Skills are the playbook layer</Subhead>
+              <p>
+                Skills are organized as a hierarchy. A constitutional{" "}
+                <b>master skill</b> sets the universal rules.{" "}
+                <b>Artifact-type skills</b> define shape (the pre-call brief always
+                has these five sections, the same data sources, the same voice).{" "}
+                <b>Variant skills</b> under each type adjust content per situation.
+              </p>
+              <p>Take the master skill rules. They read like laws:</p>
+              <RuleQuote>
+                <p>Never claim something you can't cite.</p>
+                <p>
+                  Never write "the customer is happy" when the data only says
+                  "health score is 72."
+                </p>
+                <p>
+                  When the rep asks who the champion is and three sources disagree,
+                  show all three. Don't pick.
+                </p>
+              </RuleQuote>
+              <p>
+                Take a variant. The renewal-call brief variant adds rules like{" "}
+                <em>"open with renewal posture in the first sentence"</em> and{" "}
+                <em>"flag any unresolved billing items in 'what to do.'"</em> The
+                discovery-call variant says{" "}
+                <em>
+                  "open with what we know about the prospect's stated pain"
+                </em>{" "}
+                and{" "}
+                <em>
+                  "the talk track section should focus on credibility, not
+                  features."
+                </em>
+              </p>
+              <p>
+                Same shape. Different content. Variants are where the playbook
+                actually lives.
+              </p>
+              <p>
+                Skills anchor the LLM to business context. They're permanent
+                knowledge structures: how a brief should read, when to escalate,
+                what "expansion-ready" looks like at this company. The LLM is the
+                rendering engine. Skills are how it learns the business.
+              </p>
 
-          <h3 className="mt-7 mb-2 font-serif text-[18px] font-medium text-ink">
-            The library improves via three feedback signals:
-          </h3>
-          <BulletList>
-            <li>
-              <b>AI-judged A/B.</b> When a skill update is proposed, a judge
-              agent compares before-vs-after briefs across seeded test accounts.
-              Regressions never ship; improvements get flagged for human review.
-            </li>
-            <li>
-              <b>Explicit rep signal.</b> A thumbs-up/down on each brief.
-              Low-friction but requires engagement.
-            </li>
-            <li>
-              <b>Implicit rep behavior.</b> Edit distance on the talk track.
-              Regeneration requests. Mode switches to Prep (signal: rep didn't
-              trust the read). Honest even when reps are rushed.
-            </li>
-            <li>
-              Composite score across all three decides whether an updated skill
-              gets promoted.
-            </li>
-          </BulletList>
+              <Subhead>4. The validator agent</Subhead>
+              <p>
+                The validator's job is being truthful. Three layered defenses:
+              </p>
+              <p>
+                <b>Structured output via fact_ids.</b> Every value gets a unique ID
+                before the LLM runs:
+              </p>
+              <CodeBlock>
+{`fact_id: 16
+source_system: catalyst
+field: relationship_score
+value: 61
+data_as_of: 2026-04-23`}
+              </CodeBlock>
+              <p>
+                The LLM writes claims that reference the fact:{" "}
+                <em>"Health dropped from 74 to 61 ·16."</em> The agent can only
+                cite things in the index.
+              </p>
+              <PullQuote>Hallucinated citations become structurally impossible.</PullQuote>
+              <p>
+                <b>Validator agent.</b> A second model (Claude Haiku) reads the
+                brief against source data. It's picky on purpose.
+              </p>
+              <p>Real catch from testing:</p>
+              <ExampleQuote>
+                <p>
+                  <em>Brief tried to write:</em> "Adoption dropped 17% in 90
+                  days"
+                </p>
+                <p>
+                  <em>Cited <Mono>fact_id</Mono> 41:</em> health_delta of −13
+                  (not 17%)
+                </p>
+                <p>
+                  <em>Cited <Mono>fact_id</Mono> 40:</em> sends_trend_pct of
+                  −18% (not adoption)
+                </p>
+                <p>
+                  <em>Validator's response:</em> you took two different metrics
+                  from two different sources and mashed them into one made-up
+                  number. <Mono>fact_id</Mono> 41 says health dropped 13
+                  points. <Mono>fact_id</Mono> 40 says sends are down 18%.
+                  Neither says "adoption dropped 17%." Pick which one you
+                  mean.
+                </p>
+              </ExampleQuote>
+              <p>The brief invented a percentage. The validator caught the math.</p>
+              <p>
+                <b>Refusal rules.</b> When the brief can't ground a claim, it
+                refuses. "No data on this" beats "made-up specifics" on trust.
+              </p>
+              <VisualMarker src="/images/writeup/validator-warnings.png">
+                Three real catches the validator surfaced on this brief. The
+                CRITICAL catch (top) flags an invented metric — see decision
+                4 above.
+              </VisualMarker>
+              <VisualMarker src="/images/writeup/citations-vs-hedging.png">
+                Left: confident claim with <Mono>·N</Mono> citation chip
+                points to a specific <Mono>fact_id</Mono>. Right: inference
+                uses hedged voice ("reads like") because no single fact
+                supports the full statement.
+              </VisualMarker>
+            </Section>
 
-          <VisualMoment caption="Simple tree diagram — master skill at top, artifact skills below, variants below that." />
+            <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
+              <p>V1 reads structured facts. It doesn't read the narrative.</p>
+              <p>
+                <b>Where the narrative lives:</b>
+              </p>
+              <BulletList>
+                <li>
+                  <b>Salesforce:</b> rep-typed notes, activities, Chatter, email
+                  logs. Gong AI summaries <em>if</em> the sync ran.
+                </li>
+                <li>
+                  <b>Gong:</b> full call transcripts. Salesforce only has the
+                  summary by default.
+                </li>
+                <li>
+                  <b>Catalyst:</b> CSM-authored notes, expansion planning,
+                  escalation history. Not in Salesforce.
+                </li>
+              </BulletList>
+              <p>
+                The Gong-to-Salesforce sync depends on rep action or admin filters;
+                in practice many calls don't make it through. Reading directly from
+                Gong avoids the dependency on whether someone pressed a button.
+              </p>
+              <p>
+                <b>The cheap fix: last 5 of each.</b>
+              </p>
+              <p>V1.5 ships in week 2:</p>
+              <BulletList>
+                <li>5 most recent notes/activities from Salesforce</li>
+                <li>5 most recent Catalyst notes</li>
+                <li>5 most recent Gong call summaries</li>
+              </BulletList>
+              <p>
+                ~1,500 added tokens per brief. No new infrastructure. Probably the
+                permanent answer for most accounts. Reps need the last call, the
+                recent escalation, the thread from two weeks ago. Note #6 from 14
+                months ago is rarely the unlock.
+              </p>
+              <p>
+                <b>The competitor: Agentforce Account Management.</b>
+              </p>
+              <p>
+                Salesforce ships a product whose job is exactly Primer's. The
+                catch: what Salesforce can synthesize is bounded by what Salesforce
+                can see.
+              </p>
+              <p>
+                The textbook answer is the modern data stack: Fivetran ingests
+                every source into Snowflake, dbt models the data, Hightouch (or
+                Fivetran Activations) syncs the synthesized output back into
+                Salesforce. Best practice, $1,000–$10,000+/month at scale,
+                requires a data team, ships value only after the dbt models are in
+                production. Salesforce's Data Cloud + Informatica is the
+                inside-the-walled-garden version.
+              </p>
+              <p>
+                <b>Primer's positioning:</b> read from each system through MCP
+                servers. Synthesize at the edge. Ship value this quarter. When the
+                customer eventually does build the warehouse stack, MCP servers
+                point at it.
+              </p>
+              <p>
+                Salesforce is moving here. They acquired Informatica in 2025
+                because data unification is what bottlenecks Agentforce. They're
+                trying to solve it. It will take years.
+              </p>
+              <p>
+                <b>The own-it path (V2B): cross-system embeddings.</b>
+              </p>
+              <p>
+                For history blended <em>across</em> systems Salesforce can't see
+                (Catalyst CSM narrative, full Gong transcripts, Primer's own
+                feedback signals), build cross-system embeddings + vector DB +
+                per-artifact retrieval. Six weeks to ship. Right at 's
+                scale.
+              </p>
+              <p>
+                <b>The feedback loop, regardless of path.</b>
+              </p>
+              <p>Once Primer is in production, it accumulates its own signal:</p>
+              <BulletList>
+                <li>Did the rep edit the brief before the call?</li>
+                <li>Did the rep mark the brief as helpful?</li>
+                <li>Did the deal advance after the call?</li>
+                <li>
+                  Did any brief content get pasted into Salesforce notes or
+                  follow-ups?
+                </li>
+              </BulletList>
+              <PullQuote>
+                Skills are the playbook. History is the memory of every play
+                that's been run.
+              </PullQuote>
+              <p>
+                <b>The four-tier roadmap:</b>
+              </p>
+              <RoadmapGrid />
+              <p>
+                V1.5 ships before V2A and V2B. V2A and V2B aren't sequential.
+              </p>
+            </Section>
 
-          <RejectedBlock>
-            <li>
-              <b>Fine-grained sub-skills</b> (e.g.,{" "}
-              <Mono>trust_repair_after_billing_incident_with_new_dm.md</Mono>).
-              Over-fits; creates a library no one can maintain. The right
-              granularity: a skill exists when a skilled human would
-              meaningfully adjust their <em>approach</em> to the call, not when
-              the situation varies.
-            </li>
-            <li>
-              <b>Config-file skills engineers must modify.</b> The point of
-              skills is that GTM teams author them. Hiding them in the codebase
-              defeats the architecture.
-            </li>
-            <li>
-              <b>No feedback loop.</b> Static skill libraries go stale in
-              months. Without feedback, the library is a config file, not a
-              compounding asset.
-            </li>
-          </RejectedBlock>
+            <Section id="tradeoffs" number="06" claim="Tradeoffs">
+              <p>
+                <b>Freshness.</b>
+              </p>
+              <BulletList>
+                <li>15-minute Redis cache. Regeneration on explicit refresh.</li>
+                <li>
+                  Every citation shows data age. Stale past threshold, the brief
+                  calls it out.
+                </li>
+              </BulletList>
+              <p>
+                <b>System boundaries.</b>
+              </p>
+              <BulletList>
+                <li>
+                  Salesforce owns accounts. NetSuite owns billing. Gong owns
+                  conversations. Primer never owns it.
+                </li>
+                <li>
+                  Drafted actions fire to whichever system already owns the
+                  workflow.
+                </li>
+                <li>
+                  Primer surfaces contradictions instead of resolving them: when
+                  Salesforce says Best Case and Catalyst flags Watchlist on the
+                  same account, the brief shows both.
+                </li>
+              </BulletList>
+              <p>
+                <b>Opinion vs. informational.</b>
+              </p>
+              <BulletList>
+                <li>
+                  A neutral summary forces the rep to do the synthesis themselves.
+                </li>
+                <li>An opinionated brief is higher-leverage and higher-risk.</li>
+                <li>
+                  The validator agent and the four guardrails make opinion safe to
+                  ship.
+                </li>
+              </BulletList>
+            </Section>
 
-          <SpeakerNotes>
-            <p>
-              The master skill is the constitutional layer. The scope question —
-              how granular should skills be — has a principle behind it: a skill
-              exists when a skilled human would meaningfully adjust their
-              approach. A great AE walking into an at-risk renewal approaches
-              the call fundamentally differently than a healthy renewal. That's
-              a skill boundary. The difference between "trust repair after
-              billing incident" and "trust repair after missed commitment" is
-              handled inside <Mono>at_risk_renewal.md</Mono> by referring to the
-              account's situation — not a new skill.
-            </p>
-            <p>
-              The feedback loop is what makes the skill library compounding
-              rather than static. The AI judge catches obvious regressions
-              before they reach reps. The explicit thumbs are the low-friction
-              human signal. The implicit signals (edit distance, mode switches)
-              are often more honest than explicit ones — reps who are rushed
-              won't thumb-up a good brief, but their edit patterns don't lie.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+            <Section id="scaling" number="07" claim="What scaling this would surface">
+              <p>
+                Five things the architecture handles in V1 but would have to
+                level up at  scale.
+              </p>
+              <p>
+                <b>Adoption is the long pole, not technology.</b> The hardest
+                part of any rep-facing tool isn't building it — it's getting
+                reps to use it. Primer assumes the rep opens it before every
+                call. In reality, reps default to old habits. The brief has
+                to be demonstrably better than 5 minutes of grepping
+                Salesforce, every time, or it gets abandoned by week 3. The
+                instrumentation (helpful/not-helpful rates, edit rates)
+                catches abandonment after it happens. Preventing it is the
+                real V2 work.
+              </p>
+              <p>
+                <b>Trust is a one-strike system.</b> A brief that confidently
+                states a wrong fact during a customer call burns the rep
+                forever. The validator helps, but isn't perfect. The first
+                time the brief says "your champion is Priya Shah" and Priya
+                left three weeks ago, the rep stops using the tool. V2 needs
+                human-in-the-loop verification for high-stakes facts
+                (champion identity, contract values, recent leadership
+                changes) — not just automated validation.
+              </p>
+              <p>
+                <b>Model spend isn't where this gets expensive.</b> Sonnet 4.6
+                generation runs ~$0.06 per brief end-to-end including the
+                validator pass. At  scale — 120 AEs × 4 briefs/day ×
+                250 days = 120K briefs/year — that's ~$7K in model spend.
+                Lunch money. What does scale: source-system API costs (Gong
+                transcript pulls and Catalyst event endpoints both have
+                per-call pricing that adds up), MCP infrastructure (six
+                stateful services × multi-region HA), and engineering time on
+                the validator (binary critical/watch is fine for V1;
+                confidence-scored validator with two-pass consistency is
+                months of work).
+              </p>
+              <p>
+                <b>Validator severity is the wrong abstraction.</b> Right now
+                the validator emits binary critical/watch flags. Same brief,
+                four runs, different counts — Haiku temperature noise on a
+                judgment call. The fix isn't more determinism; it's a
+                continuous confidence score (0–1) per warning, with the UI
+                layer deciding how to render it. That's how production
+                content-moderation systems actually work — you don't
+                classify, you score.
+              </p>
+              <p>
+                <b>Six MCP servers means six failure points.</b> A connector
+                returning stale data silently is the worst case — brief still
+                generates, but with bad inputs. Production needs partial
+                generation as a first-class behavior: when one source fails,
+                the brief notes which sections are degraded ("Renewal status
+                unavailable — Salesforce sync failed"), and the validator
+                gets told which sources are missing so it doesn't flag claims
+                as ungrounded.
+              </p>
+              <p>Exa is V1-stubbed. Live Exa wrapper is a half-day swap.</p>
+            </Section>
 
-        <WriteupSection
-          number="10"
-          claim="The 90-day plan if I joined "
-          subthesis="The skill library isn't something you write in a month. It's something you mine."
-        >
-          <p>
-             has years of Gong call recordings. Inside those calls is
-            the accumulated knowledge of what works in every sales and CSM
-            motion — locked in individual recordings, not organizational memory.
-          </p>
-          <PhaseBlock title="First 30 days">
-            <li>
-              Ship Primer V1 to a pilot AE team. One artifact, one skill, full
-              instrumentation.
-            </li>
-            <li>
-              Begin pulling Gong corpus. Cluster calls by outcome: renewals
-              saved, renewals churned, expansions won, expansions stalled.
-            </li>
-          </PhaseBlock>
-          <PhaseBlock title="30–60 days">
-            <li>
-              Identify patterns. What signals predicted each outcome? What did
-              top-performing AEs do differently? What questions did they ask?
-              What talk tracks worked?
-            </li>
-            <li>
-              Encode patterns as skill variants. Author{" "}
-              <Mono>at_risk_renewal.md</Mono> from actual data of actual saves.
-              Author <Mono>expansion_with_skeptical_buyer.md</Mono> from real
-              wins and losses.
-            </li>
-          </PhaseBlock>
-          <PhaseBlock title="60–90 days">
-            <li>
-              Ship the skill editor to RevOps and Enablement. Skills become an
-              authorable surface, not a config file.
-            </li>
-            <li>
-              Start the feedback loop. AI-judged A/B testing, rep thumbs,
-              edit-distance tracking. Skills begin compounding.
-            </li>
-          </PhaseBlock>
-          <PhaseBlock title="The longer horizon (12 months)">
-            <li>
-              Primer expands to additional artifacts (QBR prep, renewal risk
-              alerts, drafted follow-up emails). Same skill architecture, new
-              artifact types.
-            </li>
-            <li>
-              The skill library becomes the company's GTM memory. New AE
-              onboarding is "inheriting the accumulated wisdom of everyone who
-              came before" rather than "shadow three calls and figure it out."
-            </li>
-            <li>
-              The AI rendering layer is replaceable. The skill library is the
-              compounding moat.
-            </li>
-          </PhaseBlock>
-          <SpeakerNotes>
-            <p>
-              This is the concrete answer to "what would you do in this role."
-              Not a generic pitch — a three-phase plan with measurable outputs
-              each phase, grounded in the specific asset  has (the Gong
-              corpus) that most competitors don't.
-            </p>
-            <p>
-              The pattern is proven at smaller scale. The Linera Signal Engine I
-              built learned from rep edit patterns and improved outbound
-              performance by 18% on SQL conversion. The architecture
-              generalizes.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+            <Section id="plan" number="08" claim="The 90-day plan if I joined ">
+              <PhaseHeader label="DAYS 0-14" title="Validate before scaling" />
+              <BulletList>
+                <li>
+                  Wire production OAuth to 's Salesforce, Gong, Catalyst
+                  sandboxes.
+                </li>
+                <li>Harden MCP servers: rate limits, retry logic, auth refresh.</li>
+                <li>
+                  Get 3-5 reps using Primer on actual upcoming calls. Capture
+                  structured feedback.
+                </li>
+                <li>
+                  Manager-led QA: review 20 generated briefs against ground truth.
+                </li>
+                <li>
+                  Sales team interviews: 5-8 reps to learn their actual prep
+                  workflow.
+                </li>
+              </BulletList>
 
-        <WriteupSection
-          number="11"
-          claim="What I intentionally left out"
-          subthesis="A V1 is defined more by what it excludes than what it includes."
-        >
-          <BulletList>
-            <li>
-              <b>No chat.</b> Reps don't want to ask questions; they want a
-              prepared read.
-            </li>
-            <li>
-              <b>No generic dashboards.</b> Only flagged and contradictory data
-              gets prominence. A "Current ARR: $940K" tile with no context is
-              noise.
-            </li>
-            <li>
-              <b>No write-back to Salesforce.</b> Drafted proposals for rep
-              approval, never direct writes. RevTech owns that surface.
-            </li>
-            <li>
-              <b>No multi-account briefings.</b> One rep, one call, one brief.
-              Portfolio views come after single-account briefs earn trust.
-            </li>
-            <li>
-              <b>No custom confidence weighting.</b> A validated scoring model
-              matters more than a configurable one.
-            </li>
-            <li>
-              <b>No tool-use loop.</b> The orchestrator pre-fetches from all six
-              MCP servers in parallel rather than exposing tools for Claude to
-              drive. Trades flexibility for predictability: every brief has a
-              known latency envelope, the streaming contract stays monotonic,
-              and every fact is traceable.
-            </li>
-          </BulletList>
-          <SpeakerNotes>
-            <p>
-              Exclusions are decisions. Each item above is something I thought
-              about and deliberately chose not to build. The chat interface
-              decision is the most important — every AI product in GTM today
-              defaults to chat, and for pre-call prep it's the wrong pattern.
-            </p>
-            <p>
-              The pre-fetch vs. agentic loop choice is worth calling out: the
-              agentic loop is the more flexible pattern, but it complicates the
-              streaming contract and makes latency unpredictable. For V1 with
-              one artifact type, pre-fetching everything is cheaper than
-              deciding conditionally. When Primer expands to multiple artifact
-              types with different data subsets, the agentic loop becomes the
-              right move.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+              <PhaseHeader label="DAYS 15-30" title="Author seed skills from the Gong corpus" />
+              <BulletList>
+                <li>
+                  Pull 12 months of calls. Find the motions: renewal, expansion,
+                  trust-repair, discovery, demo.
+                </li>
+                <li>
+                  Author five seed skills covering the dominant call types. RevOps
+                  reviews and signs off.
+                </li>
+              </BulletList>
 
-        <WriteupSection
-          number="12"
-          claim="Tradeoffs"
-          subthesis="Every interesting decision was a tradeoff."
-        >
-          <BulletList>
-            <li>
-              <b>Freshness vs. cost</b> — cached with staleness timestamps
-              rather than live-fetching every brief. Most account data doesn't
-              change in 15 minutes; the rep sees the staleness indicator and can
-              refresh.
-            </li>
-            <li>
-              <b>Source of truth vs. velocity</b> — the brief surfaces
-              contradictions instead of reconciling them. Northstar Beauty's
-              Salesforce-Commit vs. Catalyst-Best-Case is flagged, not hidden.
-              The rep sees the conflict and decides.
-            </li>
-            <li>
-              <b>Opinion vs. informational</b> — opinion is higher-leverage per
-              rep-minute but higher-risk. Guardrails make opinion safe to ship.
-            </li>
-            <li>
-              <b>Read-only vs. write-back</b> — read-only earns trust first.
-              Write-back is the right next move, with drafted proposals and rep
-              approval, not direct mutations.
-            </li>
-            <li>
-              <b>Standalone vs. embedded</b> — standalone gives design freedom
-              for V1 but adds a new app to the rep's stack. Long-term, a
-              Lightning panel or Gong integration is additive.
-            </li>
-            <li>
-              <b>Pre-fetch vs. agentic loop</b> — pre-fetch trades flexibility
-              for predictability in a single-artifact product. The agentic loop
-              becomes right when artifacts multiply.
-            </li>
-            <li>
-              <b>Single-account vs. portfolio</b> — single is enough for V1.
-              Portfolio views come when single-account product has validated.
-            </li>
-          </BulletList>
-        </WriteupSection>
+              <PhaseHeader label="DAYS 30-60" title="Ship V1.5 + roll out skills" />
+              <BulletList>
+                <li>
+                  Add last-5 notes/activities/Gong from each source to pre-fetch.
+                </li>
+                <li>Roll out the five seed skills to the team.</li>
+                <li>
+                  Instrument feedback signals: which skill got invoked, edit rate
+                  per skill, helpful/not-helpful rate, drafted-action-sent rate.
+                </li>
+                <li>Cut what doesn't work.</li>
+              </BulletList>
 
-        <WriteupSection
-          number="13"
-          claim="How I built this"
-          subthesis="Primer went from zero to live in about 48 hours over a weekend."
-        >
-          <BulletList>
-            <li>
-              One <Mono>Claude Code</Mono> terminal per build surface —
-              frontend, backend, MCP servers, infra — running in parallel
-              overnight
-            </li>
-            <li>Claude Design for the UI system, four iterations</li>
-            <li>
-              Direct Anthropic SDK for the agent — no LangChain, no wrapper
-              frameworks
-            </li>
-            <li>
-              MCP servers as <Mono>stdio</Mono> subprocesses, parallel fan-out
-              via <Mono>asyncio</Mono>
-            </li>
-            <li>
-              All eight phases of the backend spec, all seven phases of the
-              frontend spec, shipped with verification logs at every step
-            </li>
-          </BulletList>
-          <p>
-            <b>This is the point.</b> GTM Engineering in 2026 compresses what
-            was a multi-week sprint into a weekend prototype. Teams that invest
-            in building ship differentiated infrastructure. Teams that rent
-            off-the-shelf ship the same thing as their competitors. The
-            economics have flipped.
-          </p>
-          <VisualMoment caption="Screenshot of four Ghostty terminals running Claude Code in parallel." />
-          <SpeakerNotes>
-            <p>
-              The hours number isn't a brag. It's an argument. Six years ago,
-              building something like this was a multi-engineer, multi-week
-              project. Today it's a weekend for one person with parallelized AI
-              tooling. That's not incremental productivity improvement — it's a
-              regime change in what a GTM team can build in-house.
-            </p>
-            <p>
-              The companies that figure out how to use this productivity shift
-              will build proprietary infrastructure competitors can't buy. The
-              companies that don't will be renting the same tools everyone else
-              rents.
-            </p>
-          </SpeakerNotes>
-        </WriteupSection>
+              <PhaseHeader label="DAYS 60-90" title="Wire the feedback loop" />
+              <BulletList>
+                <li>Primer reads its own call transcripts back through Gong.</li>
+                <li>Compares what the brief said to how the call actually went.</li>
+                <li>Proposes skill updates where the brief was wrong.</li>
+                <li>The library starts compounding.</li>
+              </BulletList>
 
-        <ClosingSection />
-      </article>
+              <p>
+                <b>Twelve months out:</b> new AE onboarding shifts from "shadow
+                three calls and figure it out" to "inherit the accumulated reads
+                of every senior rep who came before."
+              </p>
+            </Section>
+
+            <Section id="how-built" number="09" claim="How I built this">
+              <p>The build itself was the AI workflow being tested.</p>
+              <BulletList>
+                <li>
+                  <b>Setup.</b> Four parallelized Claude Code terminals on a
+                  personal Mac. Backend, frontend, infrastructure, writeup — one
+                  per terminal.
+                </li>
+                <li>
+                  <b>Roles.</b> Claude Chat as architect and QA. Claude Code as
+                  contractor. Claude Design as stylist. Me as client (direction,
+                  taste, ship decisions).
+                </li>
+              </BulletList>
+              <p>
+                GTM Engineering in 2026 compresses a multi-week sprint into a
+                focused build. Teams that invest in building ship differentiated
+                infrastructure. Teams that rent off-the-shelf ship the same thing
+                as their competitors. The economics flipped when the cost of
+                building one good thing dropped faster than the cost of integrating
+                five mediocre ones.
+              </p>
+            </Section>
+
+            <Closing />
+          </article>
+        </div>
     </div>
   );
 }
 
-// ---------- sub-components ----------
+// ---------- Hero ----------
 
 function Hero() {
   return (
-    <header className="pt-20 pb-14 border-b border-line">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-4">
-        Primer · Mode 4
-      </p>
-      <h1 className="mt-4 font-serif text-[48px] font-medium leading-[1.05] tracking-[-0.02em] text-ink">
+    <header id="top" className="border-b border-line pb-14">
+      <h1
+        className="font-serif font-medium leading-[1.05] tracking-[-0.02em] text-ink"
+        style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)" }}
+      >
         The brief that thinks with you.
       </h1>
-      <p className="mt-5 font-serif text-[18px] leading-[1.55] text-ink-2 max-w-[540px]">
-        Pre-call briefings for enterprise AEs, built in 48 hours as a portfolio piece
-        submission.
+      <p className="mt-6 font-serif text-[19px] leading-[1.55] text-ink-2">
+        <b>Pre-call briefings for enterprise AEs.</b>
       </p>
-      <p className="mt-5 text-[13px] text-ink-3">Nick Ruzicka · April 2026</p>
+      <p className="mt-2 max-w-[540px] font-serif text-[18px] italic leading-[1.5] text-ink-3">
+        An architecture writeup. Read on for the four decisions, the tradeoffs, and the 90-day plan.
+      </p>
+      <p className="mt-6 text-[13px] text-ink-3">Nick Ruzicka · April 2026</p>
       <div className="mt-7 flex flex-wrap gap-2.5">
         <CTAButton primary onClick={() => null}>
           Open the prototype →
         </CTAButton>
-        <CTAButton onClick={() => null}>Read the architecture below</CTAButton>
+        <CTAButton onClick={() => null}>
+          Read the architecture below
+          <ChevronDown size={14} className="ml-1.5" />
+        </CTAButton>
       </div>
+      <hr className="mt-20 border-line" />
     </header>
   );
 }
 
-function ClosingSection() {
+// ---------- TldrPanel ----------
+
+function TldrPanel() {
+  const [open, setOpen] = useState(false);
   return (
-    <section className="mt-16 border-t border-line pt-14 pb-4">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-4">
-        14 · Closing
+    <div
+      className={
+        "mt-10 max-w-[720px] overflow-hidden rounded-md border bg-surface-2 transition-colors " +
+        (open ? "border-line border-l-[3px] border-l-accent" : "border-line")
+      }
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-ink-2 hover:text-ink"
+        aria-expanded={open}
+      >
+        <FileText size={14} className="text-ink-3" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
+          TL;DR — 30 seconds
+        </span>
+        <ChevronDown
+          size={14}
+          className={
+            "ml-auto text-ink-4 transition-transform duration-200 " +
+            (open ? "rotate-180" : "")
+          }
+        />
+      </button>
+      <div
+        className={
+          "grid transition-[grid-template-rows] duration-300 ease-out " +
+          (open ? "grid-rows-[1fr]" : "grid-rows-[0fr]")
+        }
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-4 px-4 pb-4 pt-2 text-[17px] leading-[1.6] text-ink-2">
+            <p>
+              Primer is a pre-call briefing tool for AEs. It reads from six
+              source systems in parallel via MCP servers, generates an
+              opinionated brief grounded in deterministic <Mono>fact_id</Mono>s,
+              and runs a validator agent against every claim before display.
+            </p>
+            <p>
+              The architecture skips the multi-quarter data unification project
+              and ships value this quarter; when the data layer eventually does
+              ship, the MCP servers point at it instead.
+            </p>
+            <p>
+              Watch the validator catch the brief overstating its claims in
+              real time when you open the prototype.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Closing ----------
+
+function Closing() {
+  return (
+    <section id="closing" className="mt-24 border-t border-line pb-16 pt-14">
+      <p className="mb-6 text-center font-serif text-[15px] italic text-ink-3">
+        Thanks for reading.
       </p>
-      <h2 className="mt-3 font-serif text-[32px] font-medium leading-[1.15] tracking-[-0.015em] text-ink">
-        Primer is live at{" "}
-        <a
+      <hr className="mx-auto mb-10 w-[60%] border-line" />
+      <div className="space-y-6 rounded-lg border border-line bg-surface-2 p-8">
+        <FooterRow
+          icon={<Rocket size={16} />}
+          label="Try the prototype"
           href="#"
-          className="underline decoration-accent decoration-2 underline-offset-4"
-        >
-          primer.yourdomain.com
-        </a>
-        .
-        <br />
-        Source at{" "}
-        <a
-          href="#"
-          className="underline decoration-accent decoration-2 underline-offset-4"
-        >
-          github.com/nick-ruzicka/primer-
-        </a>
-        .
-      </h2>
-      <div className="mt-6 space-y-2 text-[14px] text-ink-2 leading-relaxed">
-        <p>
-          Demo walkthrough video:{" "}
-          <a
-            href="#"
-            className="underline decoration-ink-4/40 hover:decoration-ink"
-          >
-            loom.com/…
-          </a>
-        </p>
-        <p>
-          Questions:{" "}
-          <a
-            href="mailto:nick.c.ruzicka@gmail.com"
-            className="underline decoration-ink-4/40 hover:decoration-ink"
-          >
-            nick.c.ruzicka@gmail.com
-          </a>
-        </p>
-        <p className="pt-2 text-ink-4">
-          Built with Claude Code + Claude Design, April 2026.
-        </p>
+          text="primer.[hetzner-url-here]"
+        />
+        <FooterRow
+          icon={<Package size={16} />}
+          label="Source code"
+          href="https://github.com/nick-ruzicka/primer-"
+          text="github.com/nick-ruzicka/primer-"
+        />
+        <FooterRow
+          icon={<Mail size={16} />}
+          label="Questions, pushback, follow-ups"
+          href="mailto:nick.c.ruzicka@gmail.com"
+          text="nick.c.ruzicka@gmail.com"
+        />
       </div>
     </section>
   );
 }
 
-function WriteupSection({
+function FooterRow({
+  icon,
+  label,
+  href,
+  text,
+}: {
+  icon: ReactNode;
+  label: string;
+  href: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-start gap-4">
+      <span className="mt-0.5 text-ink-3">{icon}</span>
+      <div>
+        <p className="mb-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-3">
+          {label}
+        </p>
+        <a href={href} className="text-[15px] text-ink decoration-accent hover:underline">
+          {text}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Section ----------
+
+function Section({
+  id,
   number,
   claim,
-  subthesis,
   children,
 }: {
-  number: string;
+  id?: string;
+  number?: string;
   claim: string;
-  subthesis: string;
   children: ReactNode;
 }) {
   return (
-    <section className="mt-16">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-4">
-        {number} · Section
-      </p>
-      <h2 className="mt-3 font-serif text-[30px] font-medium leading-[1.18] tracking-[-0.015em] text-ink">
-        {claim}
-      </h2>
-      <p className="mt-4 font-serif text-[18px] leading-[1.5] text-ink-2 italic">
-        {subthesis}
-      </p>
-      <div className="mt-5 space-y-4 text-[15px] leading-[1.7] text-ink-2">
-        {children}
-      </div>
+    <section id={id} data-section className="mt-32 scroll-mt-20">
+      <header className="mb-10 flex items-start gap-4">
+        <div className="mt-3 h-10 w-[3px] flex-none rounded-full bg-accent" />
+        <div>
+          {number && (
+            <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
+              {number}
+            </span>
+          )}
+          <h2 className="font-serif text-[52px] font-medium leading-[1.1] tracking-[-0.025em] text-ink">
+            {claim}
+          </h2>
+        </div>
+      </header>
+      <div className="space-y-5 text-[17px] leading-[1.7] text-ink-2">{children}</div>
     </section>
   );
 }
+
+// ---------- Subhead (used in Section 04 for decisions) ----------
+
+function Subhead({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="mb-2 mt-8 font-serif text-[22px] font-medium leading-[1.3] text-ink">
+      {children}
+    </h3>
+  );
+}
+
+// ---------- PhaseHeader (used in Section 07 for 90-day plan) ----------
+
+function PhaseHeader({ label, title }: { label: string; title: string }) {
+  return (
+    <div className="mb-4 mt-8 flex items-baseline gap-3 rounded-sm border border-line bg-accent-soft/20 px-4 py-2.5">
+      <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-accent-2">
+        {label}
+      </span>
+      <span className="text-[15px] font-medium text-ink">{title}</span>
+    </div>
+  );
+}
+
+// ---------- PullQuote ----------
+
+function PullQuote({ children }: { children: ReactNode }) {
+  return (
+    <blockquote className="pull-quote my-14 max-w-[75ch] border-l-[3px] border-accent pl-8 font-serif text-[32px] font-normal italic leading-[1.25] text-ink-2">
+      {children}
+    </blockquote>
+  );
+}
+
+// ---------- RoadmapGrid ----------
+
+function RoadmapGrid() {
+  const tiers = [
+    {
+      version: "V1",
+      timing: "TODAY",
+      body: "Structured facts only. Shipped.",
+      shipped: true,
+    },
+    {
+      version: "V1.5",
+      timing: "WEEK 2",
+      body: "Last 5 notes/activities/calls from each source. No new infra.",
+      shipped: false,
+    },
+    {
+      version: "V2A",
+      timing: "MONTH 2",
+      body: "Wrap any Salesforce-side AI compression as MCP tools, if the customer has them.",
+      shipped: false,
+    },
+    {
+      version: "V2B",
+      timing: "MONTH 3-4",
+      body: "Cross-system embedding layer when scale demands it.",
+      shipped: false,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {tiers.map((t) => (
+        <div key={t.version} className="rounded-lg border border-line bg-surface-2 p-4 sm:p-5">
+          <div className="font-serif text-[17px] font-semibold text-ink">{t.version}</div>
+          <div className="mb-3 mt-0.5 font-mono text-[9.5px] uppercase tracking-[0.1em] text-ink-4">
+            {t.timing}
+          </div>
+          <p className="text-[13px] leading-[1.5] text-ink-2">{t.body}</p>
+          {t.shipped && (
+            <div className="mt-3 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-good" />
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-good">
+                shipped
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------- BulletList ----------
 
 function BulletList({ children }: { children: ReactNode }) {
   return (
@@ -914,125 +996,83 @@ function BulletList({ children }: { children: ReactNode }) {
   );
 }
 
-function RejectedBlock({ children }: { children: ReactNode }) {
+// ---------- RuleQuote ----------
+
+function RuleQuote({ children }: { children: ReactNode }) {
   return (
-    <div className="mt-6 rounded-lg border border-line bg-surface-sunk/40 px-5 py-4">
-      <h3 className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4 mb-3">
-        What I considered and rejected
-      </h3>
-      <ul className="list-disc space-y-2 pl-5 marker:text-ink-4 text-[14px] text-ink-2">
-        {children}
-      </ul>
-    </div>
+    <blockquote className="my-2 border-l-2 border-accent pl-5 font-serif text-[17px] italic leading-[1.6] text-ink-2 [&>p]:my-3">
+      {children}
+    </blockquote>
   );
 }
 
-function StretchBlock({ children }: { children: ReactNode }) {
+// ---------- ExampleQuote ----------
+
+function ExampleQuote({ children }: { children: ReactNode }) {
   return (
-    <div className="mt-6 rounded-lg border border-line bg-surface-sunk/40 px-5 py-4">
-      <h3 className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4 mb-3">
-        Stretch goals I scoped out for V1
-      </h3>
-      <ul className="list-disc space-y-3 pl-5 marker:text-ink-4 text-[14px] text-ink-2">
-        {children}
-      </ul>
-    </div>
+    <blockquote className="my-2 rounded-md border border-line bg-surface-sunk/40 px-5 py-4 text-[15px] leading-[1.65] text-ink-2 [&>p]:my-2 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0">
+      {children}
+    </blockquote>
   );
 }
 
-function OptionBlock({
-  letter,
-  title,
-  chosen = false,
+// ---------- CodeBlock ----------
+
+function CodeBlock({ children }: { children: ReactNode }) {
+  return (
+    <pre className="my-2 overflow-x-auto rounded-md border border-line/60 bg-surface-sunk/30 px-3 py-2.5 font-mono text-[12.5px] leading-[1.6] text-ink-2">
+      <code>{children}</code>
+    </pre>
+  );
+}
+
+// ---------- VisualMarker ----------
+
+function VisualMarker({
   children,
+  aspectRatio = "16:9",
+  src,
 }: {
-  letter: string;
-  title: string;
-  chosen?: boolean;
   children: ReactNode;
+  aspectRatio?: "16:9" | "4:3" | "3:2";
+  src?: string;
 }) {
+  const padMap = { "16:9": "56.25%", "4:3": "75%", "3:2": "66.67%" } as const;
+  const altText = typeof children === "string" ? children : "";
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!src && !imgError;
   return (
-    <div
-      className={
-        "mt-4 rounded-lg border px-5 py-4 " +
-        (chosen
-          ? "border-accent bg-accent-soft/40"
-          : "border-line bg-surface-2/40")
-      }
-    >
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
-          Option {letter}
-        </span>
-        <span className="font-serif text-[17px] font-medium text-ink">
-          {title}
-        </span>
-        {chosen && (
-          <span className="ml-auto rounded-sm bg-accent px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-[0.08em] text-accent-ink">
-            Chosen
-          </span>
+    <figure className="my-8">
+      <div
+        className="relative overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm"
+        style={{ paddingBottom: padMap[aspectRatio] }}
+      >
+        {showImage ? (
+          <img
+            src={src}
+            alt={altText}
+            onError={() => setImgError(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6">
+            <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-4">
+              Visual placeholder
+            </span>
+            <span className="max-w-[360px] text-center font-serif text-[14px] italic leading-[1.5] text-ink-3">
+              {children}
+            </span>
+          </div>
         )}
       </div>
-      <p className="mt-2 text-[14px] leading-[1.65] text-ink-2">{children}</p>
-    </div>
-  );
-}
-
-function PhaseBlock({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="mt-5">
-      <h3 className="mb-2 font-mono text-[10.5px] uppercase tracking-[0.1em] text-ink-4">
-        {title}
-      </h3>
-      <ul className="list-disc space-y-2 pl-5 marker:text-ink-4">{children}</ul>
-    </div>
-  );
-}
-
-function SpeakerNotes({ children }: { children: ReactNode }) {
-  return (
-    <details className="mt-6 rounded-lg border border-line/70 bg-surface/60 [&_summary::marker]:hidden">
-      <summary className="flex cursor-pointer select-none items-center gap-2 px-5 py-3 text-[12px] font-mono uppercase tracking-[0.1em] text-ink-3 hover:text-ink">
-        <svg
-          className="h-3 w-3 transition-transform group-open:rotate-90"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-        >
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-        <span>Speaker notes</span>
-      </summary>
-      <div className="space-y-3 px-5 pb-5 pt-2 text-[14px] leading-[1.7] text-ink-2 [&_p]:m-0">
+      <figcaption className="mt-2 text-center text-[12px] italic text-ink-3">
         {children}
-      </div>
-    </details>
-  );
-}
-
-function VisualMoment({ caption }: { caption: string }) {
-  return (
-    <figure className="mt-6 rounded-xl border border-dashed border-line-strong bg-surface-sunk/30 px-6 py-10 text-center">
-      <p className="font-mono text-[10.5px] uppercase tracking-[0.12em] text-ink-4">
-        Visual moment
-      </p>
-      <p className="mt-3 font-serif text-[15px] italic text-ink-3 max-w-[480px] mx-auto leading-[1.5]">
-        {/* TODO: operator to replace with actual image/diagram */}
-        {caption}
-      </p>
+      </figcaption>
     </figure>
   );
 }
+
+// ---------- CTAButton ----------
 
 function CTAButton({
   children,
@@ -1048,16 +1088,18 @@ function CTAButton({
       type="button"
       onClick={onClick}
       className={
-        "rounded-lg px-4 py-2 text-[13px] font-medium transition-colors " +
+        "inline-flex items-center rounded-lg font-medium transition-colors " +
         (primary
-          ? "bg-accent text-accent-ink shadow-sm hover:bg-accent-2"
-          : "border border-line bg-surface-2 text-ink-2 hover:border-line-strong hover:text-ink")
+          ? "bg-accent px-6 py-3 text-[14px] text-accent-ink shadow-sm hover:bg-accent-2"
+          : "border border-line bg-surface-2 px-4 py-2 text-[13px] text-ink-2 hover:border-line-strong hover:text-ink")
       }
     >
       {children}
     </button>
   );
 }
+
+// ---------- Mono ----------
 
 function Mono({ children }: { children: ReactNode }) {
   return (

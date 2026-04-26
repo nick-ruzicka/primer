@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 import time
-from collections import defaultdict
 from typing import Any
 
 import redis.asyncio as redis_asyncio
@@ -25,8 +24,6 @@ class CacheClient:
         self._rate_limit = rate_limit_per_hour
         self._client: redis_asyncio.Redis | None = None
         self.available: bool = False
-        # In-memory fallback for rate limiting when Redis is unavailable
-        self._fallback_limits: defaultdict[str, list[float]] = defaultdict(list)
 
     async def connect(self) -> None:
         try:
@@ -84,38 +81,31 @@ class CacheClient:
             log.warning("cache.invalidate_failed", extra={"error": str(exc)})
 
     async def check_rate_limit(self, ip: str) -> tuple[bool, int]:
-        """Return (allowed, remaining). Uses in-memory fallback if Redis is unavailable."""
+        """Return (allowed, remaining). Fails closed if Redis is unreachable.
+
+        Uses a MULTI pipeline so INCR + EXPIRE are a single atomic round-trip —
+        otherwise a crash between the two commands would leave the key without
+        a TTL, permanently locking out the IP.
+        """
         if not self.available or self._client is None:
-            # In-memory fallback: track requests per IP for the past hour
-            now = time.time()
-            # Clean up old requests older than 1 hour
-            self._fallback_limits[ip] = [
-                t for t in self._fallback_limits[ip] if now - t < 3600
-            ]
-            count = len(self._fallback_limits[ip])
-            if count >= self._rate_limit:
-                remaining = 0
-                allowed = False
-                log.warning(
-                    "rate_limit.fallback_denied",
-                    extra={"ip": ip, "count": count, "limit": self._rate_limit},
-                )
-                return allowed, remaining
-            self._fallback_limits[ip].append(now)
-            remaining = self._rate_limit - count - 1
-            return True, remaining
+            # Fail closed — a broken cache shouldn't open the rate-limit gate.
+            log.warning("cache.rate_limit_unavailable")
+            return False, 0
         try:
             key = f"ratelimit:{ip}"
-            count = await self._client.incr(key)
-            if count == 1:
-                await self._client.expire(key, 3600)
+            async with self._client.pipeline(transaction=True) as pipe:
+                pipe.incr(key)
+                pipe.expire(key, 3600)
+                results = await pipe.execute()
+            count = int(results[0])
             remaining = max(0, self._rate_limit - count)
             allowed = count <= self._rate_limit
             return allowed, remaining
         except Exception as exc:  # noqa: BLE001
             log.warning("cache.rate_limit_failed", extra={"error": str(exc)})
-            # Fall back to in-memory tracking on error
-            return await self.check_rate_limit(ip)
+            # Fail closed on transient errors too — safer than allowing
+            # unbounded traffic.
+            return False, 0
 
 
 _cache: CacheClient | None = None

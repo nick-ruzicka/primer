@@ -99,6 +99,34 @@ sudo systemctl restart primer-backend
 sudo systemctl restart primer-frontend
 sudo systemctl reload nginx
 
+echo "  → waiting for backend /health"
+for i in \$(seq 1 30); do
+  if curl -fsS --max-time 2 http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    echo "  ✓ backend healthy after \${i}s"
+    break
+  fi
+  if [ "\${i}" = "30" ]; then
+    echo "  ✗ backend did not become healthy within 30s" >&2
+    sudo journalctl -u primer-backend -n 50 --no-pager >&2 || true
+    exit 2
+  fi
+  sleep 1
+done
+
+echo "  → waiting for frontend :3000"
+for i in \$(seq 1 30); do
+  if curl -fsS --max-time 2 http://127.0.0.1:3000/ >/dev/null 2>&1; then
+    echo "  ✓ frontend healthy after \${i}s"
+    break
+  fi
+  if [ "\${i}" = "30" ]; then
+    echo "  ✗ frontend did not become healthy within 30s" >&2
+    sudo journalctl -u primer-frontend -n 50 --no-pager >&2 || true
+    exit 2
+  fi
+  sleep 1
+done
+
 echo "  → service status"
 sudo systemctl is-active primer-backend  || true
 sudo systemctl is-active primer-frontend || true

@@ -162,6 +162,7 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                     else None,
                     "tone": _tone_for_status(status),
                     "source": "catalyst",
+                    "field": "relationship_status",
                 }
             )
         score = health.get("relationship_score")
@@ -179,6 +180,7 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                     ),
                     "tone": _tone_for_delta(delta),
                     "source": "catalyst",
+                    "field": "relationship_score",
                 }
             )
         last_touch = health.get("last_executive_touch")
@@ -188,11 +190,19 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                     "label": "Last exec touch",
                     "value": last_touch,
                     "source": "catalyst",
+                    "field": "last_executive_touch",
                 }
             )
         notes = health.get("notes")
         if notes:
-            items.append({"label": "Notes", "value": notes, "source": "catalyst"})
+            items.append(
+                {
+                    "label": "Notes",
+                    "value": notes,
+                    "source": "catalyst",
+                    "field": "notes",
+                }
+            )
 
     if isinstance(expansion, dict) and expansion.get("expansion_readiness"):
         items.append(
@@ -200,6 +210,7 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "label": "Expansion readiness",
                 "value": expansion["expansion_readiness"],
                 "source": "catalyst",
+                "field": "expansion_readiness",
             }
         )
 
@@ -218,6 +229,7 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": f"{champion['name']} — {champion.get('title','')}",
                 "sublabel": _tenure(champion.get("tenure_months")),
                 "source": "salesforce",
+                "field": f"contact.{champion['name']}",
             }
         )
     if exec_sponsor:
@@ -227,6 +239,7 @@ def relationship_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": f"{exec_sponsor['name']} — {exec_sponsor.get('title','')}",
                 "sublabel": _tenure(exec_sponsor.get("tenure_months")),
                 "source": "salesforce",
+                "field": f"contact.{exec_sponsor['name']}",
             }
         )
 
@@ -256,6 +269,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "label": "ARR",
                 "value": _money(account.get("arr_cents")),
                 "source": "salesforce",
+                "field": "arr_cents",
             }
         )
 
@@ -268,6 +282,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 if contract.get("seats_licensed")
                 else None,
                 "source": "salesforce",
+                "field": "plan_name",
             }
         )
         items.append(
@@ -276,6 +291,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": contract.get("contract_end", "—"),
                 "sublabel": "auto-renew on" if contract.get("auto_renew") else "auto-renew off",
                 "source": "salesforce",
+                "field": "contract_term",
             }
         )
     elif contract is None:
@@ -284,6 +300,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "label": "Contract",
                 "value": "No contract on file",
                 "source": "salesforce",
+                "field": "contract",
             }
         )
 
@@ -300,6 +317,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "label": "Salesforce forecast",
                 "value": sf_forecast,
                 "source": "salesforce",
+                "field": f"opp.{sf_renewal_opp.get('opp_name')}" if sf_renewal_opp else None,
             }
         )
     if cat_forecast:
@@ -311,6 +329,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "sublabel": "disagrees with Salesforce" if tone else None,
                 "tone": tone,
                 "source": "catalyst",
+                "field": "renewal_forecast",
             }
         )
 
@@ -323,6 +342,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": _money(opp.get("amount_cents")),
                 "sublabel": f"{opp.get('stage')} · {opp.get('forecast_category')}",
                 "source": "salesforce",
+                "field": f"opp.{opp.get('opp_name')}" if opp.get("opp_name") else None,
             }
         )
 
@@ -335,6 +355,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "sublabel": _money(opp.get("amount_cents")),
                 "tone": tone,
                 "source": "salesforce",
+                "field": f"closed.{opp.get('opp_name')}" if opp.get("opp_name") else None,
             }
         )
 
@@ -351,6 +372,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 ),
                 "tone": "bad" if past_due else "good",
                 "source": "netsuite",
+                "field": "past_due_balance",
             }
         )
     if isinstance(ap, dict) and ap.get("ap_blocked"):
@@ -361,6 +383,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "sublabel": f"on {ap.get('ap_blocked_date')} — {ap.get('ap_blocked_reason','').strip()}",
                 "tone": "bad",
                 "source": "netsuite",
+                "field": "ap_flag.ap_blocked",
             }
         )
     if invoices:
@@ -371,6 +394,7 @@ def commercial_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": _money(inv.get("amount_cents")),
                 "sublabel": inv.get("invoice_date"),
                 "source": "netsuite",
+                "field": f"invoice.{inv.get('invoice_id')}" if inv.get("invoice_id") else None,
             }
         )
 
@@ -402,6 +426,7 @@ def product_usage_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 ),
                 "tone": tone,
                 "source": "snowflake",
+                "field": "sends_30d",
             }
         )
 
@@ -419,6 +444,7 @@ def product_usage_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 ),
                 "tone": "warn" if flows_active / flows_prov < 0.75 else None,
                 "source": "snowflake",
+                "field": "flows_active",
             }
         )
 
@@ -437,6 +463,7 @@ def product_usage_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 ),
                 "tone": _tone_for_delta(health_delta),
                 "source": "snowflake",
+                "field": "health_score",
             }
         )
 
@@ -450,13 +477,19 @@ def product_usage_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "sublabel": f"group avg {group}",
                 "tone": "warn" if adoption < group - 5 else None,
                 "source": "snowflake",
+                "field": "adoption_score",
             }
         )
 
     last_send = usage.get("last_send_date")
     if last_send:
         items.append(
-            {"label": "Last send", "value": last_send, "source": "snowflake"}
+            {
+                "label": "Last send",
+                "value": last_send,
+                "source": "snowflake",
+                "field": "last_send_date",
+            }
         )
 
     return items
@@ -507,6 +540,7 @@ def portfolio_section(bundle: IntelligenceBundle) -> list[dict[str, Any]]:
                 "value": parent.get("account_name", "—"),
                 "sublabel": f"{len(siblings) + 1} accounts in group",
                 "source": "salesforce",
+                "field": "parent_account",
             }
         )
         for sib in siblings:
@@ -571,15 +605,13 @@ def shape_sections(bundle: IntelligenceBundle) -> dict[str, list[dict[str, Any]]
 
 # Terminal 3's IntelligenceState keys `product_usage` as `product`. Map.
 _SECTION_ID: dict[str, str] = {
-    "relationship": "product" if False else "relationship",  # placeholder to keep mypy happy
+    "relationship": "relationship",
     "commercial": "commercial",
     "product_usage": "product",
     "conversations": "conversations",
     "portfolio": "portfolio",
     "external": "external",
 }
-# fix the placeholder above
-_SECTION_ID["relationship"] = "relationship"
 
 _SECTION_META: dict[str, dict[str, str]] = {
     "relationship": {"title": "Relationship", "desc": "Status, score, contacts"},
@@ -653,6 +685,10 @@ def shape_sections_for_frontend(
                     # frontend naming
                     "sub": item.get("sublabel"),
                     "flag": _tone_to_flag(item.get("tone")),
+                    # underlying MCP data field — used by agent.py to wire
+                    # source_cited.intel_evid → this item's evid. None for
+                    # aggregate or compositionally-derived items.
+                    "field": item.get("field"),
                     # spec-legacy naming (kept so either consumer works)
                     "sublabel": item.get("sublabel"),
                     "tone": item.get("tone"),
@@ -669,6 +705,31 @@ def shape_sections_for_frontend(
             }
         )
     return out
+
+
+def build_intel_evid_index(
+    sections: list[dict[str, Any]],
+) -> dict[tuple[str, str], str]:
+    """Build a (source, field) → intel_evid lookup from shaped sections.
+
+    Used by agent.build_context_blob to populate Fact.intel_evid so the
+    source_cited SSE event can carry a deterministic pointer to the
+    matching intelligence card. Items without a `field` (e.g. composite
+    rollups) are skipped — facts derived from those won't get a target.
+    """
+    index: dict[tuple[str, str], str] = {}
+    for section in sections:
+        for item in section.get("items", []):
+            field = item.get("field")
+            source = item.get("source")
+            evid = item.get("evid")
+            if not field or not source or not evid:
+                continue
+            key = (source, field)
+            # First write wins — there shouldn't be (source, field) collisions
+            # but if there are, keep the first deterministically.
+            index.setdefault(key, evid)
+    return index
 
 
 def _tone_to_flag(tone: str | None) -> str | None:

@@ -136,6 +136,41 @@ export const KINDRED_PET_BRIEF: BriefFixture = {
     },
     {
       id: "04",
+      key: "discovery",
+      title: "Discovery questions",
+      preview:
+        "Surface Jamie's bar before she sets it for you. The renewal is real but conditional — find the conditions on the call.",
+      questions: [
+        [
+          t(
+            "What does Jamie need to see in the next 30 days to keep us off the consolidation list",
+          ),
+          c(4),
+          t("?"),
+        ],
+        [
+          t(
+            "Of the 8 paused flows, which two would have the biggest impact on Jamie's Q2 number",
+          ),
+          c(6),
+          t("?"),
+        ],
+        [
+          t(
+            "Who's the exec sponsor on Jamie's side now that Mei has been cold for 127 days",
+          ),
+          c(7),
+          t("?"),
+        ],
+        [
+          t(
+            "What would you not want me to bring up on this call?",
+          ),
+        ],
+      ],
+    },
+    {
+      id: "05",
       key: "talk_track",
       title: "Suggested talk track",
       preview:

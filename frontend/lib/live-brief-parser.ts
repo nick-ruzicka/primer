@@ -17,20 +17,21 @@ export interface ParseResult {
   /** All sections whose `## 0N · ...` header AND body have fully arrived. */
   complete: BriefSection[];
   /** If a section header has been seen but the body is still streaming, tracks that id. */
-  streamingId: "01" | "02" | "03" | "04" | null;
+  streamingId: "01" | "02" | "03" | "04" | "05" | null;
 }
 
 const SECTION_KEYS: Record<string, BriefSection["key"]> = {
   "01": "read",
   "02": "why",
   "03": "what_to_do",
-  "04": "talk_track",
+  "04": "discovery",
+  "05": "talk_track",
 };
 
 // Matches `## 01 · The read` (no hedge suffix — dropped in spec §7 cleanup).
 // Also tolerates legacy `## 01 · Title — hedge` from older cache hits by
 // capturing title up to end-of-line (drop optional ` — ...` tail).
-const SECTION_HEADER_RE = /^##\s+(0[1-4])\s+·\s+([^\n]+?)(?:\s+—[^\n]*)?\s*$/gm;
+const SECTION_HEADER_RE = /^##\s+(0[1-5])\s+·\s+([^\n]+?)(?:\s+—[^\n]*)?\s*$/gm;
 
 export function parseStreamingBrief(markdown: string): ParseResult {
   const headers: {
@@ -58,9 +59,14 @@ export function parseStreamingBrief(markdown: string): ParseResult {
       i + 1 < headers.length ? headers[i + 1].index : markdown.length;
     const body = markdown.slice(bodyStart, bodyEnd);
     // A section counts as "complete enough to render" if the next header exists
-    // (hard boundary) or if we see a blank line that terminates its last block.
+    // (hard boundary), or — for the trailing section, where there's no next
+    // header — if the body has trailing whitespace OR is substantive enough
+    // that the agent has clearly moved past the header. The agent's final
+    // chunk often lacks a trailing blank line, which used to prevent the last
+    // section from ever revealing.
     const isLast = i === headers.length - 1;
-    const looksDone = !isLast || /\n\s*\n\s*$/.test(body);
+    const looksDone =
+      !isLast || /\n\s*\n\s*$/.test(body) || body.trim().length >= 30;
     if (isLast && body.trim().length < 10) {
       streamingId = h.id;
       continue;
@@ -108,7 +114,9 @@ function buildSection(
     base.actions = parseActions(rest);
     return base;
   }
-  if (id === "04") {
+  if (id === "04" || id === "05") {
+    // 04 = discovery questions, 05 = talk track. Both render as a numbered
+    // question list; the section key disambiguates the artifact.
     base.questions = parseQuestions(rest);
     return base;
   }

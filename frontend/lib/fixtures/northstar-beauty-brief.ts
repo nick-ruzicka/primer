@@ -25,8 +25,8 @@ export interface BriefAction {
 }
 
 export interface BriefSection {
-  id: "01" | "02" | "03" | "04";
-  key: "read" | "why" | "what_to_do" | "talk_track";
+  id: "01" | "02" | "03" | "04" | "05";
+  key: "read" | "why" | "what_to_do" | "discovery" | "talk_track";
   title: string;
   preview: string;
   // For 01 / 02: list of paragraphs
@@ -210,6 +210,35 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
     },
     {
       id: "04",
+      key: "discovery",
+      title: "Discovery questions",
+      preview:
+        "Validate the trust-repair read. Ask about Carla's mandate, the AP timeline, and renewal authority before the call drifts.",
+      questions: [
+        [
+          t("What does success look like for Carla Reyes in her first 90 days"),
+          c(1),
+          t("?"),
+        ],
+        [
+          t("How is the AP block being resolved, and what's the timeline"),
+          c(12),
+          t("?"),
+        ],
+        [
+          t(
+            "Who's authorizing renewal this cycle, given the leadership change?",
+          ),
+        ],
+        [
+          t(
+            "What would a pause-and-revisit look like vs. a renewal-with-conditions?",
+          ),
+        ],
+      ],
+    },
+    {
+      id: "05",
       key: "talk_track",
       title: "Suggested talk track",
       preview:

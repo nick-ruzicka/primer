@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AccountHeader } from "@/components/account-header";
 import { Brief } from "@/components/brief/brief";
 import { ConfidenceStrip } from "@/components/confidence-strip";
 import { IntelligencePanel } from "@/components/intelligence/intelligence-panel";
 import { LeftRail } from "@/components/left-rail";
+import { ShortcutsOverlay } from "@/components/shortcuts-overlay";
+import { SourcePulseStrip } from "@/components/source-pulse-strip";
 import { Topbar } from "@/components/topbar";
 import { TweaksPanel } from "@/components/tweaks-panel";
 import { TweaksTrigger } from "@/components/tweaks-trigger";
-import { ValidationBanner } from "@/components/validation-banner";
 import { Writeup } from "@/components/writeup/writeup";
 import { useBootstrap, useKeyboardShortcuts } from "@/lib/bootstrap";
 import {
@@ -20,12 +21,14 @@ import {
 import { loadAccount } from "@/lib/sse";
 import {
   setDensity,
+  setFocusedEvid,
   setHoveredEvid,
   setIntelligencePanelOpen,
   setMode,
   setTheme,
   setTweaksOpen,
   setVerify,
+  toggleSidebar,
   useStore,
 } from "@/lib/store";
 import type { IntelligenceSection } from "@/lib/types";
@@ -41,9 +44,11 @@ export default function BriefingPage() {
   const verify = useStore((s) => s.verifyIntensity);
   const tweaksOpen = useStore((s) => s.tweaksOpen);
   const intelligenceOpen = useStore((s) => s.intelligencePanelOpen);
+  const sidebarCollapsed = useStore((s) => s.sidebarCollapsed);
   const activeId = useStore((s) => s.activeAccountId);
   const activeAccount = useStore((s) => s.activeAccount);
   const hoveredEvid = useStore((s) => s.hoveredEvid);
+  const focusedEvid = useStore((s) => s.focusedEvid);
   const brief = useStore((s) => s.brief);
   const intelligence = useStore((s) => s.intelligence);
   const citations = useStore((s) => s.citations);
@@ -54,12 +59,38 @@ export default function BriefingPage() {
   const accountsLoading =
     accountGroups.length === 0 && standaloneAccounts.length === 0;
 
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
   // Propagate theme to <html>.dark class
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
   }, [theme]);
+
+  // `?` opens the keyboard-shortcuts overlay (Linear/Notion convention).
+  // Skips when focus is in a text input so reps can still type "?" in the
+  // search box. Modifier keys also skip — `?` is a bare-key trigger.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsOpen((v) => !v);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const displayAccount = activeAccount ??
     accountGroups[0]?.brands[0] ??
@@ -73,19 +104,40 @@ export default function BriefingPage() {
       note: "",
     };
 
-  // Rebuild intelligence section list in declaration order, skipping unrevealed.
+  // Section ordering optimized for AE pre-call prep, not consultant-style
+  // "who → what → how" rapport building. Money first (Commercial = the
+  // reason the call exists), then last-call ground truth (Conversations),
+  // then Relationship for who you're talking to, Product for usage signals,
+  // External for noise-prone web signals, Portfolio last because sibling
+  // brands are tertiary for any single-account call.
+  //
+  // Future: state-aware ordering belongs in the variant-skill system
+  // (renewal-call variant promotes Commercial; discovery-call variant
+  // promotes Conversations). Static order here is the right call for V1.
   const intelligenceSections: IntelligenceSection[] = [
-    intelligence.relationship,
     intelligence.commercial,
-    intelligence.product,
     intelligence.conversations,
-    intelligence.portfolio,
+    intelligence.relationship,
+    intelligence.product,
     intelligence.external,
+    intelligence.portfolio,
   ].filter((s): s is IntelligenceSection => !!s);
   const intelligenceCount = intelligenceSections.reduce(
     (sum, s) => sum + s.items.length,
     0,
   );
+
+  // Workspace verification mode: the citation chip stores the citation's
+  // text-evid (a long fact string in live mode, a hand-picked slug in
+  // static fixtures). Resolve to the intel-panel card's evid via the
+  // backend-emitted intel_evid pointer. Falls back to the citation evid
+  // itself when intel_evid is null/missing — works for the static fixture
+  // where citation evids and intel item evids are hand-aligned.
+  const resolvedFocusedEvid = useMemo(() => {
+    if (!focusedEvid) return null;
+    const citation = citations.find((c) => c.evid === focusedEvid);
+    return citation?.intel_evid ?? focusedEvid;
+  }, [focusedEvid, citations]);
 
   // For prospects (arr_cents === 0), pull the open-pipeline dollar amount from
   // the Commercial section's pipeline line — typically an item whose sub reads
@@ -99,15 +151,30 @@ export default function BriefingPage() {
       : null;
 
   return (
-    <div className="grid h-screen grid-cols-[260px_minmax(0,1fr)] overflow-hidden bg-bg text-ink">
-      <LeftRail
-        groups={accountGroups}
-        standalone={standaloneAccounts}
-        activeId={activeId}
-        onSelect={(id) => loadAccount(id)}
-        currentUser={CURRENT_USER}
-        loading={accountsLoading}
-      />
+    <div
+      className={cn(
+        "grid h-screen overflow-hidden bg-bg text-ink transition-[grid-template-columns] duration-200",
+        sidebarCollapsed
+          ? "grid-cols-[0px_minmax(0,1fr)]"
+          : "grid-cols-[260px_minmax(0,1fr)]",
+      )}
+    >
+      <div
+        className={cn(
+          "min-h-0 overflow-hidden transition-opacity duration-200",
+          sidebarCollapsed && "pointer-events-none opacity-0",
+        )}
+        aria-hidden={sidebarCollapsed}
+      >
+        <LeftRail
+          groups={accountGroups}
+          standalone={standaloneAccounts}
+          activeId={activeId}
+          onSelect={(id) => loadAccount(id)}
+          currentUser={CURRENT_USER}
+          loading={accountsLoading}
+        />
+      </div>
       <div className="flex min-w-0 flex-col overflow-hidden">
         <Topbar
           breadcrumbAccount={displayAccount.full_name ?? displayAccount.name}
@@ -121,6 +188,8 @@ export default function BriefingPage() {
             setIntelligencePanelOpen(!intelligenceOpen)
           }
           onRefresh={() => activeId && loadAccount(activeId, { refresh: true })}
+          sidebarCollapsed={sidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
         />
 
         {mode === "writeup" ? (
@@ -133,31 +202,40 @@ export default function BriefingPage() {
               prospectPipeline={prospectPipeline}
             />
             <ConfidenceStrip
-              confidence={generationMeta.totalTokens ?? 0}
+              confidence={
+                brief.fixture?.confidence ?? DEFAULT_BRIEF_META.confidence
+              }
               sources={DEFAULT_SOURCE_STATUSES}
               staleCount={DEFAULT_BRIEF_META.staleCount}
-              generatedAgo={brief.complete ? "just now" : "streaming…"}
+              generatedAt={generationMeta.completedAt}
+              streaming={!brief.complete}
+              warnings={warnings}
               onRegenerate={() =>
                 activeId && loadAccount(activeId, { refresh: true })
               }
             />
 
-            {warnings.length > 0 && <ValidationBanner warnings={warnings} />}
+            <SourcePulseStrip
+              intelligence={intelligence}
+              briefComplete={brief.complete}
+            />
 
             <main
               className={cn(
                 "flex flex-1 min-h-0",
                 mode === "split" &&
                   "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
-                mode === "workspace" && "grid grid-cols-[360px_minmax(0,1fr)]",
+                mode === "workspace" &&
+                  "grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
                 mode === "reading" && "flex-col",
               )}
               aria-label="Brief + intelligence"
             >
               {(() => {
                 const revealedSections =
-                  brief.fixture?.sections.filter((s) => brief.revealed[s.id]) ??
-                  [];
+                  brief.fixture?.sections.filter(
+                    (s) => brief.revealed[s.id],
+                  ) ?? [];
                 if (!brief.fixture || revealedSections.length === 0) {
                   return <BriefSkeleton layout={mode} />;
                 }
@@ -168,15 +246,13 @@ export default function BriefingPage() {
                       sections: revealedSections,
                       citations,
                     }}
-                    layout={
-                      mode === "reading"
-                        ? "centered"
-                        : mode === "workspace"
-                          ? "workspace"
-                          : "split"
-                    }
+                    layout={mode === "reading" ? "centered" : "split"}
                     hoveredEvid={hoveredEvid}
                     onCitationHover={setHoveredEvid}
+                    onCitationClick={
+                      mode === "workspace" ? setFocusedEvid : undefined
+                    }
+                    disableReferencesScroll={mode === "workspace"}
                   />
                 );
               })()}
@@ -187,6 +263,10 @@ export default function BriefingPage() {
                   variant={mode === "workspace" ? "workspace" : "compact"}
                   hoveredEvid={hoveredEvid}
                   onCardHover={setHoveredEvid}
+                  focusedEvid={mode === "workspace" ? resolvedFocusedEvid : null}
+                  onClearFocus={
+                    mode === "workspace" ? () => setFocusedEvid(null) : undefined
+                  }
                 />
               )}
             </main>
@@ -210,6 +290,11 @@ export default function BriefingPage() {
           </div>
         )}
       </div>
+
+      <ShortcutsOverlay
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+      />
 
       <TweaksTrigger onClick={() => setTweaksOpen(true)} open={tweaksOpen} />
       <TweaksPanel
