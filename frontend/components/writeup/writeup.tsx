@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { AlignJustify, ChevronDown, Mail, Package, Rocket } from "lucide-react";
+import { AlignJustify, ChevronDown, FileText, Mail, Package, Rocket } from "lucide-react";
 import { WriteupToc } from "./writeup-toc";
 
 const TOC_SECTIONS = [
@@ -13,8 +13,9 @@ const TOC_SECTIONS = [
   { id: "decisions", number: "04", title: "The architecture in four decisions" },
   { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer" },
   { id: "tradeoffs", number: "06", title: "Tradeoffs" },
-  { id: "plan", number: "07", title: "The 90-day plan if I joined " },
-  { id: "how-built", number: "08", title: "How I built this" },
+  { id: "scaling", number: "07", title: "What scaling this would surface" },
+  { id: "plan", number: "08", title: "The 90-day plan if I joined " },
+  { id: "how-built", number: "09", title: "How I built this" },
   { id: "closing", number: "", title: "Closing" },
 ];
 
@@ -108,6 +109,8 @@ export function Writeup() {
           {/* Right col: content — no max-width, fills available space */}
           <article className="w-full px-10 py-16 sm:px-14 xl:px-20 sm:py-20">
             <Hero />
+
+            <TldrPanel />
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
               <p>
@@ -377,26 +380,41 @@ data_as_of: 2026-04-23`}
               <p>Real catch from testing:</p>
               <ExampleQuote>
                 <p>
-                  <em>Brief tried to write:</em> "Avery Collins and Jules Okafor
-                  have built a disciplined operation"
+                  <em>Brief tried to write:</em> "Adoption dropped 17% in 90
+                  days"
                 </p>
                 <p>
-                  <em>Citation supported:</em> "adoption leadership"
+                  <em>Cited <Mono>fact_id</Mono> 41:</em> health_delta of −13
+                  (not 17%)
                 </p>
                 <p>
-                  <em>Validator's response:</em> you're being a hype man. The fact
-                  says they're adoption leaders, not disciplined operators. Tone
-                  it down.
+                  <em>Cited <Mono>fact_id</Mono> 40:</em> sends_trend_pct of
+                  −18% (not adoption)
+                </p>
+                <p>
+                  <em>Validator's response:</em> you took two different metrics
+                  from two different sources and mashed them into one made-up
+                  number. <Mono>fact_id</Mono> 41 says health dropped 13
+                  points. <Mono>fact_id</Mono> 40 says sends are down 18%.
+                  Neither says "adoption dropped 17%." Pick which one you
+                  mean.
                 </p>
               </ExampleQuote>
-              <p>The brief wanted to upsell. The validator made it stop.</p>
+              <p>The brief invented a percentage. The validator caught the math.</p>
               <p>
                 <b>Refusal rules.</b> When the brief can't ground a claim, it
                 refuses. "No data on this" beats "made-up specifics" on trust.
               </p>
-              <VisualMarker>validation warning panel from a real brief</VisualMarker>
-              <VisualMarker>
-                side-by-side prose, fact-citation vs hedged-inference
+              <VisualMarker src="/images/writeup/validator-warnings.png">
+                Three real catches the validator surfaced on this brief. The
+                CRITICAL catch (top) flags an invented metric — see decision
+                4 above.
+              </VisualMarker>
+              <VisualMarker src="/images/writeup/citations-vs-hedging.png">
+                Left: confident claim with <Mono>·N</Mono> citation chip
+                points to a specific <Mono>fact_id</Mono>. Right: inference
+                uses hedged voice ("reads like") because no single fact
+                supports the full statement.
               </VisualMarker>
             </Section>
 
@@ -547,7 +565,54 @@ data_as_of: 2026-04-23`}
               </BulletList>
             </Section>
 
-            <Section id="plan" number="07" claim="The 90-day plan if I joined ">
+            <Section id="scaling" number="07" claim="What scaling this would surface">
+              <p>
+                Five things the architecture handles in V1 but would have to
+                level up at  scale.
+              </p>
+              <p>
+                <b>Validator severity is non-deterministic.</b> Same brief,
+                four runs, different critical/watch counts. Haiku temperature
+                noise on judgment calls. V1.5 fix is a two-pass consistency
+                check, but at scale across hundreds of accounts, even that
+                gets fuzzy at boundaries. Production needs a confidence-scored
+                validator, not a binary one.
+              </p>
+              <p>
+                <b>Model spend isn't where this gets expensive.</b> Sonnet 4.6
+                generation at this brief size runs ~$0.06 per brief end-to-end
+                including the validator pass. Even at  scale — 120
+                AEs × 4 briefs/day × 250 working days = 120K briefs/year —
+                that's ~$7K in model spend. Lunch money. What does scale:
+                source-system API costs (Gong transcript pulls and Catalyst
+                event endpoints both have per-call pricing that adds up), MCP
+                infrastructure (six stateful services × multi-region HA), and
+                engineering time on the validator (binary critical/watch is
+                fine for V1; confidence-scored validator with two-pass
+                consistency is months of work).
+              </p>
+              <p>
+                <b>Six MCP servers means six failure points.</b> A connector
+                returning stale data silently is the worst case — brief still
+                generates, but with bad inputs. Real production needs per-MCP
+                health monitoring, automatic stale-data detection, and
+                graceful degradation when one source goes dark.
+              </p>
+              <p>
+                <b>The skill library is the moat — and the long pole.</b> New
+                customer onboarding is fast on architecture, slow on authoring
+                the right variant skills. A renewal-call brief at 
+                looks different from one at Stripe. Mining the Gong corpus is
+                how this scales but it requires real time investment per
+                customer.
+              </p>
+              <p>
+                <b>Exa is V1-stubbed.</b> External signals come from a seeded
+                table. Live Exa wrapper is a half-day swap.
+              </p>
+            </Section>
+
+            <Section id="plan" number="08" claim="The 90-day plan if I joined ">
               <PhaseHeader label="DAYS 0-14" title="Validate before scaling" />
               <BulletList>
                 <li>
@@ -608,7 +673,7 @@ data_as_of: 2026-04-23`}
               </p>
             </Section>
 
-            <Section id="how-built" number="08" claim="How I built this">
+            <Section id="how-built" number="09" claim="How I built this">
               <p>The build itself was the AI workflow being tested.</p>
               <BulletList>
                 <li>
@@ -668,6 +733,65 @@ function Hero() {
       </div>
       <hr className="mt-20 border-line" />
     </header>
+  );
+}
+
+// ---------- TldrPanel ----------
+
+function TldrPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className={
+        "mt-10 max-w-[720px] overflow-hidden rounded-md border bg-surface-2 transition-colors " +
+        (open ? "border-line border-l-[3px] border-l-accent" : "border-line")
+      }
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 px-4 py-3 text-left text-ink-2 hover:text-ink"
+        aria-expanded={open}
+      >
+        <FileText size={14} className="text-ink-3" />
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
+          TL;DR — 30 seconds
+        </span>
+        <ChevronDown
+          size={14}
+          className={
+            "ml-auto text-ink-4 transition-transform duration-200 " +
+            (open ? "rotate-180" : "")
+          }
+        />
+      </button>
+      <div
+        className={
+          "grid transition-[grid-template-rows] duration-300 ease-out " +
+          (open ? "grid-rows-[1fr]" : "grid-rows-[0fr]")
+        }
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-4 px-4 pb-4 pt-2 text-[17px] leading-[1.6] text-ink-2">
+            <p>
+              Primer is a pre-call briefing tool for AEs. It reads from six
+              source systems in parallel via MCP servers, generates an
+              opinionated brief grounded in deterministic <Mono>fact_id</Mono>s,
+              and runs a validator agent against every claim before display.
+            </p>
+            <p>
+              The architecture skips the multi-quarter data unification project
+              and ships value this quarter; when the data layer eventually does
+              ship, the MCP servers point at it instead.
+            </p>
+            <p>
+              Watch the validator catch the brief overstating its claims in
+              real time when you open the prototype.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -899,17 +1023,20 @@ function VisualMarker({
   src?: string;
 }) {
   const padMap = { "16:9": "56.25%", "4:3": "75%", "3:2": "66.67%" } as const;
-  const caption = typeof children === "string" ? children : "";
+  const altText = typeof children === "string" ? children : "";
+  const [imgError, setImgError] = useState(false);
+  const showImage = !!src && !imgError;
   return (
     <figure className="my-8">
       <div
         className="relative overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm"
         style={{ paddingBottom: padMap[aspectRatio] }}
       >
-        {src ? (
+        {showImage ? (
           <img
             src={src}
-            alt={caption}
+            alt={altText}
+            onError={() => setImgError(true)}
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
@@ -918,13 +1045,13 @@ function VisualMarker({
               Visual placeholder
             </span>
             <span className="max-w-[360px] text-center font-serif text-[14px] italic leading-[1.5] text-ink-3">
-              {caption}
+              {children}
             </span>
           </div>
         )}
       </div>
       <figcaption className="mt-2 text-center text-[12px] italic text-ink-3">
-        {caption}
+        {children}
       </figcaption>
     </figure>
   );
