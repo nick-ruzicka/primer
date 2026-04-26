@@ -165,53 +165,39 @@ export function Writeup() {
             </Section>
 
             <Section id="what-built" number="02" claim="What I built">
-              <p>Two terms before anything else.</p>
+              <p>
+                <b>The brief.</b> Single-page app, one brief per account.
+                Four modes (Reading, Workspace, Split, Writeup) render the
+                same brief at different densities. Five sections per brief:
+                the read (what the call is about), why this read (the
+                evidence), what to do, discovery questions, suggested talk
+                track.
+              </p>
+
+              <p>
+                <b>Two terms before the architecture.</b>
+              </p>
               <BulletList>
                 <li>
-                  <b>Artifact</b>: whatever Primer produces. Today: the
-                  pre-call brief. Tomorrow: post-call summaries, drafted
-                  outreach, renewal risk alerts.
+                  <b>Artifact</b>: whatever Primer produces. Today it's the
+                  brief. Tomorrow: post-call summaries, drafted outreach,
+                  renewal alerts.
                 </li>
                 <li>
-                  <b>Skill file</b>: a markdown policy document the LLM has
-                  to live inside. Rules, structure, voice, forbidden
-                  behaviors — not a prompt, a contract.
+                  <b>Skill file</b>: a markdown contract the LLM has to
+                  follow on every call. Rules (<em>"if you can't cite it,
+                  you can't claim it"</em>), structure, voice, forbidden
+                  behaviors. Not a prompt — a policy.
                 </li>
               </BulletList>
 
-              <Subhead>The artifact: a pre-call brief</Subhead>
               <p>
-                Single-page app, one brief per account. Four modes (Reading,
-                Workspace, Split, Writeup) render the same brief at
-                different densities. The brief has five sections:
-              </p>
-              <BulletList>
-                <li>The read. What's the call about, in two sentences.</li>
-                <li>Why this read. The evidence behind it.</li>
-                <li>What to do on the call. Three specific actions.</li>
-                <li>Discovery questions. Five questions tied to the read.</li>
-                <li>Suggested talk track. Language to actually use.</li>
-              </BulletList>
-
-              <Subhead>The skill system</Subhead>
-              <p>
-                Skills are a three-tier hierarchy of markdown files: a
-                constitutional master skill (<em>"if you can't cite it, you
-                can't claim it"</em>), an artifact skill per artifact type
-                (<em>"take a position, argue, don't summarize"</em>), and
-                variant skills underneath (renewal-call, expansion,
-                trust-repair). The LLM reads them as instructions. Adding a
-                new artifact is writing a new skill file, not retraining a
-                model. The skills are the moat.
-              </p>
-
-              <Subhead>The agents</Subhead>
-              <p>
-                Three specialized agents, each pinned to its own skill: the
-                Writer (Sonnet 4.6) drafts the brief, the Validator (Haiku)
-                flags violations, the Scorer (committee of narrow Haiku
-                judges) turns each warning into a confidence score.
-                Architecture detail in section 04.
+                Skills are tiered: a master skill that applies to
+                everything, an artifact skill per artifact type, variant
+                skills underneath (renewal-call, expansion, trust-repair).
+                Adding a new artifact is writing a new skill file, not
+                retraining a model. The skills are the moat — they encode
+                what good looks like for this business, in plain markdown.
               </p>
 
               <p>
