@@ -192,12 +192,29 @@ export function Writeup() {
               </BulletList>
 
               <p>
-                Skills are tiered: a master skill that applies to
-                everything, an artifact skill per artifact type, variant
-                skills underneath (renewal-call, expansion, trust-repair).
-                Adding a new artifact is writing a new skill file, not
-                retraining a model. The skills are the moat — they encode
-                what good looks like for this business, in plain markdown.
+                <b>Why skills, not prompts or fine-tuning.</b> Every LLM
+                system has the same hard problem: finite context. What you
+                put in it decides what the model can reason about. Most
+                products solve this with RAG (retrieval is fuzzy, misses
+                specific facts) or fine-tuning (bakes business rules into
+                model weights, brittle, expensive to update). Skills are a
+                third option: versioned markdown loaded into context per
+                request. The model stays general. The business knowledge
+                stays editable, inspectable, and auditable.
+              </p>
+              <p>
+                Skills are tiered the way real policy is: a master skill
+                for company-wide rules (<em>"if you can't cite it, you
+                can't claim it"</em>), an artifact skill per output type
+                (<em>"the brief argues, doesn't summarize"</em>), variant
+                skills underneath for specific situations (renewal-call,
+                expansion, trust-repair). Adding a new artifact is writing
+                a new skill file, not retraining a model. RevOps can read
+                what the system believes and change it in plain markdown.
+              </p>
+              <p>
+                The skills are the moat — they encode what good looks like
+                for this business, in a format anyone can read and improve.
               </p>
 
               <p>
