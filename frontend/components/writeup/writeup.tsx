@@ -125,27 +125,32 @@ export function Writeup() {
 
             <Section id="problem" number="01" claim="The problem we're actually solving">
               <p>
-                A rep walks into a customer call with six tabs open: Salesforce,
-                Gong, Catalyst, NetSuite, Snowflake, LinkedIn. Each has signal.
-                None tells you what the call is about.
-              </p>
-              <p>The hour of prep is spent assembling a story:</p>
-              <BulletList>
-                <li>What state is this account actually in?</li>
-                <li>Who's the new decision-maker?</li>
-                <li>What did we agree to last quarter and never follow up on?</li>
-                <li>Renewal, trust-repair, or expansion?</li>
-              </BulletList>
-              <p>
-                The assembly happens in the rep's head, under time pressure, with
-                incomplete recall. That's where deals get lost.
+                A SaaS company forecasts a renewal at 70% likelihood. The
+                deal dies. The decision-maker left months earlier and a new
+                CFO arrived. The sales team didn't know.
               </p>
               <PullQuote>
-                AEs don't have a dashboards problem. They have a synthesis problem.
+                AEs don't have a dashboards problem. They have an{" "}
+                <em>awareness</em> problem.
               </PullQuote>
               <p>
-                Primer takes a position. Every claim grounded in a source. Every
-                claim it can't ground, it refuses to make.
+                Each account has a decision-making structure — who has
+                authority, who's the champion, who's blocking — and that
+                structure changes constantly across systems no single tool
+                watches. By the time the rep notices, the deal is already
+                moving against them.
+              </p>
+              <p>
+                Synthesis is the visible part. Six tabs, an hour of prep, a
+                story the rep assembles in their head under time pressure.
+                The deeper problem is what the rep doesn't think to look
+                for.
+              </p>
+              <p>
+                Primer is a synthesis layer that tracks decision-making
+                across the systems where it changes. The brief takes a
+                position on what the call is about, grounds every claim in
+                a source, and refuses to make claims it can't ground.
               </p>
             </Section>
 
@@ -326,6 +331,19 @@ export function Writeup() {
                 4 above. Confidence scores (0.71, 0.63, 0.22) come from the
                 decomposed scorer.
               </VisualMarker>
+              <p>
+                The 17% catch is a synthesis-grounding catch: the brief made
+                a claim the data didn't support. The harder catch is{" "}
+                <em>awareness</em>-grounding: the brief says "Priya is your
+                champion" because Salesforce still says she is, but Priya
+                left three weeks ago. The validator can't catch that today
+                — the data still technically grounds the claim. V2 extends
+                the validator from "is this claim grounded in the data we
+                have?" to "is the data we have still current?" External
+                monitoring on key contacts: LinkedIn employment lookups,
+                Gong transcripts scanned for departure language, Exa for
+                press mentions.
+              </p>
               <p>
                 <b>Decomposed confidence scoring.</b> Each warning gets a
                 score across four factors: citation match (60%, mechanical),
@@ -549,8 +567,24 @@ export function Writeup() {
               </p>
 
               <SlidePoint
-                headline="Adoption is the long pole, not technology."
+                headline="Trust is a one-strike system."
                 cite={1}
+                note={
+                  <p>
+                    <b>High-stakes facts that need human-in-the-loop</b>{" "}
+                    verification before display: champion identity, contract
+                    values, recent leadership changes. Everything else stays
+                    automated.
+                  </p>
+                }
+              >
+                The first time the brief says "your champion is Priya Shah" and
+                Priya left three weeks ago, the rep stops using the tool.
+              </SlidePoint>
+
+              <SlidePoint
+                headline="Adoption is the long pole, not technology."
+                cite={2}
                 note={
                   <>
                     <p>
@@ -570,22 +604,6 @@ export function Writeup() {
                 time, or it's abandoned by week 3. The way you prevent that
                 is the Phase 1 validation work: 3-5 reps on real calls,
                 structured feedback, cut what doesn't work before scaling.
-              </SlidePoint>
-
-              <SlidePoint
-                headline="Trust is a one-strike system."
-                cite={2}
-                note={
-                  <p>
-                    <b>High-stakes facts that need human-in-the-loop</b>{" "}
-                    verification before display: champion identity, contract
-                    values, recent leadership changes. Everything else stays
-                    automated.
-                  </p>
-                }
-              >
-                The first time the brief says "your champion is Priya Shah" and
-                Priya left three weeks ago, the rep stops using the tool.
               </SlidePoint>
 
               <SlidePoint
