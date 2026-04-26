@@ -281,6 +281,8 @@ export function Writeup() {
             </Section>
 
             <Section id="decisions" number="04" claim="The architecture in four decisions">
+              <ArchitectureDiagram />
+
               <Subhead>1. Read-only, not write-back</Subhead>
               <BulletList>
                 <li>Six MCP servers read. Primer never writes back.</li>
@@ -407,16 +409,37 @@ data_as_of: 2026-04-23`}
                 refuses. "No data on this" beats "made-up specifics" on trust.
               </p>
               <VisualMarker src="/images/writeup/validator-warnings.png">
-                Three real catches the validator surfaced on this brief. The
+                Four real catches the validator surfaced on this brief. The
                 CRITICAL catch (top) flags an invented metric — see decision
-                4 above.
+                4 above. Confidence scores (0.71, 0.63, 0.22) come from the
+                decomposed scorer.
               </VisualMarker>
-              <VisualMarker src="/images/writeup/citations-vs-hedging.png">
-                Left: confident claim with <Mono>·N</Mono> citation chip
-                points to a specific <Mono>fact_id</Mono>. Right: inference
-                uses hedged voice ("reads like") because no single fact
-                supports the full statement.
-              </VisualMarker>
+              <figure className="my-8">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm">
+                    <img
+                      src="/images/writeup/the-read-citations.png"
+                      alt="The read paragraph showing dense citation chips"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                  <div className="overflow-hidden rounded-lg border border-line bg-surface-sunk/40 shadow-sm">
+                    <img
+                      src="/images/writeup/why-this-read-inference.png"
+                      alt="Why this read inference paragraph showing fewer citations and interpretive language"
+                      className="block h-auto w-full"
+                    />
+                  </div>
+                </div>
+                <figcaption className="mx-auto mt-3 max-w-[640px] text-center text-[12px] italic text-ink-3">
+                  Left: <b>The read</b> — confident claims, <Mono>·N</Mono>
+                  citation chips on every assertion. Right: <b>Why this read</b>{" "}
+                  inference — fewer citations, interpretive language ("she's
+                  publicly talking about... that's architect language, not
+                  maintenance") because no single fact supports the full
+                  statement.
+                </figcaption>
+              </figure>
             </Section>
 
             <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
@@ -553,8 +576,8 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <PullQuote>
-                Skills are the playbook. History is the memory of every play
-                that's been run.
+                Skills define the structure. History tells you which variant fits
+                which situation.
               </PullQuote>
 
               <p>
@@ -628,7 +651,7 @@ data_as_of: 2026-04-23`}
                     <p>
                       Preventing it — onboarding, manager calibration,
                       distribution inside Slack and Calendar where reps already
-                      are — is the real V2 work.
+                      are — is V2.
                     </p>
                   </>
                 }
@@ -722,10 +745,9 @@ data_as_of: 2026-04-23`}
                   </>
                 }
               >
-                Binary critical/watch produces different counts on identical
-                reruns. Fix: decompose into mechanical citation_match plus
-                three narrow LLM sub-scores — most of the confidence becomes
-                deterministic.
+                Run the same brief twice: one flags three warnings critical, the
+                other flags two. citation_match needs no LLM at all. Three narrow
+                sub-scores replace one fuzzy judgment — and the counts stabilize.
               </SlidePoint>
 
               <SlidePoint
@@ -754,8 +776,8 @@ data_as_of: 2026-04-23`}
             <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive">
               <p className="italic text-ink-3">
                 Parallel tracks for the first two weeks — validate the product,
-                seed the skills library. The back half prioritizes whichever
-                gap V1.5 telemetry surfaces.
+                seed the skills library. The back half adapts based on what V1.5
+                telemetry shows.
               </p>
 
               <PhaseHeader label="DAYS 0-14" title="Product Validation" />
@@ -785,8 +807,7 @@ data_as_of: 2026-04-23`}
                   access lets every Salesforce custom field, Catalyst tag
                   taxonomy, NetSuite billing schema, and Snowflake usage table
                   get a typed path through the MCP layer. Attentive-specific
-                  internal tools get new MCP wrappers where needed — this is
-                  where the architecture earns its flexibility.
+                  internal tools get new MCP wrappers where needed.
                 </li>
                 <li>
                   Pull 12 months of Gong calls. Find the motions: renewal,
@@ -821,11 +842,11 @@ data_as_of: 2026-04-23`}
                   Add last-5 notes/activities/Gong from each source to pre-fetch.
                 </li>
                 <li>
-                  Score external signals into the brief: LinkedIn (champion
-                  moves), Exa-live (competitive intelligence — press, funding
-                  rounds, competitor exec changes), Gong scans (departure
-                  language). Per-motion weighting — stability matters for
-                  renewal, momentum matters for expansion.
+                  Surface account health for renewal calls: usage trending down,
+                  champion departures, rising support tickets. Surface market
+                  opportunity for expansion: competitor changes, funding/hiring at
+                  the account, product momentum. Different motions, different
+                  signals.
                 </li>
                 <li>Deploy V1.5 to the broader AE team beyond the initial 3-5.</li>
                 <li>
@@ -847,8 +868,8 @@ data_as_of: 2026-04-23`}
                 The default is to <b>wire the feedback loop:</b> Primer reads
                 its own call transcripts back through Gong, compares against
                 how the call actually went, proposes skill updates where the
-                brief was wrong. RevOps approves before any ships; the library
-                starts compounding.
+                brief was wrong. RevOps approves before any ships; each skill
+                gets richer as it learns what actually worked on calls.
               </p>
               <p>
                 Whether that's the right call depends on V1.5 telemetry.
@@ -880,14 +901,6 @@ data_as_of: 2026-04-23`}
                   taste, ship decisions).
                 </li>
               </BulletList>
-              <p>
-                GTM Engineering in 2026 compresses a multi-week sprint into a
-                focused build. Teams that invest in building ship differentiated
-                infrastructure. Teams that rent off-the-shelf ship the same thing
-                as their competitors. The economics flipped when the cost of
-                building one good thing dropped faster than the cost of integrating
-                five mediocre ones.
-              </p>
             </Section>
 
             <Closing />
@@ -1188,6 +1201,446 @@ function RoadmapGrid() {
         </div>
       ))}
     </div>
+  );
+}
+
+// ---------- ArchitectureDiagram ----------
+
+function ArchitectureDiagram() {
+  const sources = [
+    "Salesforce",
+    "Gong",
+    "Catalyst",
+    "NetSuite",
+    "Snowflake",
+    "LinkedIn",
+  ];
+  const SOURCE_X = 24;
+  const SOURCE_W = 140;
+  const SOURCE_H = 36;
+  const SOURCE_GAP = 8;
+  const SOURCE_Y0 = 12;
+
+  const FACT_X = 264;
+  const FACT_Y = 36;
+  const FACT_W = 200;
+  const FACT_H = 224;
+  const FACT_ENTRY_Y = FACT_Y + FACT_H / 2;
+
+  const WRITER_X = 520;
+  const WRITER_Y = 60;
+  const WRITER_W = 200;
+  const WRITER_H = 120;
+
+  const VAL_X = 520;
+  const VAL_Y = 230;
+  const VAL_W = 200;
+  const VAL_H = 120;
+
+  const BRIEF_X = 780;
+  const BRIEF_Y = 210;
+  const BRIEF_W = 160;
+  const BRIEF_H = 160;
+
+  const labelMono = {
+    fontFamily: "var(--font-mono), monospace",
+    fontSize: 9,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+  };
+  const sampleMono = {
+    fontFamily: "var(--font-mono), monospace",
+    fontSize: 11,
+  };
+  const sampleSerif = {
+    fontFamily: "var(--font-serif), Georgia, serif",
+    fontSize: 12,
+    fontStyle: "italic" as const,
+  };
+
+  return (
+    <figure className="-mx-2 my-10 sm:mx-0">
+      <div className="overflow-x-auto">
+        <svg
+          viewBox="0 0 960 380"
+          role="img"
+          aria-labelledby="arch-diagram-title"
+          className="block w-full min-w-[760px]"
+        >
+          <title id="arch-diagram-title">
+            Primer architecture: six MCP sources fan into a fact index that
+            feeds a Sonnet writer; a Haiku validator cross-checks every
+            citation before the brief ships.
+          </title>
+
+          <defs>
+            <marker
+              id="arch-arrow"
+              viewBox="0 0 10 10"
+              refX={9}
+              refY={5}
+              markerWidth={5}
+              markerHeight={5}
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                style={{ fill: "var(--color-ink-3)" }}
+              />
+            </marker>
+            <marker
+              id="arch-arrow-faint"
+              viewBox="0 0 10 10"
+              refX={9}
+              refY={5}
+              markerWidth={5}
+              markerHeight={5}
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                style={{ fill: "var(--color-ink-4)" }}
+              />
+            </marker>
+          </defs>
+
+          {sources.map((name, i) => {
+            const y = SOURCE_Y0 + i * (SOURCE_H + SOURCE_GAP);
+            return (
+              <g key={name}>
+                <rect
+                  x={SOURCE_X}
+                  y={y}
+                  width={SOURCE_W}
+                  height={SOURCE_H}
+                  rx={5}
+                  style={{
+                    fill: "var(--color-surface-2)",
+                    stroke: "var(--color-line)",
+                  }}
+                  strokeWidth={1}
+                />
+                <text
+                  x={SOURCE_X + SOURCE_W / 2}
+                  y={y + SOURCE_H / 2 + 4}
+                  textAnchor="middle"
+                  style={{
+                    fill: "var(--color-ink-2)",
+                    fontFamily: "var(--font-serif), Georgia, serif",
+                    fontSize: 13,
+                  }}
+                >
+                  {name}
+                </text>
+              </g>
+            );
+          })}
+
+          <text
+            x={SOURCE_X + SOURCE_W / 2}
+            y={SOURCE_Y0 + sources.length * (SOURCE_H + SOURCE_GAP) + 12}
+            textAnchor="middle"
+            style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+          >
+            via MCP servers · parallel
+          </text>
+
+          {sources.map((_, i) => {
+            const y = SOURCE_Y0 + i * (SOURCE_H + SOURCE_GAP) + SOURCE_H / 2;
+            return (
+              <line
+                key={i}
+                x1={SOURCE_X + SOURCE_W}
+                y1={y}
+                x2={FACT_X}
+                y2={FACT_ENTRY_Y}
+                style={{ stroke: "var(--color-line-strong)" }}
+                strokeWidth={0.75}
+                strokeOpacity={0.7}
+              />
+            );
+          })}
+
+          <g>
+            <rect
+              x={FACT_X}
+              y={FACT_Y}
+              width={FACT_W}
+              height={FACT_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <rect
+              x={FACT_X}
+              y={FACT_Y}
+              width={3}
+              height={FACT_H}
+              style={{ fill: "var(--color-accent)" }}
+            />
+            <text
+              x={FACT_X + 14}
+              y={FACT_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Fact Index
+            </text>
+            {[
+              { id: "16", body: "catalyst · health 61" },
+              { id: "17", body: "gong · Priya engaged" },
+              { id: "18", body: "salesforce · ARR $680K" },
+              { id: "19", body: "netsuite · due $18K" },
+              { id: "20", body: "linkedin · CFO arrived" },
+              { id: "…", body: "" },
+            ].map((f, i) => (
+              <text
+                key={i}
+                x={FACT_X + 14}
+                y={FACT_Y + 56 + i * 28}
+                style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+              >
+                <tspan style={{ fill: "var(--color-ink-3)" }}>{f.id}</tspan>
+                {f.body && ` · ${f.body}`}
+              </text>
+            ))}
+          </g>
+
+          <line
+            x1={FACT_X + FACT_W}
+            y1={FACT_ENTRY_Y - 20}
+            x2={WRITER_X - 4}
+            y2={WRITER_Y + WRITER_H / 2}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <line
+            x1={FACT_X + FACT_W}
+            y1={FACT_ENTRY_Y + 20}
+            x2={VAL_X - 4}
+            y2={VAL_Y + VAL_H / 2}
+            style={{ stroke: "var(--color-ink-4)" }}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            markerEnd="url(#arch-arrow-faint)"
+          />
+
+          <g>
+            <rect
+              x={WRITER_X}
+              y={WRITER_Y}
+              width={WRITER_W}
+              height={WRITER_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Writer · Sonnet 4.6
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 50}
+              style={{ ...sampleSerif, fill: "var(--color-ink-2)" }}
+            >
+              "Health 74 → 61"
+            </text>
+            <text
+              x={WRITER_X + WRITER_W - 14}
+              y={WRITER_Y + 50}
+              textAnchor="end"
+              style={{ ...sampleMono, fill: "var(--color-accent-2)" }}
+            >
+              ·16
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 72}
+              style={{ ...sampleSerif, fill: "var(--color-ink-2)" }}
+            >
+              "Priya engaged"
+            </text>
+            <text
+              x={WRITER_X + WRITER_W - 14}
+              y={WRITER_Y + 72}
+              textAnchor="end"
+              style={{ ...sampleMono, fill: "var(--color-accent-2)" }}
+            >
+              ·17
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + WRITER_H - 14}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              guided by skill files
+            </text>
+          </g>
+
+          <line
+            x1={WRITER_X + WRITER_W / 2 + 16}
+            y1={WRITER_Y + WRITER_H}
+            x2={WRITER_X + WRITER_W / 2 + 16}
+            y2={VAL_Y - 4}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <path
+            d={`M ${WRITER_X + WRITER_W / 2 - 16} ${VAL_Y} Q ${WRITER_X + WRITER_W / 2 - 40} ${VAL_Y - 25}, ${WRITER_X + WRITER_W / 2 - 16} ${WRITER_Y + WRITER_H}`}
+            fill="none"
+            style={{ stroke: "var(--color-ink-4)" }}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            markerEnd="url(#arch-arrow-faint)"
+          />
+          <text
+            x={WRITER_X + WRITER_W / 2 - 44}
+            y={WRITER_Y + WRITER_H + 28}
+            textAnchor="end"
+            style={{
+              ...labelMono,
+              fill: "var(--color-ink-4)",
+              fontSize: 8.5,
+            }}
+          >
+            rewrite if reject
+          </text>
+
+          <g>
+            <rect
+              x={VAL_X}
+              y={VAL_Y}
+              width={VAL_W}
+              height={VAL_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <rect
+              x={VAL_X}
+              y={VAL_Y}
+              width={3}
+              height={VAL_H}
+              style={{ fill: "var(--color-accent)" }}
+            />
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Validator · Haiku
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 50}
+              style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+            >
+              <tspan style={{ fill: "var(--color-accent-2)" }}>·16</tspan>
+              <tspan> ✓ </tspan>
+              <tspan dx={6} style={{ fill: "var(--color-accent-2)" }}>·17</tspan>
+              <tspan> ✓</tspan>
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 72}
+              style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+            >
+              <tspan style={{ fill: "var(--color-accent-2)" }}>·22</tspan>
+              <tspan> reject — ungrounded</tspan>
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + VAL_H - 14}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              cross-checks every citation
+            </text>
+          </g>
+
+          <line
+            x1={VAL_X + VAL_W}
+            y1={VAL_Y + VAL_H / 2}
+            x2={BRIEF_X - 4}
+            y2={BRIEF_Y + BRIEF_H / 2}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <g>
+            <rect
+              x={BRIEF_X}
+              y={BRIEF_Y}
+              width={BRIEF_W}
+              height={BRIEF_H}
+              rx={6}
+              style={{
+                fill: "var(--color-bg)",
+                stroke: "var(--color-line-strong)",
+              }}
+              strokeWidth={1}
+            />
+            <text
+              x={BRIEF_X + 14}
+              y={BRIEF_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Brief
+            </text>
+            {[
+              { y: 38, w: 130, h: 7 },
+              { y: 50, w: 100, h: 4 },
+              { y: 60, w: 116, h: 4 },
+              { y: 70, w: 88, h: 4 },
+              { y: 88, w: 124, h: 7 },
+              { y: 100, w: 110, h: 4 },
+              { y: 110, w: 120, h: 4 },
+              { y: 120, w: 80, h: 4 },
+              { y: 138, w: 104, h: 7 },
+            ].map((row, i) => (
+              <rect
+                key={i}
+                x={BRIEF_X + 14}
+                y={BRIEF_Y + row.y}
+                width={row.w}
+                height={row.h}
+                rx={1}
+                style={{
+                  fill:
+                    row.h === 7
+                      ? "var(--color-ink-2)"
+                      : "var(--color-ink-3)",
+                  fillOpacity: row.h === 7 ? 1 : 0.55,
+                }}
+              />
+            ))}
+          </g>
+        </svg>
+      </div>
+
+      <figcaption className="mx-auto mt-4 max-w-[640px] text-center font-serif text-[13px] italic leading-[1.5] text-ink-3">
+        Six sources fan into a fact index. The Writer (Sonnet 4.6) drafts
+        prose grounded in <Mono>fact_id</Mono>s. The Validator (Haiku)
+        cross-checks every citation against the index — and rejects claims
+        it can't ground.
+      </figcaption>
+    </figure>
   );
 }
 
