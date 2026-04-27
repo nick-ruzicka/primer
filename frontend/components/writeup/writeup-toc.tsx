@@ -6,6 +6,7 @@ interface TocSection {
   id: string;
   number: string;
   title: string;
+  demoLevel?: "essential" | "supporting" | "optional";
 }
 
 interface Props {
@@ -20,21 +21,29 @@ export function WriteupToc({ sections, activeId, onNavigate }: Props) {
     onNavigate?.();
   };
 
+  const bgMap = {
+    essential: "bg-good/5",
+    supporting: "bg-accent-soft/5",
+    optional: "",
+  };
+
   return (
     <nav aria-label="Table of contents">
       <ul className="space-y-0.5">
         {sections.map((section) => {
           const isActive = activeId === section.id;
+          const bgClass = section.demoLevel ? bgMap[section.demoLevel] : "";
           return (
             <li key={section.id}>
               <button
                 type="button"
                 onClick={() => handleClick(section.id)}
                 className={
-                  "flex w-full items-baseline gap-2 border-l-2 py-[5px] pl-3 text-left transition-colors " +
+                  "flex w-full items-baseline gap-2 border-l-2 py-[5px] pl-3 pr-2 rounded text-left transition-colors " +
                   (isActive
                     ? "border-accent text-ink"
-                    : "border-transparent text-ink-3 hover:text-ink-2")
+                    : "border-transparent text-ink-3 hover:text-ink-2") +
+                  ` ${bgClass}`
                 }
               >
                 {section.number && (
