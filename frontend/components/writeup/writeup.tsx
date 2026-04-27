@@ -272,14 +272,16 @@ export function Writeup() {
                 We used MCP servers — small, isolated programs that each
                 handle one source system — instead of having the brief
                 code call Salesforce, Gong, and the others directly. The
-                advantage is isolation: if Salesforce changes how its
-                data looks, only the Salesforce server needs updating,
-                not the brief itself. And every source looks the same
-                to the brief, which is what makes the citations work —
-                every fact has a stable ID regardless of which system
-                it came from. The cost is one extra step per data
-                lookup, fine for a brief that runs every fifteen
-                minutes, wrong for something needing instant responses.
+                advantage is isolation: when Salesforce changes its API
+                (renamed fields, new auth, restructured endpoints), only
+                the Salesforce MCP server needs updating; the brief code
+                that consumes it doesn't change. Every source also looks
+                the same to the brief code, which is what makes the
+                citations work — every fact has a stable ID regardless
+                of which system it came from. The cost is one extra step
+                per data lookup, fine for a brief that runs every
+                fifteen minutes, wrong for something needing instant
+                responses.
               </p>
 
               <Subhead>A note on databases</Subhead>
