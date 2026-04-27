@@ -144,7 +144,7 @@ export function Writeup() {
                 <p className="text-[16px] leading-[1.65] text-ink-2">
                   A rep tracking 40 accounts can't watch every system every
                   day. The rep who forecasts a renewal at 70% likelihood
-                  and then loses the deal isn't lazy — they didn't see the
+                  and then loses the deal is unaware — they didn't see the
                   new CFO arrived three weeks ago.
                 </p>
                 <p className="mt-3 font-serif text-[16px] italic leading-[1.65] text-ink-3">
