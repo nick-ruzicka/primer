@@ -269,13 +269,17 @@ export function Writeup() {
                 ← chosen
               </p>
               <p>
-                Pre-fetch every value through MCP servers into a fact index
-                with unique IDs. Citations point at specific{" "}
-                <Mono>fact_id</Mono>s. Every fact is structurally
-                addressable, citations can't hallucinate, no shadow database
-                to maintain. C trades flexibility for predictability —
-                exactly the trade you want when the product's job is making
-                confident, defensible claims.
+                We used MCP servers — small, isolated programs that each
+                handle one source system — instead of having the brief
+                code call Salesforce, Gong, and the others directly. The
+                advantage is isolation: if Salesforce changes how its
+                data looks, only the Salesforce server needs updating,
+                not the brief itself. And every source looks the same
+                to the brief, which is what makes the citations work —
+                every fact has a stable ID regardless of which system
+                it came from. The cost is one extra step per data
+                lookup, fine for a brief that runs every fifteen
+                minutes, wrong for something needing instant responses.
               </p>
 
               <Subhead>A note on databases</Subhead>
