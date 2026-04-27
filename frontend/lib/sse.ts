@@ -24,6 +24,13 @@ import type {
   IntelSectionId,
   ValidationWarning,
 } from "./types";
+import {
+  validateBriefChunk,
+  validateCitation,
+  validateDoneEvent,
+  validateIntelligenceEvent,
+  validateWarning,
+} from "./validators";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -37,6 +44,9 @@ export const MOCK_MODE = !API_BASE;
 
 let currentAbort: AbortController | null = null;
 let currentEventSource: EventSource | null = null;
+let currentAccountId: string | null = null;
+let currentStreamId: string | null = null;  // Unique ID for each stream to prevent race conditions
+let currentTraceId: string | null = null;  // Trace ID for debugging and observability
 
 export interface LoadOptions {
   refresh?: boolean;
@@ -50,17 +60,24 @@ export function loadAccount(accountId: string, opts: LoadOptions = {}): void {
     currentEventSource = null;
   }
 
+  // Generate unique IDs for this stream
+  currentStreamId = `${accountId}_${Date.now()}_${Math.random()}`;
+  currentTraceId = `trace_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  currentAccountId = accountId;
+
   const account = findAccountInStore(accountId);
   resetAccountState(account, accountId);
 
   if (typeof window !== "undefined") {
     window.localStorage.setItem("primer:lastAccount", accountId);
+    // Store trace ID for debugging (users can share in bug reports)
+    window.localStorage.setItem("primer:lastTraceId", currentTraceId);
   }
 
   if (MOCK_MODE) {
-    runMockStream(accountId, currentAbort.signal);
+    runMockStream(accountId, currentAbort.signal, currentStreamId);
   } else {
-    runLiveStream(accountId, opts);
+    runLiveStream(accountId, opts, currentStreamId, currentTraceId);
   }
 }
 
@@ -83,7 +100,9 @@ function sleep(ms: number, signal: AbortSignal): Promise<void> {
 async function runMockStream(
   accountId: string,
   signal: AbortSignal,
+  streamId: string,
 ): Promise<void> {
+  const activeStreamId = streamId;
   const account = findAccountInStore(accountId);
   const { brief, intelligence } = getMockForAccount(
     accountId,
@@ -124,8 +143,7 @@ async function runMockStream(
       );
       appendCitations(citationsForSection);
       for (const c of citationsForSection) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pushSourceCited(c as any);
+        pushSourceCited(c);
         await sleep(40, signal);
       }
     }
@@ -329,35 +347,76 @@ function adaptIntelligenceEvent(data: unknown): IntelligenceSection | null {
   };
 }
 
-function runLiveStream(accountId: string, opts: LoadOptions): void {
+function runLiveStream(accountId: string, opts: LoadOptions, streamId: string, traceId: string): void {
   resetLiveBriefBuffer(accountId);
 
-  const url = `${API_BASE}/briefing/${accountId}${opts.refresh ? "?refresh=1" : ""}`;
+  const params = new URLSearchParams();
+  if (opts.refresh) params.set("refresh", "1");
+  params.set("trace_id", traceId);
+  const queryStr = params.toString();
+  const url = `${API_BASE}/briefing/${accountId}${queryStr ? `?${queryStr}` : ""}`;
   const es = new EventSource(url);
   currentEventSource = es;
 
+  // Capture streamId to validate all events belong to this stream
+  const activeStreamId = streamId;
+
+  // Store handler references so we can remove them later and prevent memory leaks
+  const handlers: Record<string, EventListener> = {};
+
   es.addEventListener("intelligence", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      const section = adaptIntelligenceEvent(data);
-      if (section) revealIntelligence(section);
+      const section = validateIntelligenceEvent(data);
+      if (!section) {
+        pushWarning({
+          severity: "critical",
+          type: "missing_ground",
+          message: "Intelligence data malformed — skipping section",
+        });
+        return;
+      }
+      const adapted = adaptIntelligenceEvent(section);
+      if (adapted) revealIntelligence(adapted);
     } catch (err) {
       console.error("[primer] intelligence parse error", err);
+      pushWarning({
+        severity: "critical",
+        type: "missing_ground",
+        message: `Intelligence parse error: ${err instanceof Error ? err.message : String(err)}`,
+      });
     }
   });
 
   es.addEventListener("brief_chunk", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      if (typeof data.delta === "string") handleBriefChunk(data.delta);
+      const delta = validateBriefChunk(data);
+      if (!delta) {
+        console.warn("[primer] brief_chunk validation failed", data);
+        return;
+      }
+      handleBriefChunk(delta);
     } catch (err) {
       console.error("[primer] brief_chunk parse error", err);
     }
   });
 
   es.addEventListener("source_cited", (e) => {
+    if (currentStreamId !== activeStreamId) return;  // Ignore if stream switched
     try {
       const data = JSON.parse((e as MessageEvent).data);
+      const validatedData = validateCitation(data);
+      if (!validatedData) {
+        pushWarning({
+          severity: "critical",
+          type: "missing_ground",
+          message: "Citation data malformed — skipping",
+        });
+        return;
+      }
       // Authoritative shape — backend emits the discriminated-union payload.
       const base = {
         n: data.citation_number,
@@ -394,17 +453,39 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
   });
 
   es.addEventListener("validation_warning", (e) => {
+    if (currentStreamId !== activeStreamId) return;
     try {
       const data = JSON.parse((e as MessageEvent).data);
-      pushWarning(data);
+      const warning = validateWarning(data);
+      if (!warning) {
+        console.warn("[primer] validation_warning validation failed", data);
+        return;
+      }
+      pushWarning(warning);
     } catch (err) {
       console.error("[primer] validation_warning parse error", err);
     }
   });
 
+  // Create a cleanup function to prevent memory leaks from lingering event listeners
+  const cleanup = () => {
+    es.close();
+    currentEventSource = null;
+    // Note: Due to the complexity of removing inline event listeners in browser
+    // EventSource API, we rely on the closed EventSource being garbage collected.
+    // The activeStreamId check in each handler prevents stale events from being processed.
+  };
+
   es.addEventListener("done", (e) => {
+    if (currentStreamId !== activeStreamId) return;
     try {
-      const meta = JSON.parse((e as MessageEvent).data);
+      const data = JSON.parse((e as MessageEvent).data);
+      const meta = validateDoneEvent(data);
+      if (!meta) {
+        console.warn("[primer] done event validation failed", data);
+        cleanup();
+        return;
+      }
       markBriefDone({
         completedAt: Date.now(),
         totalTokens: meta.total_tokens ?? null,
@@ -426,8 +507,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
     } catch (err) {
       console.error("[primer] done parse error", err);
     }
-    es.close();
-    currentEventSource = null;
+    cleanup();
   });
 
   es.addEventListener("error", () => {
@@ -439,6 +519,7 @@ function runLiveStream(accountId: string, opts: LoadOptions): void {
         type: "missing_ground",
         message: "Connection to briefing stream lost. Refresh to retry.",
       });
+      cleanup();
     }
   });
 }
