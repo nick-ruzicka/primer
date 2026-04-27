@@ -225,10 +225,23 @@ function WarningsPill({
   );
 }
 
+const SCORE_LABELS: { key: keyof NonNullable<ValidationWarning["scores"]>; label: string }[] = [
+  { key: "citation_match", label: "citation" },
+  { key: "source_appropriateness", label: "source" },
+  { key: "semantic_drift", label: "drift" },
+  { key: "inference_legitimacy", label: "inference" },
+];
+
+function scoreBarColor(val: number): string {
+  if (val >= 0.70) return "bg-bad";
+  if (val >= 0.40) return "bg-warn-strong";
+  return "bg-ink-4";
+}
+
 function WarningRow({ warning }: { warning: ValidationWarning }) {
   const [expanded, setExpanded] = useState(false);
   const critical = warning.severity === "critical";
-  const hasDetail = Boolean(warning.brief_excerpt);
+  const hasDetail = Boolean(warning.brief_excerpt) || Boolean(warning.scores);
   return (
     <li
       className={cn(
@@ -255,6 +268,14 @@ function WarningRow({ warning }: { warning: ValidationWarning }) {
         >
           {warning.severity}
         </span>
+        {warning.warning_confidence !== undefined && (
+          <span className={cn(
+            "flex-shrink-0 font-mono text-[10px] tabular-nums",
+            critical ? "text-bad" : "text-warn-strong",
+          )}>
+            {warning.warning_confidence.toFixed(2)}
+          </span>
+        )}
         {warning.sources && warning.sources.length > 0 && (
           <span className="flex flex-shrink-0 gap-1">
             {warning.sources.map((src) => (
@@ -299,6 +320,29 @@ function WarningRow({ warning }: { warning: ValidationWarning }) {
               <p className="italic text-ink-3">
                 &ldquo;{warning.brief_excerpt}&rdquo;
               </p>
+            )}
+            {warning.scores && (
+              <div className="mt-2 space-y-1.5">
+                {SCORE_LABELS.map(({ key, label }) => {
+                  const val = warning.scores![key];
+                  return (
+                    <div key={key} className="flex items-center gap-2">
+                      <span className="w-16 flex-shrink-0 font-mono text-[9px] uppercase tracking-[0.06em] text-ink-4">
+                        {label}
+                      </span>
+                      <div className="h-1.5 flex-1 rounded-full bg-surface-sunk">
+                        <div
+                          className={cn("h-1.5 rounded-full transition-all", scoreBarColor(val))}
+                          style={{ width: `${val * 100}%` }}
+                        />
+                      </div>
+                      <span className="w-7 flex-shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-3">
+                        {val.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>

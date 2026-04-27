@@ -4,19 +4,20 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AlignJustify, ChevronDown, FileText, Mail, Package, Rocket } from "lucide-react";
+import { setMode } from "@/lib/store";
 import { WriteupToc } from "./writeup-toc";
 
 const TOC_SECTIONS = [
   { id: "top", number: "", title: "Top" },
-  { id: "problem", number: "01", title: "The problem we're actually solving" },
-  { id: "what-built", number: "02", title: "What I built" },
-  { id: "architectures", number: "03", title: "Three architectures I considered" },
-  { id: "decisions", number: "04", title: "The architecture in four decisions" },
-  { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer" },
-  { id: "tradeoffs", number: "06", title: "Tradeoffs" },
-  { id: "scaling", number: "07", title: "What scaling this would surface" },
-  { id: "plan", number: "08", title: "The 90-day plan to ship Primer" },
-  { id: "how-built", number: "09", title: "How I built this" },
+  { id: "problem", number: "01", title: "The problem we're actually solving", demoLevel: "essential" as const },
+  { id: "what-built", number: "02", title: "What I built", demoLevel: "essential" as const },
+  { id: "architectures", number: "03", title: "Three architectures I considered", demoLevel: "optional" as const },
+  { id: "decisions", number: "04", title: "The architecture in four decisions", demoLevel: "essential" as const },
+  { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer", demoLevel: "optional" as const },
+  { id: "tradeoffs", number: "06", title: "Tradeoffs", demoLevel: "supporting" as const },
+  { id: "scaling", number: "07", title: "What scaling this would surface", demoLevel: "optional" as const },
+  { id: "plan", number: "08", title: "The 90-day plan to ship Primer", demoLevel: "supporting" as const },
+  { id: "how-built", number: "09", title: "How I built this", demoLevel: "optional" as const },
   { id: "closing", number: "", title: "Closing" },
 ];
 
@@ -28,6 +29,7 @@ export function Writeup() {
   // Track active ToC item on scroll
   useEffect(() => {
     if (!scrollEl) return;
+    let timeout: ReturnType<typeof setTimeout>;
     const update = () => {
       const sections = Array.from(scrollEl.querySelectorAll<HTMLElement>("[data-section]"));
       let active = "top";
@@ -37,9 +39,16 @@ export function Writeup() {
       }
       setActiveSection(active);
     };
-    scrollEl.addEventListener("scroll", update, { passive: true });
+    const onScroll = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(update, 50);
+    };
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
     update();
-    return () => scrollEl.removeEventListener("scroll", update);
+    return () => {
+      scrollEl.removeEventListener("scroll", onScroll);
+      clearTimeout(timeout);
+    };
   }, [scrollEl]);
 
   // Fade-in for pull quotes on scroll into view
@@ -61,7 +70,7 @@ export function Writeup() {
   }, [scrollEl]);
 
   return (
-    <div className="w-full overflow-y-auto bg-bg" ref={setScrollEl}>
+    <div className="w-full snap-y snap-mandatory overflow-y-auto bg-bg" ref={setScrollEl}>
       {/* Floating ToC button — narrow viewports only */}
       <button
         className="xl:hidden fixed bottom-6 left-6 z-50 flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface-2 text-ink-3 shadow-md transition-colors hover:text-ink"
@@ -108,38 +117,55 @@ export function Writeup() {
           </aside>
 
           {/* Right col: content — no max-width, fills available space */}
-          <article className="w-full px-10 py-16 sm:px-14 xl:px-20 sm:py-20">
-            <Hero />
-
-            <TldrPanel />
+          <article className="w-full px-10 sm:px-14 xl:px-20">
+            <div className="flex min-h-screen snap-start flex-col justify-center gap-10">
+              <Hero />
+              <TldrPanel />
+            </div>
 
             <Section id="problem" number="01" claim="The problem we're actually solving" demoLevel="essential">
               <p>
-                A rep walks into a customer call with six tabs open: Salesforce,
-                Gong, Catalyst, NetSuite, Snowflake, LinkedIn. Each has signal.
-                None tells you what the call is about.
+                AEs at enterprise SaaS companies cover dozens of accounts.
+                Each account has decision-making structure — champions,
+                blockers, exec sponsors, finance contacts — and that
+                structure changes constantly across systems no single tool
+                watches. The signals that matter (a champion leaving, a
+                payables block, a usage cliff, a competitor sniff) live in
+                places the rep doesn't think to check. By the time anyone
+                notices, the deal is already moving against them.
               </p>
-              <p>The hour of prep is spent assembling a story:</p>
-              <BulletList>
-                <li>What state is this account actually in?</li>
-                <li>Who's the new decision-maker?</li>
-                <li>What did we agree to last quarter and never follow up on?</li>
-                <li>Renewal, trust-repair, or expansion?</li>
-              </BulletList>
+              <div className="my-10 rounded-lg border-l-[3px] border-accent bg-accent-soft/15 px-7 py-6">
+                <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.15em] text-ink-3">
+                  The diagnosis
+                </p>
+                <p className="mb-5 font-serif text-[30px] font-medium leading-[1.15] tracking-[-0.01em] text-ink">
+                  Information overload, not a dashboards problem.
+                </p>
+                <p className="text-[16px] leading-[1.65] text-ink-2">
+                  A rep tracking 40 accounts can't watch every system every
+                  day. The rep who forecasts a renewal at 70% likelihood
+                  and then loses the deal is unaware — they didn't see the
+                  new CFO arrived three weeks ago.
+                </p>
+                <p className="mt-3 font-serif text-[16px] italic leading-[1.65] text-ink-3">
+                  Management wasn't aware either.
+                </p>
+              </div>
               <p>
-                The assembly happens in the rep's head, under time pressure, with
-                incomplete recall. That's where deals get lost.
+                Synthesis is the visible part: six tabs, an hour of prep, a
+                story the rep assembles in their head under time pressure.
+                The deeper problem is what they didn't think to look for.
               </p>
-              <PullQuote>
-                AEs don't have a dashboards problem. They have a synthesis problem.
-              </PullQuote>
               <p>
-                Primer takes a position. Every claim grounded in a source. Every
-                claim it can't ground, it refuses to make.
+                Primer is the start of an account intelligence platform. V1
+                ships the pre-call brief: every claim grounded in a source,
+                every claim it can't ground refused, the most call-relevant
+                account state surfaced in one read.
               </p>
             </Section>
 
             <Section id="what-built" number="02" claim="What I built" demoLevel="essential">
+<<<<<<< HEAD
               <p>Two terms before anything else:</p>
               <BulletList>
                 <li>
@@ -153,67 +179,66 @@ export function Writeup() {
                   what rules it must follow.
                 </li>
               </BulletList>
+=======
+>>>>>>> feature/reading-view-redesign
               <p>
-                <b>Today's artifact: the pre-call brief.</b> A single-page web app
-                with four modes (Reading, Workspace, Split, Writeup), all rendering
-                one brief per account.
+                <b>The brief.</b> Single-page app, one brief per account.
+                Three modes (Reading, Workspace, Split) render the same
+                brief at different densities. Five sections per brief:
+                the read (what the call is about), why this read (the
+                evidence), what to do, discovery questions, suggested talk
+                track.
               </p>
-              <p>The brief itself has five sections:</p>
-              <BulletList>
-                <li>
-                  <b>The read.</b> What's the call about, in one paragraph.
-                </li>
-                <li>
-                  <b>Why this read.</b> The evidence behind it.
-                </li>
-                <li>
-                  <b>What to do on the call.</b> Specific actions.
-                </li>
-                <li>
-                  <b>Discovery questions.</b> Three to five questions tied to the
-                  read. Sales runs on questions.
-                </li>
-                <li>
-                  <b>Suggested talk track.</b> Language to actually use.
-                </li>
-              </BulletList>
+
               <p>
-                At production, the brief also surfaces{" "}
-                <b>revenue × health by product</b> ("paying $X for Flows Pro at
-                health 82, $Y for Journeys at 61") so the rep sees combined
-                value-and-risk per line, not separately.
-              </p>
-              <p>
-                <b>Stretch goals I scoped out:</b>
+                <b>Two terms before the architecture.</b>
               </p>
               <BulletList>
                 <li>
-                  <b>Calendar-aware brief generation.</b> Wire Google Calendar /
-                  Outlook. Brief auto-generates 30 minutes before a customer call.
+                  <b>Artifact</b>: whatever Primer produces. Today it's the
+                  brief. Tomorrow: post-call summaries, drafted outreach,
+                  renewal alerts.
                 </li>
                 <li>
-                  <b>Slack as a distribution surface.</b>{" "}
-                  <Mono>/primer [account]</Mono> slash command, or auto-post briefs
-                  into deal channels on calendar trigger.
-                </li>
-                <li>
-                  <b>Mobile read view.</b> Brief renders cleanly on phone for the
-                  rep checking it in the Uber to the meeting.
-                </li>
-                <li>
-                  <b>Email digest.</b> Daily morning summary of upcoming calls and
-                  their briefs, in the inbox.
-                </li>
-                <li>
-                  <b>Pipeline ops uptime monitoring.</b> Health-check dashboard for
-                  the MCP servers. Alerts when a connector starts failing silently.
-                </li>
-                <li>
-                  <b>User analytics tracking.</b> Per-rep usage dashboard: which
-                  briefs got opened, time-on-page, edit patterns,
-                  helpful/not-helpful rates.
+                  <b>Skill file</b>: a markdown contract the LLM has to
+                  follow on every call. Rules, structure, voice, forbidden
+                  behaviors. Not a prompt — a policy.
                 </li>
               </BulletList>
+
+              <p>
+                <b>Why skills, not prompts or fine-tuning.</b> Every LLM
+                system has the same hard problem: finite context. What you
+                put in it decides what the model can reason about. Most
+                products solve this with RAG (retrieval is approximate,
+                can drop the specific fact you need) or fine-tuning (bakes
+                business rules into model weights, brittle, expensive to
+                update). Skills are a
+                third option: versioned markdown loaded into context per
+                request. The model stays general. The business knowledge
+                stays editable, inspectable, and auditable.
+              </p>
+              <p>
+                Skills are tiered the way real policy is: a master skill
+                for company-wide rules (<em>"if you can't cite it, you
+                can't claim it"</em>), an artifact skill per output type
+                (<em>"the brief argues, doesn't summarize"</em>), variant
+                skills underneath for specific situations (renewal-call,
+                expansion, trust-repair). Adding a new artifact is writing
+                a new skill file, not retraining a model. RevOps can read
+                what the system believes and change it in plain markdown.
+              </p>
+              <p>
+                Skills aren't static — the brief picks which variant
+                anchors the call based on context. A renewal call loads
+                the renewal-call variant on top of the master and brief
+                skills; an expansion conversation loads a different one.
+                Same architecture, different anchor.
+              </p>
+              <p>
+                The skills are the moat — they encode what good looks like
+                for this business, in a format anyone can read and improve.
+              </p>
             </Section>
 
             <Section id="architectures" number="03" claim="Three architectures I considered" demoLevel="optional">
@@ -227,157 +252,117 @@ export function Writeup() {
                   licenses.
                 </li>
                 <li>
-                  <em>Cons:</em> Salesforce can only synthesize what Salesforce can
-                  see. Catalyst, Snowflake usage, NetSuite, Slack, external signals
-                  all live outside.
+                  <em>Cons:</em> Salesforce can only synthesize what Salesforce
+                  can see — but doesn't tell the rep what it's missing. The
+                  brief looks complete even when half the signal lives outside.
                 </li>
               </BulletList>
               <p>
-                <b>Option B: Vector DB / RAG layer.</b>
+                <b>Option B: Vector database / semantic search.</b>
               </p>
-              <BulletList>
-                <li>
-                  Embed every fact and document into a vector store. Retrieve
-                  relevant chunks per brief via semantic search.
-                </li>
-                <li>
-                  <em>Embeddings:</em> vector representations of unstructured text
-                  that allow semantic retrieval. "Find notes about pricing
-                  pushback" works even if no note literally says those words.
-                </li>
-                <li>
-                  <em>Vector DB:</em> where embeddings live (Pinecone, Weaviate,
-                  pgvector).
-                </li>
-                <li>
-                  <em>Cons:</em> retrieval is lossy. Hard to guarantee a specific
-                  fact (champion name, exact ARR) makes it into context. Hybrid
-                  keyword + semantic search reduces some failure modes (Dispatch
-                  ran this way), but the hallucination risk compounds with corpus
-                  size.
-                </li>
-              </BulletList>
+              <p>
+                Embed every fact and conversation into a database. Search
+                by meaning instead of by keyword.
+              </p>
+              <p>
+                <em>Pros:</em> handles the long tail. Once you have years
+                of Gong calls and multi-quarter Catalyst notes, semantic
+                search is the only way to find what matters in a corpus
+                that big.
+              </p>
+              <p>
+                <em>Cons:</em> retrieval is fuzzy. The brief might miss a
+                specific fact (champion name, exact ARR) because the
+                search returned something <em>similar</em> instead of the
+                exact value. For a brief where every claim has to be
+                cited, that's the wrong tradeoff today.
+              </p>
+              <p>Right answer for V3, not V1.</p>
               <p>
                 <b>
                   Option C: Read-layer with deterministic pre-fetch via MCP.
                 </b>{" "}
                 ← chosen
               </p>
-              <BulletList>
-                <li>
-                  Pre-fetch every value through MCP servers. Bundle into a fact
-                  index with unique IDs. Citations point at specific{" "}
-                  <Mono>fact_id</Mono>s.
-                </li>
-                <li>
-                  <em>Pros:</em> every fact is structurally addressable. Citations
-                  can't hallucinate. No shadow database.
-                </li>
-              </BulletList>
               <p>
-                C trades flexibility for predictability. Exactly the trade you want
-                when the product's job is making confident, defensible claims.
+                Pre-fetch every value through MCP servers into a fact index
+                with unique IDs. Citations point at specific{" "}
+                <Mono>fact_id</Mono>s. Every fact is structurally
+                addressable, citations can't hallucinate, no shadow database
+                to maintain. C trades flexibility for predictability —
+                exactly the trade you want when the product's job is making
+                confident, defensible claims.
+              </p>
+
+              <Subhead>A note on databases</Subhead>
+              <p>
+                V1 doesn't need a database. The fact index rebuilds per
+                request — small corpus, bounded scope.
+              </p>
+              <p>
+                V1.5 adds Postgres for two things the in-memory index
+                can't do. First, <b>account memory</b>. Right now each
+                brief is a fresh read; the system has no record of what
+                it believed about an account last week. With persistence,
+                when the most recent Salesforce pull shows Priya is no
+                longer the primary contact, the system flags the change
+                instead of silently overwriting it. The awareness problem
+                from §01 is solved by remembering, not by re-reading
+                harder.
+              </p>
+              <p>
+                Second, <b>skill telemetry</b>. Every brief generated,
+                every rep edit, every helpful/not-helpful rating, logged
+                in plain rows. RevOps gets edit-rate-per-skill and
+                skip-rate-per-skill on day one. Skills with bad numbers
+                get revised; skills with good numbers become templates
+                other variants inherit from.
+              </p>
+              <p>
+                Plain SQL on structured rows. Vectors come back in V3,
+                when the corpus is large enough to need semantic search
+                across years of Gong calls and cross-account history.
               </p>
             </Section>
 
             <Section id="decisions" number="04" claim="The architecture in four decisions" demoLevel="essential">
+<<<<<<< HEAD
+=======
+              <ArchitectureDiagram />
+
+>>>>>>> feature/reading-view-redesign
               <Subhead>1. Read-only, not write-back</Subhead>
-              <BulletList>
-                <li>Six MCP servers read. Primer never writes back.</li>
-                <li>Drafted actions for the rep to approve and send themselves.</li>
-                <li>
-                  When RevTech's unified data layer ships, MCP servers repoint.
-                </li>
-              </BulletList>
+              <p>
+                Six MCP servers read. Primer never writes back. Drafted
+                actions go to whichever system already owns the workflow.
+                When RevTech's unified data layer ships, MCP servers repoint.
+              </p>
 
               <Subhead>2. Pre-fetch, not agentic loop</Subhead>
-              <BulletList>
-                <li>
-                  An <em>agentic loop</em> is when the model decides what to do
-                  next on each step (call this tool, then that one, then
-                  synthesize). Pre-fetch is the opposite: pull everything first,
-                  reason once.
-                </li>
-                <li>
-                  Pre-fetch wins for one artifact with a known shape. Latency
-                  bounded, cost fixed per brief.
-                </li>
-                <li>
-                  Agentic loops are right when artifacts multiply and the model has
-                  to decide which tools to call.
-                </li>
-              </BulletList>
+              <p>
+                An agentic loop is when the model decides what to do next on
+                each step. Pre-fetch is the opposite: pull everything first,
+                reason once. Pre-fetch wins for one artifact with a known
+                shape — bounded latency, fixed cost. Agentic loops are right
+                when artifacts multiply and the model has to decide which
+                tools to call.
+              </p>
 
-              <Subhead>3. Skills are the playbook layer</Subhead>
+              <Subhead>3. Skills carry the playbook</Subhead>
               <p>
-                Skills are organized as a hierarchy. A constitutional{" "}
-                <b>master skill</b> sets the universal rules.{" "}
-                <b>Artifact-type skills</b> define shape (the pre-call brief always
-                has these five sections, the same data sources, the same voice).{" "}
-                <b>Variant skills</b> under each type adjust content per situation.
-              </p>
-              <p>Take the master skill rules. They read like laws:</p>
-              <RuleQuote>
-                <p>Never claim something you can't cite.</p>
-                <p>
-                  Never write "the customer is happy" when the data only says
-                  "health score is 72."
-                </p>
-                <p>
-                  When the rep asks who the champion is and three sources disagree,
-                  show all three. Don't pick.
-                </p>
-              </RuleQuote>
-              <p>
-                Take a variant. The renewal-call brief variant adds rules like{" "}
-                <em>"open with renewal posture in the first sentence"</em> and{" "}
-                <em>"flag any unresolved billing items in 'what to do.'"</em> The
-                discovery-call variant says{" "}
-                <em>
-                  "open with what we know about the prospect's stated pain"
-                </em>{" "}
-                and{" "}
-                <em>
-                  "the talk track section should focus on credibility, not
-                  features."
-                </em>
-              </p>
-              <p>
-                Same shape. Different content. Variants are where the playbook
-                actually lives.
-              </p>
-              <p>
-                Skills anchor the LLM to business context. They're permanent
-                knowledge structures: how a brief should read, when to escalate,
-                what "expansion-ready" looks like at this company. The LLM is the
-                rendering engine. Skills are how it learns the business.
+                Covered in section 02. The decision to put business rules in
+                markdown skill files (instead of model weights or hard-coded
+                heuristics) is what makes the system replicable per
+                customer.
               </p>
 
               <Subhead>4. The validator agent</Subhead>
               <p>
-                The validator's job is being truthful. Three layered defenses:
-              </p>
-              <p>
-                <b>Structured output via fact_ids.</b> Every value gets a unique ID
-                before the LLM runs:
-              </p>
-              <CodeBlock>
-{`fact_id: 16
-source_system: catalyst
-field: relationship_score
-value: 61
-data_as_of: 2026-04-23`}
-              </CodeBlock>
-              <p>
-                The LLM writes claims that reference the fact:{" "}
-                <em>"Health dropped from 74 to 61 ·16."</em> The agent can only
-                cite things in the index.
+                Three layered defenses: structured <Mono>fact_id</Mono>s the
+                LLM cites, a second model that cross-checks every citation,
+                and refusal rules when nothing grounds.
               </p>
               <PullQuote>Hallucinated citations become structurally impossible.</PullQuote>
-              <p>
-                <b>Validator agent.</b> A second model (Claude Haiku) reads the
-                brief against source data. It's picky on purpose.
-              </p>
               <p>Real catch from testing:</p>
               <ExampleQuote>
                 <p>
@@ -400,23 +385,33 @@ data_as_of: 2026-04-23`}
                   Neither says "adoption dropped 17%." Pick which one you
                   mean.
                 </p>
+                <p>
+                  The brief invented a percentage. The validator caught the
+                  math.
+                </p>
               </ExampleQuote>
-              <p>The brief invented a percentage. The validator caught the math.</p>
               <p>
-                <b>Refusal rules.</b> When the brief can't ground a claim, it
-                refuses. "No data on this" beats "made-up specifics" on trust.
+                The 17% catch is a synthesis-grounding catch: the brief made
+                a claim the data didn't support. The harder catch is{" "}
+                <em>awareness</em>-grounding: the brief says "Priya is your
+                champion" because Salesforce still says she is, but Priya
+                left three weeks ago. The validator can't catch that today
+                — the data still technically grounds the claim. V2 extends
+                the validator from "is this claim grounded in the data we
+                have?" to "is the data we have still current?" External
+                monitoring on key contacts: LinkedIn employment lookups,
+                Gong transcripts scanned for departure language, Exa for
+                press mentions.
               </p>
-              <VisualMarker src="/images/writeup/validator-warnings.png">
-                Three real catches the validator surfaced on this brief. The
-                CRITICAL catch (top) flags an invented metric — see decision
-                4 above.
-              </VisualMarker>
-              <VisualMarker src="/images/writeup/citations-vs-hedging.png">
-                Left: confident claim with <Mono>·N</Mono> citation chip
-                points to a specific <Mono>fact_id</Mono>. Right: inference
-                uses hedged voice ("reads like") because no single fact
-                supports the full statement.
-              </VisualMarker>
+              <p>
+                <b>Decomposed confidence scoring.</b> Each warning gets a
+                score across four factors: citation match (60%, mechanical),
+                source appropriateness (15%), semantic drift (15%), and
+                inference legitimacy (10%). The "adoption dropped 17%" catch
+                scored <Mono>0.71</Mono>. Most of the score is mechanical;
+                the LLM only handles parts that need judgment. The rep sees
+                a graded warning, not a binary alarm.
+              </p>
             </Section>
 
             <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer" demoLevel="optional">
@@ -553,8 +548,8 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <PullQuote>
-                Skills are the playbook. History is the memory of every play
-                that's been run.
+                Historical data grounds the initial skills. The feedback loop
+                keeps them reactive as situations evolve.
               </PullQuote>
 
               <p>
@@ -571,7 +566,7 @@ data_as_of: 2026-04-23`}
                 <b>Freshness.</b>
               </p>
               <BulletList>
-                <li>15-minute Redis cache. Regeneration on explicit refresh.</li>
+                <li>Briefs are cached for 15 minutes. Click refresh to regenerate.</li>
                 <li>
                   Every citation shows data age. Stale past threshold, the brief
                   calls it out.
@@ -598,16 +593,13 @@ data_as_of: 2026-04-23`}
               <p>
                 <b>Opinion vs. informational.</b>
               </p>
-              <BulletList>
-                <li>
-                  A neutral summary forces the rep to do the synthesis themselves.
-                </li>
-                <li>An opinionated brief is higher-leverage and higher-risk.</li>
-                <li>
-                  The validator agent and the four guardrails make opinion safe to
-                  ship.
-                </li>
-              </BulletList>
+              <p>
+                A neutral summary says "health score is 61." An opinionated
+                brief says "the renewal is at risk; the conversation should
+                be about what broke operationally, not defending the
+                renewal." Higher leverage, higher risk. The validator agent
+                and four guardrails make the opinion safe to ship.
+              </p>
             </Section>
 
             <Section id="scaling" number="07" claim="What scaling this would surface" demoLevel="optional">
@@ -616,30 +608,8 @@ data_as_of: 2026-04-23`}
               </p>
 
               <SlidePoint
-                headline="Adoption is the long pole, not technology."
-                cite={1}
-                note={
-                  <>
-                    <p>
-                      <b>Detection vs. prevention.</b> Instrumentation
-                      (helpful/not-helpful, edit rates) catches abandonment{" "}
-                      <em>after</em> it happens.
-                    </p>
-                    <p>
-                      Preventing it — onboarding, manager calibration,
-                      distribution inside Slack and Calendar where reps already
-                      are — is the real V2 work.
-                    </p>
-                  </>
-                }
-              >
-                The brief has to beat 5 minutes of grepping Salesforce, every
-                time, or it's abandoned by week 3.
-              </SlidePoint>
-
-              <SlidePoint
                 headline="Trust is a one-strike system."
-                cite={2}
+                cite={1}
                 note={
                   <p>
                     <b>High-stakes facts that need human-in-the-loop</b>{" "}
@@ -654,55 +624,53 @@ data_as_of: 2026-04-23`}
               </SlidePoint>
 
               <SlidePoint
-                headline="Model spend isn't where this gets expensive."
-                cite={3}
+                headline="Adoption is the long pole, not technology."
+                cite={2}
                 note={
                   <>
                     <p>
-                      <b>Source APIs:</b> Gong transcript pulls and Catalyst
-                      event endpoints have per-call pricing.
+                      <b>Detection vs. prevention.</b> Instrumentation
+                      (helpful/not-helpful, edit rates) catches abandonment{" "}
+                      <em>after</em> it happens.
                     </p>
                     <p>
-                      <b>MCP:</b> six stateful services × multi-region HA.
-                    </p>
-                    <p>
-                      <b>Validator:</b> confidence-scored two-pass consistency
-                      is months of work.
+                      Preventing it — onboarding, manager calibration,
+                      distribution inside Slack and Calendar where reps already
+                      are — is V2.
                     </p>
                   </>
                 }
               >
-                Sonnet 4.6 runs ~$0.06/brief end-to-end. 120 AEs × 4 briefs ×
-                250 days = ~$7K/yr. What scales: source-system API egress, MCP
-                HA, validator engineering.
+                The brief has to beat 5 minutes of grepping Salesforce, every
+                time, or it's abandoned by week 3. The way you prevent that
+                is the Phase 1 validation work: 3-5 reps on real calls,
+                structured feedback, cut what doesn't work before scaling.
               </SlidePoint>
 
               <SlidePoint
-                headline="Validator severity is the wrong abstraction."
-                cite={4}
+                headline="Model spend isn't where this gets expensive."
+                cite={3}
                 note={
-                  <>
-                    <p>
-                      Same brief, four runs, different warning counts — Haiku
-                      temperature noise on a judgment call. Determinism isn't
-                      the fix; scoring is.
-                    </p>
-                    <p>
-                      Production trust-and-safety stacks (Jigsaw, Hive, OpenAI
-                      moderation) all output continuous scores and let the
-                      surface decide the threshold.
-                    </p>
-                  </>
+                  <p>
+                    The combined GTM team's loaded comp dwarfs that by
+                    orders of magnitude. The model isn't the cost. What
+                    scales: per-call charges from source systems (Gong and
+                    Catalyst meter their APIs) and engineering time to
+                    keep skills, validators, and integrations current as
+                    the business and its data sources change.
+                  </p>
                 }
               >
-                Binary critical/watch produces different counts on identical
-                reruns. Fix is a continuous 0–1 confidence score per warning —
-                how production content-moderation actually works.
+                ~$0.06 per brief end-to-end. Back-of-envelope at Attentive
+                scale (~115 quota-carrying AEs plus a sizable CSM org,
+                call it ~3 briefs per rep per working day): roughly
+                100-200K briefs/year, roughly $6-12K/year in Anthropic
+                costs.
               </SlidePoint>
 
               <SlidePoint
                 headline="Six MCP servers means six failure points."
-                cite={5}
+                cite={4}
                 note={
                   <p>
                     Silent-stale-data is the worst case — brief still generates,
@@ -724,10 +692,28 @@ data_as_of: 2026-04-23`}
             </Section>
 
             <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive" demoLevel="supporting">
+<<<<<<< HEAD
+=======
+              <p>
+                Primer in V1 is a brief. Primer at maturity is a platform
+                that watches account state across systems and tells the rep
+                what changed and what to do about it. The brief is the
+                wedge: it proves the architecture (deterministic citations,
+                validator-caught hallucinations, opinionated synthesis) on
+                a single high-leverage artifact. From there, the same
+                skill stack extends to other artifacts on the same data
+                layer — outreach drafts grounded in account state,
+                competitive intel as another signal, post-call evaluation
+                that asks whether the brief actually prepped the rep,
+                churn prediction that fires before the renewal forecast
+                does.
+              </p>
+>>>>>>> feature/reading-view-redesign
               <p className="italic text-ink-3">
-                Parallel tracks for the first two weeks — validate the product,
-                seed the skills library. The back half prioritizes whichever
-                gap V1.5 telemetry surfaces.
+                The 90-day plan ships V1 well, then lets V1.5 telemetry
+                decide which artifact comes next. Parallel tracks for the
+                first two weeks — validate the product, seed the skills
+                library. The back half adapts based on what the data says.
               </p>
 
               <PhaseHeader label="DAYS 0-14" title="Product Validation" />
@@ -757,8 +743,7 @@ data_as_of: 2026-04-23`}
                   access lets every Salesforce custom field, Catalyst tag
                   taxonomy, NetSuite billing schema, and Snowflake usage table
                   get a typed path through the MCP layer. Attentive-specific
-                  internal tools get new MCP wrappers where needed — this is
-                  where the architecture earns its flexibility.
+                  internal tools get new MCP wrappers where needed.
                 </li>
                 <li>
                   Pull 12 months of Gong calls. Find the motions: renewal,
@@ -793,11 +778,11 @@ data_as_of: 2026-04-23`}
                   Add last-5 notes/activities/Gong from each source to pre-fetch.
                 </li>
                 <li>
-                  Score external signals into the brief: LinkedIn (champion
-                  moves), Exa-live (competitive intelligence — press, funding
-                  rounds, competitor exec changes), Gong scans (departure
-                  language). Per-motion weighting — stability matters for
-                  renewal, momentum matters for expansion.
+                  Surface account health for renewal calls: usage trending down,
+                  champion departures, rising support tickets. Surface market
+                  opportunity for expansion: competitor changes, funding/hiring at
+                  the account, product momentum. Different motions, different
+                  signals.
                 </li>
                 <li>Deploy V1.5 to the broader AE team beyond the initial 3-5.</li>
                 <li>
@@ -816,19 +801,20 @@ data_as_of: 2026-04-23`}
                 title="Highest-leverage next move (priority TBD by V1.5 data)"
               />
               <p>
-                The default is to <b>wire the feedback loop:</b> Primer reads
-                its own call transcripts back through Gong, compares against
-                how the call actually went, proposes skill updates where the
-                brief was wrong. RevOps approves before any ships; the library
-                starts compounding.
-              </p>
-              <p>
-                Whether that's the right call depends on V1.5 telemetry.
-                Alternatives if the data points elsewhere: Slack/Calendar
-                distribution (if adoption is the gap), more skill variants (if
-                breadth is the gap), V2A Salesforce-side AI MCP wrappers (if
-                Attentive has them), or a manager coaching surface (if
-                managers ask for visibility into rep edit patterns).
+                The default Phase 4 work is the <b>post-call feedback
+                loop</b>. Primer reads its own call transcripts back
+                through Gong, compares the brief's predicted read against
+                what actually happened on the call, and proposes skill
+                updates where the prediction missed. This works cleanly
+                on calls with defined outcomes — renewals (renewed or
+                didn't), expansion gates (advanced or stalled),
+                trust-repair calls (escalation resolved or not). It works
+                less cleanly on discovery calls where the agenda is
+                intentionally open. So the loop runs selectively: motions
+                with clear outcomes feed it, discovery briefs get
+                evaluated through edit rate and helpfulness signals from
+                the skill telemetry layer instead. RevOps approves every
+                proposed skill change before it ships.
               </p>
 
               <p>
@@ -852,14 +838,6 @@ data_as_of: 2026-04-23`}
                   taste, ship decisions).
                 </li>
               </BulletList>
-              <p>
-                GTM Engineering in 2026 compresses a multi-week sprint into a
-                focused build. Teams that invest in building ship differentiated
-                infrastructure. Teams that rent off-the-shelf ship the same thing
-                as their competitors. The economics flipped when the cost of
-                building one good thing dropped faster than the cost of integrating
-                five mediocre ones.
-              </p>
             </Section>
 
             <Closing />
@@ -873,7 +851,7 @@ data_as_of: 2026-04-23`}
 
 function Hero() {
   return (
-    <header id="top" className="border-b border-line pb-14">
+    <header id="top" className="flex flex-col">
       <h1
         className="font-serif font-medium leading-[1.05] tracking-[-0.02em] text-ink"
         style={{ fontSize: "clamp(3rem, 7vw, 6.5rem)" }}
@@ -888,15 +866,20 @@ function Hero() {
       </p>
       <p className="mt-6 text-[13px] text-ink-3">Nick Ruzicka · April 2026</p>
       <div className="mt-7 flex flex-wrap gap-2.5">
-        <CTAButton primary onClick={() => null}>
+        <CTAButton primary onClick={() => setMode("split")}>
           Open the prototype →
         </CTAButton>
-        <CTAButton onClick={() => null}>
+        <CTAButton
+          onClick={() => {
+            document
+              .getElementById("problem")
+              ?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        >
           Read the architecture below
           <ChevronDown size={14} className="ml-1.5" />
         </CTAButton>
       </div>
-      <hr className="mt-20 border-line" />
     </header>
   );
 }
@@ -1050,7 +1033,11 @@ function Section({
     <section
       id={id}
       data-section
+<<<<<<< HEAD
       className={`mt-32 scroll-mt-20 rounded-lg px-6 py-8 ${demoLevel ? bgMap[demoLevel] : ""}`}
+=======
+      className={`flex min-h-screen snap-start scroll-mt-0 flex-col pt-16 pb-12 px-6 ${demoLevel ? bgMap[demoLevel] : ""}`}
+>>>>>>> feature/reading-view-redesign
     >
       <header className="mb-10 flex items-start gap-4">
         <div className={`mt-3 h-10 w-[3px] flex-none rounded-full ${borderColorMap[demoLevel ?? "optional"]}`} />
@@ -1178,6 +1165,447 @@ function RoadmapGrid() {
         </div>
       ))}
     </div>
+  );
+}
+
+// ---------- ArchitectureDiagram ----------
+
+function ArchitectureDiagram() {
+  const sources = [
+    "Salesforce",
+    "Gong",
+    "Catalyst",
+    "NetSuite",
+    "Snowflake",
+    "LinkedIn",
+  ];
+  const SOURCE_X = 24;
+  const SOURCE_W = 140;
+  const SOURCE_H = 36;
+  const SOURCE_GAP = 8;
+  const SOURCE_Y0 = 12;
+
+  const FACT_X = 264;
+  const FACT_Y = 36;
+  const FACT_W = 200;
+  const FACT_H = 224;
+  const FACT_ENTRY_Y = FACT_Y + FACT_H / 2;
+
+  const WRITER_X = 520;
+  const WRITER_Y = 60;
+  const WRITER_W = 200;
+  const WRITER_H = 120;
+
+  const VAL_X = 520;
+  const VAL_Y = 230;
+  const VAL_W = 200;
+  const VAL_H = 120;
+
+  const BRIEF_X = 780;
+  const BRIEF_Y = 210;
+  const BRIEF_W = 160;
+  const BRIEF_H = 160;
+
+  const labelMono = {
+    fontFamily: "var(--font-mono), monospace",
+    fontSize: 9,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+  };
+  const sampleMono = {
+    fontFamily: "var(--font-mono), monospace",
+    fontSize: 11,
+  };
+  const sampleSerif = {
+    fontFamily: "var(--font-serif), Georgia, serif",
+    fontSize: 12,
+    fontStyle: "italic" as const,
+  };
+
+  return (
+    <figure className="-mx-2 my-10 sm:mx-0">
+      <div className="overflow-x-auto">
+        <svg
+          viewBox="0 0 960 380"
+          role="img"
+          aria-labelledby="arch-diagram-title"
+          className="block w-full min-w-[760px]"
+        >
+          <title id="arch-diagram-title">
+            Primer architecture: six MCP sources fan into a fact index that
+            feeds a Sonnet writer; a Haiku validator cross-checks every
+            citation before the brief ships.
+          </title>
+
+          <defs>
+            <marker
+              id="arch-arrow"
+              viewBox="0 0 10 10"
+              refX={9}
+              refY={5}
+              markerWidth={5}
+              markerHeight={5}
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                style={{ fill: "var(--color-ink-3)" }}
+              />
+            </marker>
+            <marker
+              id="arch-arrow-faint"
+              viewBox="0 0 10 10"
+              refX={9}
+              refY={5}
+              markerWidth={5}
+              markerHeight={5}
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M 0 0 L 10 5 L 0 10 z"
+                style={{ fill: "var(--color-ink-4)" }}
+              />
+            </marker>
+          </defs>
+
+          {sources.map((name, i) => {
+            const y = SOURCE_Y0 + i * (SOURCE_H + SOURCE_GAP);
+            return (
+              <g key={name}>
+                <rect
+                  x={SOURCE_X}
+                  y={y}
+                  width={SOURCE_W}
+                  height={SOURCE_H}
+                  rx={5}
+                  style={{
+                    fill: "var(--color-surface-2)",
+                    stroke: "var(--color-line)",
+                  }}
+                  strokeWidth={1}
+                />
+                <text
+                  x={SOURCE_X + SOURCE_W / 2}
+                  y={y + SOURCE_H / 2 + 4}
+                  textAnchor="middle"
+                  style={{
+                    fill: "var(--color-ink-2)",
+                    fontFamily: "var(--font-serif), Georgia, serif",
+                    fontSize: 13,
+                  }}
+                >
+                  {name}
+                </text>
+              </g>
+            );
+          })}
+
+          <text
+            x={SOURCE_X + SOURCE_W / 2}
+            y={SOURCE_Y0 + sources.length * (SOURCE_H + SOURCE_GAP) + 12}
+            textAnchor="middle"
+            style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+          >
+            via MCP servers · parallel
+          </text>
+
+          {sources.map((_, i) => {
+            const y = SOURCE_Y0 + i * (SOURCE_H + SOURCE_GAP) + SOURCE_H / 2;
+            return (
+              <line
+                key={i}
+                x1={SOURCE_X + SOURCE_W}
+                y1={y}
+                x2={FACT_X}
+                y2={FACT_ENTRY_Y}
+                style={{ stroke: "var(--color-line-strong)" }}
+                strokeWidth={0.75}
+                strokeOpacity={0.7}
+              />
+            );
+          })}
+
+          <g>
+            <rect
+              x={FACT_X}
+              y={FACT_Y}
+              width={FACT_W}
+              height={FACT_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <rect
+              x={FACT_X}
+              y={FACT_Y}
+              width={3}
+              height={FACT_H}
+              style={{ fill: "var(--color-accent)" }}
+            />
+            <text
+              x={FACT_X + 14}
+              y={FACT_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Fact Index
+            </text>
+            {[
+              { id: "16", body: "catalyst · health 61" },
+              { id: "17", body: "gong · Priya engaged" },
+              { id: "18", body: "salesforce · ARR $680K" },
+              { id: "19", body: "netsuite · due $18K" },
+              { id: "20", body: "linkedin · CFO arrived" },
+              { id: "…", body: "" },
+            ].map((f, i) => (
+              <text
+                key={i}
+                x={FACT_X + 14}
+                y={FACT_Y + 56 + i * 28}
+                style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+              >
+                <tspan style={{ fill: "var(--color-ink-3)" }}>{f.id}</tspan>
+                {f.body && ` · ${f.body}`}
+              </text>
+            ))}
+          </g>
+
+          <line
+            x1={FACT_X + FACT_W}
+            y1={FACT_ENTRY_Y - 20}
+            x2={WRITER_X - 4}
+            y2={WRITER_Y + WRITER_H / 2}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <line
+            x1={FACT_X + FACT_W}
+            y1={FACT_ENTRY_Y + 20}
+            x2={VAL_X - 4}
+            y2={VAL_Y + VAL_H / 2}
+            style={{ stroke: "var(--color-ink-4)" }}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            markerEnd="url(#arch-arrow-faint)"
+          />
+
+          <g>
+            <rect
+              x={WRITER_X}
+              y={WRITER_Y}
+              width={WRITER_W}
+              height={WRITER_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Writer · Sonnet 4.6
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 50}
+              style={{ ...sampleSerif, fill: "var(--color-ink-2)" }}
+            >
+              "Health 74 → 61"
+            </text>
+            <text
+              x={WRITER_X + WRITER_W - 14}
+              y={WRITER_Y + 50}
+              textAnchor="end"
+              style={{ ...sampleMono, fill: "var(--color-accent-2)" }}
+            >
+              ·16
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + 72}
+              style={{ ...sampleSerif, fill: "var(--color-ink-2)" }}
+            >
+              "Priya engaged"
+            </text>
+            <text
+              x={WRITER_X + WRITER_W - 14}
+              y={WRITER_Y + 72}
+              textAnchor="end"
+              style={{ ...sampleMono, fill: "var(--color-accent-2)" }}
+            >
+              ·17
+            </text>
+            <text
+              x={WRITER_X + 14}
+              y={WRITER_Y + WRITER_H - 14}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              guided by skill files
+            </text>
+          </g>
+
+          <line
+            x1={WRITER_X + WRITER_W / 2 + 16}
+            y1={WRITER_Y + WRITER_H}
+            x2={WRITER_X + WRITER_W / 2 + 16}
+            y2={VAL_Y - 4}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <path
+            d={`M ${WRITER_X + WRITER_W / 2 - 16} ${VAL_Y} Q ${WRITER_X + WRITER_W / 2 - 40} ${VAL_Y - 25}, ${WRITER_X + WRITER_W / 2 - 16} ${WRITER_Y + WRITER_H}`}
+            fill="none"
+            style={{ stroke: "var(--color-ink-4)" }}
+            strokeWidth={1}
+            strokeDasharray="3 3"
+            markerEnd="url(#arch-arrow-faint)"
+          />
+          <text
+            x={WRITER_X + WRITER_W / 2 - 44}
+            y={WRITER_Y + WRITER_H + 28}
+            textAnchor="end"
+            style={{
+              ...labelMono,
+              fill: "var(--color-ink-4)",
+              fontSize: 8.5,
+            }}
+          >
+            rewrite if reject
+          </text>
+
+          <g>
+            <rect
+              x={VAL_X}
+              y={VAL_Y}
+              width={VAL_W}
+              height={VAL_H}
+              rx={6}
+              style={{
+                fill: "var(--color-surface-2)",
+                stroke: "var(--color-line)",
+              }}
+              strokeWidth={1}
+            />
+            <rect
+              x={VAL_X}
+              y={VAL_Y}
+              width={3}
+              height={VAL_H}
+              style={{ fill: "var(--color-accent)" }}
+            />
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Validator · Haiku
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 50}
+              style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+            >
+              <tspan style={{ fill: "var(--color-accent-2)" }}>·16</tspan>
+              <tspan>  0.97</tspan>
+              <tspan dx={10} style={{ fill: "var(--color-accent-2)" }}>·17</tspan>
+              <tspan>  0.83</tspan>
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + 72}
+              style={{ ...sampleMono, fill: "var(--color-ink-2)" }}
+            >
+              <tspan style={{ fill: "var(--color-accent-2)" }}>·22</tspan>
+              <tspan>  0.22</tspan>
+              <tspan dx={10} style={{ fill: "var(--color-ink-3)" }}>critical</tspan>
+            </text>
+            <text
+              x={VAL_X + 14}
+              y={VAL_Y + VAL_H - 14}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              scores 0–1 across 4 factors
+            </text>
+          </g>
+
+          <line
+            x1={VAL_X + VAL_W}
+            y1={VAL_Y + VAL_H / 2}
+            x2={BRIEF_X - 4}
+            y2={BRIEF_Y + BRIEF_H / 2}
+            style={{ stroke: "var(--color-ink-3)" }}
+            strokeWidth={1}
+            markerEnd="url(#arch-arrow)"
+          />
+
+          <g>
+            <rect
+              x={BRIEF_X}
+              y={BRIEF_Y}
+              width={BRIEF_W}
+              height={BRIEF_H}
+              rx={6}
+              style={{
+                fill: "var(--color-bg)",
+                stroke: "var(--color-line-strong)",
+              }}
+              strokeWidth={1}
+            />
+            <text
+              x={BRIEF_X + 14}
+              y={BRIEF_Y + 22}
+              style={{ ...labelMono, fill: "var(--color-ink-3)" }}
+            >
+              Brief
+            </text>
+            {[
+              { y: 38, w: 130, h: 7 },
+              { y: 50, w: 100, h: 4 },
+              { y: 60, w: 116, h: 4 },
+              { y: 70, w: 88, h: 4 },
+              { y: 88, w: 124, h: 7 },
+              { y: 100, w: 110, h: 4 },
+              { y: 110, w: 120, h: 4 },
+              { y: 120, w: 80, h: 4 },
+              { y: 138, w: 104, h: 7 },
+            ].map((row, i) => (
+              <rect
+                key={i}
+                x={BRIEF_X + 14}
+                y={BRIEF_Y + row.y}
+                width={row.w}
+                height={row.h}
+                rx={1}
+                style={{
+                  fill:
+                    row.h === 7
+                      ? "var(--color-ink-2)"
+                      : "var(--color-ink-3)",
+                  fillOpacity: row.h === 7 ? 1 : 0.55,
+                }}
+              />
+            ))}
+          </g>
+        </svg>
+      </div>
+
+      <figcaption className="mx-auto mt-4 max-w-[640px] text-center font-serif text-[13px] italic leading-[1.5] text-ink-3">
+        Six sources fan into a fact index. The Writer (Sonnet 4.6) drafts
+        prose grounded in <Mono>fact_id</Mono>s. The Validator (Haiku)
+        cross-checks every citation against the index — and rejects claims
+        it can't ground.
+      </figcaption>
+    </figure>
   );
 }
 
