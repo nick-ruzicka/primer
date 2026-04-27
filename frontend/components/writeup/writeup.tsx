@@ -324,6 +324,21 @@ export function Writeup() {
                 actions go to whichever system already owns the workflow.
                 When RevTech's unified data layer ships, MCP servers repoint.
               </p>
+              <p>
+                We used MCP servers — small, isolated programs that each
+                handle one source system — instead of having the brief
+                code call Salesforce, Gong, and the others directly. The
+                advantage is isolation: when Salesforce changes its API
+                (renamed fields, new auth, restructured endpoints), only
+                the Salesforce MCP server needs updating; the brief code
+                that consumes it doesn't change. Every source also looks
+                the same to the brief code, which is what makes the
+                citations work — every fact has a stable ID regardless
+                of which system it came from. The cost is one extra step
+                per data lookup, fine for a brief that runs every
+                fifteen minutes, wrong for something needing instant
+                responses.
+              </p>
 
               <Subhead>2. Pre-fetch, not agentic loop</Subhead>
               <p>
