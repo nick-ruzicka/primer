@@ -9,15 +9,15 @@ import { WriteupToc } from "./writeup-toc";
 
 const TOC_SECTIONS = [
   { id: "top", number: "", title: "Top" },
-  { id: "problem", number: "01", title: "The problem we're actually solving" },
-  { id: "what-built", number: "02", title: "What I built" },
-  { id: "architectures", number: "03", title: "Three architectures I considered" },
-  { id: "decisions", number: "04", title: "The architecture in four decisions" },
-  { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer" },
-  { id: "tradeoffs", number: "06", title: "Tradeoffs" },
-  { id: "scaling", number: "07", title: "What scaling this would surface" },
-  { id: "plan", number: "08", title: "The 90-day plan to ship Primer" },
-  { id: "how-built", number: "09", title: "How I built this" },
+  { id: "problem", number: "01", title: "The problem we're actually solving", demoLevel: "essential" as const },
+  { id: "what-built", number: "02", title: "What I built", demoLevel: "essential" as const },
+  { id: "architectures", number: "03", title: "Three architectures I considered", demoLevel: "optional" as const },
+  { id: "decisions", number: "04", title: "The architecture in four decisions", demoLevel: "essential" as const },
+  { id: "v1-misses", number: "05", title: "What V1 misses: the narrative layer", demoLevel: "optional" as const },
+  { id: "tradeoffs", number: "06", title: "Tradeoffs", demoLevel: "supporting" as const },
+  { id: "scaling", number: "07", title: "What scaling this would surface", demoLevel: "optional" as const },
+  { id: "plan", number: "08", title: "The 90-day plan to ship Primer", demoLevel: "supporting" as const },
+  { id: "how-built", number: "09", title: "How I built this", demoLevel: "optional" as const },
   { id: "closing", number: "", title: "Closing" },
 ];
 
