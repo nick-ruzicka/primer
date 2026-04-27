@@ -165,22 +165,6 @@ export function Writeup() {
             </Section>
 
             <Section id="what-built" number="02" claim="What I built" demoLevel="essential">
-<<<<<<< HEAD
-              <p>Two terms before anything else:</p>
-              <BulletList>
-                <li>
-                  <b>Artifact:</b> whatever Primer produces for a rep. Today: the
-                  pre-call brief. Tomorrow: post-call summaries, drafted outreach,
-                  renewal risk alerts.
-                </li>
-                <li>
-                  <b>Skill file:</b> a markdown document that defines an artifact.
-                  What data to pull, how to structure it, what voice to write in,
-                  what rules it must follow.
-                </li>
-              </BulletList>
-=======
->>>>>>> feature/reading-view-redesign
               <p>
                 <b>The brief.</b> Single-page app, one brief per account.
                 Three modes (Reading, Workspace, Split) render the same
@@ -326,11 +310,8 @@ export function Writeup() {
             </Section>
 
             <Section id="decisions" number="04" claim="The architecture in four decisions" demoLevel="essential">
-<<<<<<< HEAD
-=======
               <ArchitectureDiagram />
 
->>>>>>> feature/reading-view-redesign
               <Subhead>1. Read-only, not write-back</Subhead>
               <p>
                 Six MCP servers read. Primer never writes back. Drafted
@@ -692,8 +673,6 @@ export function Writeup() {
             </Section>
 
             <Section id="plan" number="08" claim="The 90-day plan to ship Primer at " demoLevel="supporting">
-<<<<<<< HEAD
-=======
               <p>
                 Primer in V1 is a brief. Primer at maturity is a platform
                 that watches account state across systems and tells the rep
@@ -708,7 +687,6 @@ export function Writeup() {
                 churn prediction that fires before the renewal forecast
                 does.
               </p>
->>>>>>> feature/reading-view-redesign
               <p className="italic text-ink-3">
                 The 90-day plan ships V1 well, then lets V1.5 telemetry
                 decide which artifact comes next. Parallel tracks for the
@@ -1033,11 +1011,7 @@ function Section({
     <section
       id={id}
       data-section
-<<<<<<< HEAD
-      className={`mt-32 scroll-mt-20 rounded-lg px-6 py-8 ${demoLevel ? bgMap[demoLevel] : ""}`}
-=======
       className={`flex min-h-screen snap-start scroll-mt-0 flex-col pt-16 pb-12 px-6 ${demoLevel ? bgMap[demoLevel] : ""}`}
->>>>>>> feature/reading-view-redesign
     >
       <header className="mb-10 flex items-start gap-4">
         <div className={`mt-3 h-10 w-[3px] flex-none rounded-full ${borderColorMap[demoLevel ?? "optional"]}`} />
