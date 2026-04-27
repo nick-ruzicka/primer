@@ -123,7 +123,7 @@ export function Writeup() {
               <TldrPanel />
             </div>
 
-            <Section id="problem" number="01" claim="The problem we're actually solving">
+            <Section id="problem" number="01" claim="The problem we're actually solving" demoLevel="essential">
               <p>
                 AEs at enterprise SaaS companies cover dozens of accounts.
                 Each account has decision-making structure — champions,
@@ -164,7 +164,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="what-built" number="02" claim="What I built">
+            <Section id="what-built" number="02" claim="What I built" demoLevel="essential">
               <p>
                 <b>The brief.</b> Single-page app, one brief per account.
                 Three modes (Reading, Workspace, Split) render the same
@@ -225,7 +225,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="architectures" number="03" claim="Three architectures I considered">
+            <Section id="architectures" number="03" claim="Three architectures I considered" demoLevel="optional">
               <p>
                 <b>Option A: Salesforce-native (Lightning panel + Agentforce).</b>
               </p>
@@ -309,7 +309,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="decisions" number="04" claim="The architecture in four decisions">
+            <Section id="decisions" number="04" claim="The architecture in four decisions" demoLevel="essential">
               <ArchitectureDiagram />
 
               <Subhead>1. Read-only, not write-back</Subhead>
@@ -395,7 +395,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
+            <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer" demoLevel="optional">
               <p className="italic text-ink-3">
                 V1 reads structured facts. It doesn't read the narrative.
               </p>
@@ -542,7 +542,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="tradeoffs" number="06" claim="Tradeoffs">
+            <Section id="tradeoffs" number="06" claim="Tradeoffs" demoLevel="supporting">
               <p>
                 <b>Freshness.</b>
               </p>
@@ -583,7 +583,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="scaling" number="07" claim="What scaling this would surface">
+            <Section id="scaling" number="07" claim="What scaling this would surface" demoLevel="optional">
               <p className="italic text-ink-3">
                 Five things V1 handles that would have to level up at  scale.
               </p>
@@ -672,7 +672,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at ">
+            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at " demoLevel="supporting">
               <p>
                 Primer in V1 is a brief. Primer at maturity is a platform
                 that watches account state across systems and tells the rep
@@ -802,7 +802,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="how-built" number="09" claim="How I built this">
+            <Section id="how-built" number="09" claim="How I built this" demoLevel="optional">
               <p>The build itself was the AI workflow being tested.</p>
               <BulletList>
                 <li>
@@ -987,20 +987,34 @@ function Section({
   number,
   claim,
   children,
+  demoLevel,
 }: {
   id?: string;
   number?: string;
   claim: string;
   children: ReactNode;
+  demoLevel?: "essential" | "supporting" | "optional";
 }) {
+  const bgMap = {
+    essential: "bg-good/8 border border-good/20",
+    supporting: "bg-accent-soft/10 border border-accent/15",
+    optional: "",
+  };
+
+  const borderColorMap = {
+    essential: "bg-good",
+    supporting: "bg-accent",
+    optional: "bg-accent",
+  };
+
   return (
     <section
       id={id}
       data-section
-      className="flex min-h-screen snap-start scroll-mt-0 flex-col pt-16 pb-12"
+      className={`flex min-h-screen snap-start scroll-mt-0 flex-col pt-16 pb-12 px-6 ${demoLevel ? bgMap[demoLevel] : ""}`}
     >
       <header className="mb-10 flex items-start gap-4">
-        <div className="mt-3 h-10 w-[3px] flex-none rounded-full bg-accent" />
+        <div className={`mt-3 h-10 w-[3px] flex-none rounded-full ${borderColorMap[demoLevel ?? "optional"]}`} />
         <div>
           {number && (
             <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
