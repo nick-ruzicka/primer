@@ -633,12 +633,9 @@ export function Writeup() {
                 cite={3}
                 note={
                   <p>
-                    The combined GTM team's loaded comp dwarfs that by
-                    orders of magnitude. The model isn't the cost. What
-                    scales: per-call charges from source systems (Gong and
-                    Catalyst meter their APIs) and engineering time to
-                    keep skills, validators, and integrations current as
-                    the business and its data sources change.
+                    Anthropic per-token pricing as of 2026; brief volume
+                    estimated from  headcount and typical AE
+                    cadence.
                   </p>
                 }
               >
@@ -646,7 +643,12 @@ export function Writeup() {
                 scale (~115 quota-carrying AEs plus a sizable CSM org,
                 call it ~3 briefs per rep per working day): roughly
                 100-200K briefs/year, roughly $6-12K/year in Anthropic
-                costs.
+                costs. The combined GTM team's loaded comp dwarfs that by
+                orders of magnitude. The model isn't the cost. What scales:
+                per-call charges from source systems (Gong and Catalyst
+                meter their APIs) and engineering time to keep skills,
+                validators, and integrations current as the business and
+                its data sources change.
               </SlidePoint>
 
               <SlidePoint
