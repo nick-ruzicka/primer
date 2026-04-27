@@ -113,7 +113,7 @@ export function Writeup() {
 
             <TldrPanel />
 
-            <Section id="problem" number="01" claim="The problem we're actually solving">
+            <Section id="problem" number="01" claim="The problem we're actually solving" demoLevel="essential">
               <p>
                 A rep walks into a customer call with six tabs open: Salesforce,
                 Gong, Catalyst, NetSuite, Snowflake, LinkedIn. Each has signal.
@@ -139,7 +139,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="what-built" number="02" claim="What I built">
+            <Section id="what-built" number="02" claim="What I built" demoLevel="essential">
               <p>Two terms before anything else:</p>
               <BulletList>
                 <li>
@@ -216,7 +216,7 @@ export function Writeup() {
               </BulletList>
             </Section>
 
-            <Section id="architectures" number="03" claim="Three architectures I considered">
+            <Section id="architectures" number="03" claim="Three architectures I considered" demoLevel="optional">
               <p>
                 <b>Option A: Salesforce-native (Lightning panel + Agentforce).</b>
               </p>
@@ -280,7 +280,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="decisions" number="04" claim="The architecture in four decisions">
+            <Section id="decisions" number="04" claim="The architecture in four decisions" demoLevel="essential">
               <Subhead>1. Read-only, not write-back</Subhead>
               <BulletList>
                 <li>Six MCP servers read. Primer never writes back.</li>
@@ -419,7 +419,7 @@ data_as_of: 2026-04-23`}
               </VisualMarker>
             </Section>
 
-            <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer">
+            <Section id="v1-misses" number="05" claim="What V1 misses: the narrative layer" demoLevel="optional">
               <p className="italic text-ink-3">
                 V1 reads structured facts. It doesn't read the narrative.
               </p>
@@ -566,7 +566,7 @@ data_as_of: 2026-04-23`}
               </p>
             </Section>
 
-            <Section id="tradeoffs" number="06" claim="Tradeoffs">
+            <Section id="tradeoffs" number="06" claim="Tradeoffs" demoLevel="supporting">
               <p>
                 <b>Freshness.</b>
               </p>
@@ -610,7 +610,7 @@ data_as_of: 2026-04-23`}
               </BulletList>
             </Section>
 
-            <Section id="scaling" number="07" claim="What scaling this would surface">
+            <Section id="scaling" number="07" claim="What scaling this would surface" demoLevel="optional">
               <p className="italic text-ink-3">
                 Five things V1 handles that would have to level up at Attentive scale.
               </p>
@@ -723,7 +723,7 @@ data_as_of: 2026-04-23`}
               </p>
             </Section>
 
-            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive">
+            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive" demoLevel="supporting">
               <p className="italic text-ink-3">
                 Parallel tracks for the first two weeks — validate the product,
                 seed the skills library. The back half prioritizes whichever
@@ -838,7 +838,7 @@ data_as_of: 2026-04-23`}
               </p>
             </Section>
 
-            <Section id="how-built" number="09" claim="How I built this">
+            <Section id="how-built" number="09" claim="How I built this" demoLevel="optional">
               <p>The build itself was the AI workflow being tested.</p>
               <BulletList>
                 <li>
@@ -973,8 +973,8 @@ function Closing() {
         <FooterRow
           icon={<Rocket size={16} />}
           label="Try the prototype"
-          href="#"
-          text="primer.[hetzner-url-here]"
+          href="https://primer.5.161.116.216.sslip.io"
+          text="primer.5.161.116.216.sslip.io"
         />
         <FooterRow
           icon={<Package size={16} />}
@@ -1026,16 +1026,34 @@ function Section({
   number,
   claim,
   children,
+  demoLevel,
 }: {
   id?: string;
   number?: string;
   claim: string;
   children: ReactNode;
+  demoLevel?: "essential" | "supporting" | "optional";
 }) {
+  const bgMap = {
+    essential: "bg-good/8 border border-good/20",
+    supporting: "bg-accent-soft/10 border border-accent/15",
+    optional: "",
+  };
+
+  const borderColorMap = {
+    essential: "bg-good",
+    supporting: "bg-accent",
+    optional: "bg-accent",
+  };
+
   return (
-    <section id={id} data-section className="mt-32 scroll-mt-20">
+    <section
+      id={id}
+      data-section
+      className={`mt-32 scroll-mt-20 rounded-lg px-6 py-8 ${demoLevel ? bgMap[demoLevel] : ""}`}
+    >
       <header className="mb-10 flex items-start gap-4">
-        <div className="mt-3 h-10 w-[3px] flex-none rounded-full bg-accent" />
+        <div className={`mt-3 h-10 w-[3px] flex-none rounded-full ${borderColorMap[demoLevel ?? "optional"]}`} />
         <div>
           {number && (
             <span className="mb-1.5 block font-mono text-[11px] uppercase tracking-[0.1em] text-ink-3">
