@@ -76,8 +76,8 @@ picture.
 
 ```bash
 # 1. Clone + enter the repo
-git clone git@github.com:nick-ruzicka/primer-.git
-cd primer-
+git clone git@github.com:nick-ruzicka/primer.git
+cd primer
 
 # 2. Environment
 cp .env.example .env
@@ -119,7 +119,7 @@ ssh root@<IP> PRIMER_DOMAIN=primer.your-domain.com bash /root/setup_server.sh
 PRIMER_SERVER=root@<IP> scripts/deploy.sh
 ```
 
-- `scripts/deploy.sh` mirrors the Chariot Signal Engine pattern: push, SSH,
+- `scripts/deploy.sh` is a standard git-push-then-systemctl-restart pattern:
   git pull, rebuild, `systemctl restart`.
 - `DRY_RUN=1 scripts/deploy.sh` prints every step without executing.
 - nginx reverse-proxies `/` to Next.js (3000), `/api/*` and `/briefing/*` to
@@ -129,7 +129,7 @@ PRIMER_SERVER=root@<IP> scripts/deploy.sh
 ## Repo layout
 
 ```
-primer-/
+primer/
 ├── backend/               # FastAPI app, MCP client, Claude agent
 ├── mcp_servers/           # six stdio MCP servers, one per source system
 ├── data/                  # SQLite schema, seed SQL, seeded fixtures (8-10 accounts)
