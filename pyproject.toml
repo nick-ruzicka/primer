@@ -1,7 +1,7 @@
 [project]
 name = "primer-attentive"
 version = "0.1.0"
-description = "Primer — pre-call briefing system for Attentive AEs."
+description = "Primer — pre-call briefing system for enterprise AEs."
 requires-python = ">=3.12"
 dependencies = [
     "anthropic>=0.96.0",

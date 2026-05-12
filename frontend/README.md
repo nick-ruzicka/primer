@@ -1,6 +1,6 @@
 # Primer — Frontend
 
-The Next.js application for Primer, Attentive's pre-call briefing product. Terminal 3 deliverable.
+The Next.js 15 + Tailwind v4 frontend for Primer.
 
 ## Run it
 

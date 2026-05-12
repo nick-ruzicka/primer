@@ -71,7 +71,7 @@ export function LeftRail({
         </div>
         <div className="min-w-0">
           <div className="text-[14px] font-semibold text-ink leading-tight">
-            Attentive
+            Primer
           </div>
           <div className="mt-[1px] text-[10px] font-medium uppercase tracking-[0.08em] text-ink-4">
             Briefing · AE

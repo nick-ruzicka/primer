@@ -1,8 +1,7 @@
 import type { CitationMeta } from "../types";
 
 /**
- * Northstar Beauty brief fixture — lifted verbatim from the reference HTML
- * (reference/Attentive_Briefing.html, extracted JSX source). This copy is the
+ * Northstar Beauty brief fixture — reference quality brief fixture. This copy is the
  * canonical brief-quality bar the streaming agent must hit.
  *
  * Structure mirrors the `<Prose>` / `<Cite>` model in the reference: each
@@ -193,7 +192,7 @@ export const NORTHSTAR_BEAUTY_BRIEF: BriefFixture = {
           body: [t("Reframe around the group, not Beauty alone.")],
           rationale: [
             t(
-              "Beauty is the weakest of the three brands. Bring a side-by-side of Beauty + Active + Home so the conversation is consolidation onto Attentive, not off it.",
+              "Beauty is the weakest of the three brands. Bring a side-by-side of Beauty + Active + Home so the conversation is consolidation across brands, not off the platform.",
             ),
           ],
         },
