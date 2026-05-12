@@ -1,7 +1,7 @@
-# Loom fallback — 3-minute demo script
+# 3-minute architectural walkthrough
 
-Recorded walkthrough in case the live demo has network or API issues during
-the interview. Three minutes, conversational, one take is fine.
+A recorded demo of the system in action. Three minutes, conversational, one take
+is fine.
 
 **Record settings:** 1080p, mic only (no face cam), tab highlight on, desktop
 audio off. Target 3:00, hard ceiling 3:30.
@@ -91,8 +91,8 @@ audio off. Target 3:00, hard ceiling 3:30.
 
 > The architectural claim I care most about: this is a read layer, not a
 > write layer. MCP wraps the existing systems, Primer reasons across them,
-> and never writes back. That means when 's RevTech team ships
-> their unified data layer, the MCP servers repoint — Primer doesn't change.
+> and never writes back. That means when your internal data unification layer
+> ships, the MCP servers repoint — Primer doesn't change.
 
 ---
 
@@ -104,8 +104,7 @@ audio off. Target 3:00, hard ceiling 3:30.
 > is a point I make in Mode 4: building has gotten cheap enough that
 > renting off-the-shelf now costs you differentiation.
 
-> Source is on GitHub, link in the writeup. My email's there too. Thanks for
-> the time — I'd love to talk through any of this live.
+> Source is on GitHub at the link in the writeup. Questions? Email's there too.
 
 *(Stop recording. Don't narrate the outro screen.)*
 
@@ -122,7 +121,6 @@ audio off. Target 3:00, hard ceiling 3:30.
 
 ## Version notes
 
-- **v1** (2026-04-22): initial script. If the live demo is solid, this Loom
-  is a nice-to-have — not a shipping gate. If the live demo is flaky, this
-  is what gets linked in the writeup closing block and referenced if the
-  interviewer asks for a recorded walkthrough.
+- **v1** (2026-04-22): initial script. This walkthrough covers the core
+  architecture and interaction patterns. Pairs with Mode 4 (the embedded writeup)
+  for a complete picture of the system design.

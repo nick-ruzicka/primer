@@ -5,9 +5,11 @@ an account before a call; Primer composes a three-paragraph brief with source
 citations and a streaming Account Intelligence panel that populates in under
 two seconds.
 
-Built as a portfolio project in April 2026. The writeup lives inside the
-product as Mode 4 — open the prototype, click **About this build** in the mode
-switcher.
+Built as a portfolio project exploring MCP-based multi-source orchestration with
+Claude streaming tool use. The writeup lives inside the product as Mode 4 — open
+the prototype, click **About this build** in the mode switcher.
+
+**Run locally**: See [Running locally](#running-locally) below.
 
 ---
 
