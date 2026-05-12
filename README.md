@@ -9,6 +9,32 @@ Built as a takehome submission in April 2026. The writeup lives inside the
 product as Mode 4 — open the prototype, click **About this build** in the mode
 switcher.
 
+**Try it live**: https://primer.5.161.116.216.sslip.io
+
+---
+
+## See it work
+
+![Split mode mid-stream](docs/split-streaming.png)
+
+*The Split view while a brief is generating. Six MCP servers — Salesforce, Snowflake, Catalyst, NetSuite, Gong, Exa — fan out in parallel. Each source lights up as it returns data and populates the Account Intelligence panel on the right, topic-by-topic.*
+
+![Reading mode fully rendered](docs/reading-full.png)
+
+*Reading mode after the stream completes. The brief is three paragraphs of opinionated, hedged prose. Each gold chip (·n) is a fact_id that maps back to a raw row in one of the source systems. Facts are cited; inferences are hedged ("appears", "likely", "suggests").*
+
+![Citations inline with prose](docs/citations-close.png)
+
+*Zoomed view showing how every claim is qualified by a citation. The validation agent runs in parallel during generation and flags statements that contradict the underlying data — keeping the brief grounded.*
+
+![References panel](docs/references-panel.png)
+
+*The references list after the brief. Every numbered citation shows its source system, the field, the raw value, and the snippet or timestamp. A reader can trace any chip back to its origin in two clicks.*
+
+![Writeup and architecture, Mode 4](docs/writeup-mode4.png)
+
+*The architectural writeup ships inside the product as Mode 4. No separate PDF or linked document — the thing being read sits inside the thing it describes. The architecture claim: MCP is a read layer, so the writeup is just another view over the same orchestrator.*
+
 ---
 
 ## What it is
