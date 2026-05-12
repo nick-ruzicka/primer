@@ -1,6 +1,6 @@
 # Primer
 
-A pre-call briefing product for Attentive Account Executives. The rep selects
+A pre-call briefing product for enterprise Account Executives. The rep selects
 an account before a call; Primer composes a three-paragraph brief with source
 citations and a streaming Account Intelligence panel that populates in under
 two seconds.

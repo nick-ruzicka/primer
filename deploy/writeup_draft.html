@@ -502,7 +502,7 @@
     <header>
       <p class="kicker">takehome submission · april 2026</p>
       <h1 class="hero">Primer</h1>
-      <p class="hero-sub">A pre-call briefing for Attentive Account Executives.</p>
+      <p class="hero-sub">A pre-call briefing for enterprise Account Executives.</p>
       <p class="hero-meta">Built by Nick Ruzicka in about six hours of elapsed time, across four Claude Code terminals running in parallel.</p>
       <div class="hero-cta">
         <a class="btn primary" href="#/">Open the prototype →</a>
@@ -537,7 +537,7 @@
         <summary>Speaker notes</summary>
         <div class="notes-body">
           <p>Most GTM tooling in this category gets into trouble the same way: it starts as a helpful layer and ends up as the fifth system of record the RevOps team has to reconcile. The move here was to refuse to become one of those systems. Primer doesn't own any field. It doesn't overwrite Salesforce. It doesn't patch Catalyst health. It reads from the system of record, reasons over the bundle, and returns an opinion in a format the rep can use.</p>
-          <p>That's what makes it <em>deployable inside Attentive</em> even while RevTech is mid-consolidation. They're the team that owns making these systems talk to each other; Primer is the team that reads whatever they expose. When RevTech finishes their unified layer, Primer's six MCP adapters collapse into one and nothing above them shifts. The posture is: earn trust with the read layer first, earn the right to a write layer later.</p>
+          <p>That's what makes it <em>deployable in any RevTech environment</em> even during mid-consolidation. RevTech is the team that owns making these systems talk to each other; Primer is the team that reads whatever they expose. When RevTech finishes their unified layer, Primer's six MCP adapters collapse into one and nothing above them shifts. The posture is: earn trust with the read layer first, earn the right to a write layer later.</p>
           <p>A product that writes back from day one couldn't survive that conversation with RevTech. This one can.</p>
         </div>
       </details>
@@ -806,7 +806,7 @@
         <div class="notes-body">
           <p>The reason I structured this writeup around tradeoffs is that I think a hiring manager reading it learns more about the way I think from a tradeoff than from a feature list. Any feature can be justified in isolation. What's interesting is what got cut, and why.</p>
           <p>Freshness vs. cost: the real-time-everything version of this product costs 5× as much to run and earns you a very small amount of rep-perceived improvement, because reps don't make decisions off the last five minutes of data anyway. Cache with labeled staleness is a better product and a cheaper one.</p>
-          <p>Source of truth vs. velocity: the impulse is always to "fix" contradictions in the data — to have Primer decide which system is right. That's a quagmire. Surface the contradiction, let the rep decide, and ship. Attentive's internal RevTech team is the right owner of reconciliation anyway; Primer just makes it visible.</p>
+          <p>Source of truth vs. velocity: the impulse is always to "fix" contradictions in the data — to have Primer decide which system is right. That's a quagmire. Surface the contradiction, let the rep decide, and ship. The internal RevTech team is the right owner of reconciliation anyway; Primer just makes it visible.</p>
           <p>Opinion vs. informational: I keep coming back to this because it's the biggest one. The informational version ships safer. The opinionated version is the product. The architecture in sections 3 and 4 is how we make the opinionated version ship-safe. If the architecture weren't there, I would have shipped informational.</p>
         </div>
       </details>

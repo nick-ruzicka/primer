@@ -520,7 +520,7 @@ export function Writeup() {
                 }
               >
                 V2B builds cross-system embeddings + per-artifact retrieval.
-                Six weeks at Attentive's scale.
+                Six weeks at enterprise scale.
               </SlidePoint>
 
               <SlidePoint
@@ -606,7 +606,7 @@ export function Writeup() {
 
             <Section id="scaling" number="07" claim="What scaling this would surface" demoLevel="optional">
               <p className="italic text-ink-3">
-                Five things V1 handles that would have to level up at Attentive scale.
+                Five things V1 handles that would have to level up at enterprise scale.
               </p>
 
               <SlidePoint
@@ -655,12 +655,12 @@ export function Writeup() {
                 note={
                   <p>
                     Anthropic per-token pricing as of 2026; brief volume
-                    estimated from Attentive headcount and typical AE
+                    estimated from typical enterprise headcount and AE
                     cadence.
                   </p>
                 }
               >
-                ~$0.06 per brief end-to-end. Back-of-envelope at Attentive
+                ~$0.06 per brief end-to-end. Back-of-envelope at enterprise
                 scale (~115 quota-carrying AEs plus a sizable CSM org,
                 call it ~3 briefs per rep per working day): roughly
                 100-200K briefs/year, roughly $6-12K/year in Anthropic
@@ -695,7 +695,7 @@ export function Writeup() {
               </p>
             </Section>
 
-            <Section id="plan" number="08" claim="The 90-day plan to ship Primer at Attentive" demoLevel="supporting">
+            <Section id="plan" number="08" claim="The 90-day plan to ship Primer" demoLevel="supporting">
               <p>
                 Primer in V1 is a brief. Primer at maturity is a platform
                 that watches account state across systems and tells the rep
@@ -720,7 +720,7 @@ export function Writeup() {
               <PhaseHeader label="DAYS 0-14" title="Product Validation" />
               <BulletList>
                 <li>
-                  Wire production OAuth to Attentive's Salesforce, Gong, Catalyst
+                  Wire production OAuth to Salesforce, Gong, Catalyst
                   sandboxes.
                 </li>
                 <li>Harden MCP servers: rate limits, retry logic, auth refresh.</li>
@@ -743,7 +743,7 @@ export function Writeup() {
                   <b>Map real data, configure MCP per source.</b> Production
                   access lets every Salesforce custom field, Catalyst tag
                   taxonomy, NetSuite billing schema, and Snowflake usage table
-                  get a typed path through the MCP layer. Attentive-specific
+                  get a typed path through the MCP layer. Any company-specific
                   internal tools get new MCP wrappers where needed.
                 </li>
                 <li>
@@ -751,8 +751,7 @@ export function Writeup() {
                   expansion, trust-repair, discovery, demo.
                 </li>
                 <li>
-                  Catalog Attentive-specific semantics: product taxonomy (Flows,
-                  Journeys, Pro tiers), what "expansion-ready" means here,
+                  Catalog domain-specific semantics: product taxonomy, what "expansion-ready" means here,
                   escalation conventions. Skills cite this as ground truth.
                 </li>
                 <li>
@@ -763,8 +762,7 @@ export function Writeup() {
                 </li>
                 <li>
                   Calibrate objectivity scoring and refusal thresholds against
-                  real examples. Feed the validator known good/bad Attentive
-                  briefs so the "opinion-vs-grounded-fact" threshold and the
+                  real examples. Feed the validator known good/bad briefs so the "opinion-vs-grounded-fact" threshold and the
                   "we don't have enough evidence to surface this" cutoff both
                   reflect this domain's data quality, not a generic prior.
                 </li>
@@ -860,7 +858,7 @@ function Hero() {
         The brief that thinks with you.
       </h1>
       <p className="mt-6 font-serif text-[19px] leading-[1.55] text-ink-2">
-        <b>Pre-call briefings for Attentive AEs.</b>
+        <b>Pre-call briefings for enterprise AEs.</b>
       </p>
       <p className="mt-2 max-w-[540px] font-serif text-[18px] italic leading-[1.5] text-ink-3">
         An architecture writeup. Read on for the four decisions, the tradeoffs, and the 90-day plan.
@@ -1112,7 +1110,7 @@ function RoadmapGrid() {
     {
       version: "V2A",
       timing: "MONTH 2",
-      body: "Wrap any Salesforce-side AI compression as MCP tools, if Attentive has them.",
+      body: "Wrap any Salesforce-side AI compression as MCP tools, if your company has them.",
       status: "future",
     },
     {

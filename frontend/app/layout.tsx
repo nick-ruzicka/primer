@@ -24,9 +24,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Primer — Pre-call briefings for Attentive AEs",
+  title: "Primer — Pre-call briefings for enterprise AEs",
   description:
-    "Pre-call briefing system for Attentive account executives. Streams opinionated, cited briefs from six source systems.",
+    "Pre-call briefing system for enterprise account executives. Streams opinionated, cited briefs from six source systems.",
 };
 
 export default function RootLayout({
